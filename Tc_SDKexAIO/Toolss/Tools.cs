@@ -11,6 +11,7 @@
             Menu = PlaySharp.Menu.Add(new Menu("Tools", "Tools(通用工具)"));
 
             SkinChance.Init();
+            AutoWard.Init();
         }
     }
 }

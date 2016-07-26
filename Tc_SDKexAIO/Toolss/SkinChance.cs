@@ -7,6 +7,8 @@
     using System.Collections.Generic;
     using Config;
 
+    using Menu = LeagueSharp.SDK.UI.Menu;
+
     internal class SkinChance
     {
 
