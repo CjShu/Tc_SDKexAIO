@@ -59,12 +59,12 @@
 
         #region 造型名稱 SkinNama
 
-        private static IEnumerable<string> AatroxS = new[]
+        private static IEnumerable<string> Aatrox = new[]
         {
             "Classic", "Justicar Aatrox", "Mecha Aatrox", "Sea Hunter Aatrox"
         };
 
-        private static IEnumerable<string> AhriS = new[]
+        private static IEnumerable<string> Ahri = new[]
         {
             "Classic", "Dynasty Ahri", "Midnight Ahri", "Foxfire Ahri", "Popstar Ahri", "Challenger Ahri", "Academy Ahri"
         };
