@@ -2,14 +2,11 @@
 {
 
     using LeagueSharp;
-    using LeagueSharp.SDK;
     using LeagueSharp.SDK.UI;
-    using LeagueSharp.SDK.Enumerations;
     using System;
     using System.Collections.Generic;
-    using Tc_SDKexAIO.Config;
+    using Config;
 
-  
     internal class SkinChance
     {
 
@@ -34,6 +31,7 @@
                         SkinMenu.Add(new MenuList<string>("SkinName", "Skin Name", Jinx));
                         break;
                     default:
+                        SkinMenu.Add(new MenuList<string>("SkinName", "Skin Name", new[] { "Classic", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" }));
                         break;
                 }
             }
@@ -167,6 +165,5 @@
         };
 
         #endregion
-
     }
 }

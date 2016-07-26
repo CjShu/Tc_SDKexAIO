@@ -48,9 +48,6 @@
     <Reference Include="LeagueSharp.SDKEx">
       <HintPath>..\..\..\..\Desktop\L#\PlaySharp\System\LeagueSharp.SDKEx.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\..\..\Desktop\L#\PlaySharp\System\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="SharpDX">
       <HintPath>C:\Users\user\Desktop\L#\LeagueSharp\System\SharpDX.dll</HintPath>
     </Reference>

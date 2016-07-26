@@ -68,6 +68,8 @@
             E = new Spell(SpellSlot.E);
             R = new Spell(SpellSlot.R);
 
+            Toolss.Tools.Init();
+
             switch (Player.ChampionName)
             {
                 case "Jinx":
