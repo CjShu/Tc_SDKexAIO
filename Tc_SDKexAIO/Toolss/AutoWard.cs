@@ -11,47 +11,33 @@
     using System.Collections.Generic;
     using System.Linq;
 
-    using Menu = LeagueSharp.SDK.UI.Menu;
-
 
     internal class AutoWard
     {
-
-        private static Menu Menu => Tools.Menu;
-
+        private Menu Menu;
         public static List<ChampionInfo> ChampionInfoList = new List<ChampionInfo>();
-
-        private static Vector3 EnemySpawn = ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(x => x.IsEnemy).Position;
-
-        private static Obj_AI_Hero Player = PlaySharp.Player, Rengar = null, Vayne = null;
-  
+        private Vector3 EnemySpawn = ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(x => x.IsEnemy).Position;
+        private Obj_AI_Hero Me, Rengar = null, Vayne = null;
         public static List<HiddenObj> HiddenObjList = new List<HiddenObj>();
 
-        private static Items.Item VisionWard = new Items.Item(ItemId.Vision_Ward, 550f);
-        private static Items.Item OracleLens = new Items.Item(ItemId.Oracles_Lens_Trinket, 550f);
-        private static Items.Item WardN = new Items.Item(ItemId.Stealth_Ward, 600f);
-        private static Items.Item TrinketN = new Items.Item(ItemId.Warding_Totem_Trinket, 600f);
-        private static Items.Item SightStone = new Items.Item(ItemId.Sightstone, 600f);
-        private static Items.Item FarsightOrb = new Items.Item(ItemId.Scrying_Orb_Trinket, 4000f);
-        private static Items.Item ScryingOrb = new Items.Item(ItemId.Farsight_Orb_Trinket, 3500f);
-        private static Items.Item Oasis = new Items.Item(2302, 600f);
-        private static Items.Item Equinox = new Items.Item(2303, 600f);
-        private static Items.Item Watchers = new Items.Item(2301, 600f);
+        private Items.Item VisionWard = new Items.Item(ItemId.Oracles_Lens_Trinket, 550f);
+        private Items.Item OracleLens = new Items.Item(ItemId.Vision_Ward, 550f);
+        private Items.Item WardN = new Items.Item(ItemId.Stealth_Ward, 600f);
+        private Items.Item TrinketN = new Items.Item(ItemId.Warding_Totem_Trinket, 600f);
+        private Items.Item SightStone = new Items.Item(ItemId.Sightstone, 600f);
+        private Items.Item FarsightOrb = new Items.Item(ItemId.Scrying_Orb_Trinket, 4000f);
+        private Items.Item ScryingOrb = new Items.Item(ItemId.Farsight_Orb_Trinket, 3500f);
+
+        private Items.Item Watchers = new Items.Item(2301, 600f);
+        private Items.Item Oasis = new Items.Item(2302, 600f);
+        private Items.Item Equinox = new Items.Item(2303, 600f);
 
 
-
-        internal static void Init()
+        public AutoWard(Menu mainMenu)
         {
+            this.Menu = mainMenu;
 
-            Player = GameObjects.Player;
-
-            Menu AutoWard = new Menu("AutoWard.Menu", "AutoWard(自動守衛)");
-            AutoWard.Add(new MenuBool("Enable", "Enable(啟動開關)"));
-            AutoWard.Add(new MenuBool("AutoWardBlue", "AutoWard.Blue(自動更換鷹眼晶球)"));
-            AutoWard.Add(new MenuBool("AutoWardPink", "Auto.VisionWard(自動使用偵視守衛)"));
-            AutoWard.Add(new MenuBool("AutoWardCombo", "Only combo mode(僅限連招模式)"));
-            AutoWard.Add(new MenuKeyBind("ComboKey", "Combo.Key(按鍵啟動)", System.Windows.Forms.Keys.Space, KeyBindType.Press));
-            Menu.Add(AutoWard);
+            Me = GameObjects.Player;
 
             foreach (var hero in ObjectManager.Get<Obj_AI_Hero>())
             {
@@ -65,13 +51,73 @@
                 }
             }
 
+            Menu AutoWard = new Menu("AutoWard.Menu", "AutoWard(自動守衛)");
+            AutoWard.Add(new MenuBool("Enable", "Enable(開關)"));
+            AutoWard.Add(new MenuBool("BuyBlue", "BuyBlue(自動更換鷹眼晶球)"));
+            AutoWard.Add(new MenuBool("AutoWardCombo", "AutoWardCombo(僅按鍵啟動)", true));
+            AutoWard.Add(new MenuKeyBind("ComboKey", "ComboKey(按鍵開啟!)", System.Windows.Forms.Keys.Space, KeyBindType.Press));
+
+            Menu.Add(AutoWard);
+
             Game.OnUpdate += OnUpdate;
             Obj_AI_Base.OnProcessSpellCast += OnProcessSpellCast;
             GameObject.OnCreate += OnCreate;
             GameObject.OnDelete += OnDelete;
         }
 
-        private static void OnDelete(GameObject sender, EventArgs args)
+        private void OnCreate(GameObject sender, EventArgs args)
+        {
+            if (!sender.IsEnemy || sender.IsAlly)
+                return;
+
+            var missile = sender as MissileClient;
+
+            if (missile != null)
+            {
+                if (!missile.SpellCaster.IsVisible)
+                    if ((missile.SData.Name == "BantamTrapShort" || missile.SData.Name == "BantamTrapBounceSpell") && !HiddenObjList.Exists(x => missile.EndPosition == x.pos))
+                        AddWard("teemorcast", missile.EndPosition);
+            }
+
+            var minion = sender as Obj_AI_Minion;
+
+            if (minion != null)
+            {
+                if ((sender.Name.ToLower() == "visionward" || sender.Name.ToLower() == "sightward") && !HiddenObjList.Exists(x => x.pos.Distance(sender.Position) < 100))
+                {
+                    foreach (var obj in HiddenObjList)
+                    {
+                        if (obj.pos.Distance(sender.Position) < 400)
+                            if (obj.type == 0)
+                            {
+                                HiddenObjList.Remove(obj);
+                                return;
+                            }
+                    }
+
+                    var dupa = (Obj_AI_Minion)sender;
+
+                    if (dupa.Mana == 0)
+                        HiddenObjList.Add(new HiddenObj() { type = 2, pos = sender.Position, endTime = float.MaxValue });
+                    else
+                        HiddenObjList.Add(new HiddenObj() { type = 1, pos = sender.Position, endTime = Game.Time + dupa.Mana });
+                }
+            }
+            else if (Rengar != null && sender.Position.Distance(Me.Position) < 800)
+            {
+                switch (sender.Name)
+                {
+                    case "Rengar_LeapSound.troy":
+                        CastVisionWards(sender.Position);
+                        break;
+                    case "Rengar_Base_R_Alert":
+                        CastVisionWards(sender.Position);
+                        break;
+                }
+            }
+        }
+
+        private void OnDelete(GameObject sender, EventArgs args)
         {
             var minion = sender as Obj_AI_Minion;
 
@@ -106,78 +152,14 @@
             }
         }
 
-        private static void OnCreate(GameObject sender, EventArgs args)
-        {
-            if (!sender.IsEnemy || sender.IsAlly)
-            {
-                return;
-            }
-
-            var missile = sender as MissileClient;
-
-            if (missile != null)
-            {
-                if (!missile.SpellCaster.IsVisible)
-                {
-                    if ((missile.SData.Name == "BantamTrapShort"
-                        || missile.SData.Name == "BantamTrapBounceSpell")
-                        && !HiddenObjList.Exists(x => missile.EndPosition == x.pos))
-                        AddWard("teemorcast", missile.EndPosition);
-                }
-                var minion = sender as Obj_AI_Minion;
-
-                if (minion != null)
-                {
-                    if ((sender.Name.ToLower() == "visionward"
-                        || sender.Name.ToLower() == "sightward")
-                        && !HiddenObjList.Exists(x => x.pos.Distance(sender.Position) < 100))
-                    {
-                        foreach (var obj in HiddenObjList)
-                        {
-                            if (obj.pos.Distance(sender.Position) < 400)
-                            {
-                                if (obj.type == 0)
-                                {
-                                    HiddenObjList.Remove(obj);
-                                    return;
-                                }
-                            }
-                        }
-                        var dupa = (Obj_AI_Minion)sender;
-
-                        if (dupa.Mana == 0)
-                        {
-                            HiddenObjList.Add(new HiddenObj() { type = 2, pos = sender.Position, endTime = float.MaxValue });
-                        }
-                        else
-                        {
-                            HiddenObjList.Add(new HiddenObj() { type = 1, pos = sender.Position, endTime = Game.Time + dupa.Mana });
-                        }
-                    }
-                }
-                else if (Rengar != null && sender.Position.Distance(Player.Position) < 800)
-                {
-                    switch (sender.Name)
-                    {
-                        case "Rengar_LeapSound.troy":
-                            CastVisionWards(sender.Position);
-                            break;
-                        case "Rengar_Base_R_Alert":
-                            CastVisionWards(sender.Position);
-                            break;
-                    }
-                }
-            }
-        }
-
-        private static void OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
+        private void OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
             if (sender is Obj_AI_Hero && sender.IsEnemy)
             {
                 if (args.Target == null)
                     AddWard(args.SData.Name.ToLower(), args.End);
 
-                if ((OracleLens.IsReady || VisionWard.IsReady) && sender.Distance(Player.Position) < 1200)
+                if ((OracleLens.IsReady || VisionWard.IsReady) && sender.Distance(Me.Position) < 1200)
                 {
                     switch (args.SData.Name.ToLower())
                     {
@@ -210,19 +192,19 @@
             }
         }
 
-        private static void OnUpdate(EventArgs args)
+        private void OnUpdate(EventArgs args)
         {
             foreach (var enemy in GameObjects.EnemyHeroes.Where(enemy => enemy.IsValid))
             {
-                var ChampionInfOne = ChampionInfoList.Find(e => e.NetworkId == enemy.NetworkId);
+                var ChampionInfoOne = ChampionInfoList.Find(x => x.NetworkId == enemy.NetworkId);
                 if (enemy.IsDead)
                 {
-                    if (ChampionInfOne != null)
+                    if (ChampionInfoOne != null)
                     {
-                        ChampionInfOne.NetworkId = enemy.NetworkId;
-                        ChampionInfOne.LastVisablePos = EnemySpawn;
-                        ChampionInfOne.LastVisableTime = Game.Time;
-                        ChampionInfOne.PredictedPos = EnemySpawn;
+                        ChampionInfoOne.NetworkId = enemy.NetworkId;
+                        ChampionInfoOne.LastVisablePos = EnemySpawn;
+                        ChampionInfoOne.LastVisableTime = Game.Time;
+                        ChampionInfoOne.PredictedPos = EnemySpawn;
                     }
                 }
                 else if (enemy.IsVisible)
@@ -232,51 +214,53 @@
                     if (enemy.IsMoving)
                         prepos = prepos.Extend(enemy.GetWaypoints().Last().ToVector3(), 125);
 
-                    if (ChampionInfOne == null)
+                    if (ChampionInfoOne == null)
                     {
                         ChampionInfoList.Add(new ChampionInfo() { NetworkId = enemy.NetworkId, LastVisablePos = enemy.Position, LastVisableTime = Game.Time, PredictedPos = prepos });
                     }
+                    else
+                    {
+                        ChampionInfoOne.NetworkId = enemy.NetworkId;
+                        ChampionInfoOne.LastVisablePos = enemy.Position;
+                        ChampionInfoOne.LastVisableTime = Game.Time;
+                        ChampionInfoOne.PredictedPos = prepos;
+                    }
                 }
             }
-            if (!Menu["AutoWard.Menu"]["Enable"].GetValue<MenuBool>())
-            {
-                return;
-            }
 
+            if (!Menu["AutoWard.Menu"]["Enable"].GetValue<MenuBool>())
+                return;
 
             if (Menu["AutoWard.Menu"]["BuyBlue"].GetValue<MenuBool>())
             {
-                if (Player.InFountain() && !ScryingOrb.IsOwned() && Player.Level >= 9)
-                    FarsightOrb.Cast(Player);
+                if (Me.InFountain() && !ScryingOrb.IsOwned() && Me.Level >= 9)
+                    Me.BuyItem(ItemId.Farsight_Orb_Trinket);
             }
 
-            if (Rengar != null && Player.HasBuff("rengarralertsound"))
-                CastVisionWards(Player.ServerPosition);
+            if (Rengar != null && Me.HasBuff("rengarralertsound"))
+                CastVisionWards(Me.ServerPosition);
 
             if (Vayne != null && Vayne.IsValidTarget(1000) && Vayne.HasBuff("vaynetumblefade"))
                 CastVisionWards(Vayne.ServerPosition);
 
-            foreach (var enemy in GameObjects.EnemyHeroes.Where(e => e.IsValid && !e.IsVisible && !e.IsDead))
+            foreach (var enemy in GameObjects.EnemyHeroes.Where(enemy => enemy.IsValid && !enemy.IsVisible && !enemy.IsDead))
             {
                 var need = ChampionInfoList.Find(x => x.NetworkId == enemy.NetworkId);
 
                 if (need == null || need.PredictedPos == null)
                     continue;
 
-                var PPDistance = need.PredictedPos.Distance(Player.Position);
+                var PPDistance = need.PredictedPos.Distance(Me.Position);
 
-                if (PPDistance > 1500)
+                if (PPDistance > 1400)
                     continue;
 
                 var timer = Game.Time - need.LastVisableTime;
 
                 if (timer < 4)
                 {
-                    if (Menu["AutoWard.Menu"]["AutoWardCombo"].GetValue<MenuBool>()
-                        && !Menu["AutoWard.Menu"]["ComboKey"].GetValue<MenuKeyBind>().Active)
-                    {
+                    if (Menu["AutoWard.Menu"]["AutoWardCombo"].GetValue<MenuBool>() && !Menu["AutoWard.Menu"]["ComboKey"].GetValue<MenuKeyBind>().Active)
                         return;
-                    }
 
                     if (NavMesh.IsWallOfGrass(need.PredictedPos, 0))
                     {
@@ -313,6 +297,7 @@
                                 need.LastVisableTime = Game.Time - 5;
                             }
                         }
+
                         if (FarsightOrb.IsReady)
                         {
                             FarsightOrb.Cast(need.PredictedPos);
@@ -328,7 +313,7 @@
             }
         }
 
-        private static void AddWard(string name, Vector3 posCast)
+        private void AddWard(string name, Vector3 posCast)
         {
             switch (name)
             {
@@ -374,19 +359,14 @@
             }
         }
 
-        private static void CastVisionWards(Vector3 position)
+        private void CastVisionWards(Vector3 position)
         {
             if (OracleLens.IsReady)
-            {
-                OracleLens.Cast(Player.Position.Extend(position, OracleLens.Range));
-            }
+                OracleLens.Cast(Me.Position.Extend(position, OracleLens.Range));
             else if (VisionWard.IsReady)
-            {
-                VisionWard.Cast(Player.Position.Extend(position, VisionWard.Range));
-            }
+                VisionWard.Cast(Me.Position.Extend(position, VisionWard.Range));
         }
     }
-
 
     internal class ChampionInfo
     {
@@ -408,7 +388,6 @@
             FinishRecallTime = 0;
         }
     }
-
 
     internal class HiddenObj
     {

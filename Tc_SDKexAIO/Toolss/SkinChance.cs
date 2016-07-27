@@ -47,11 +47,11 @@
                 return;
             }
 
-            if (Menu["SkinChance"]["Enable"])
+            if (Menu["SkinChance"]["Eanble"].GetValue<MenuBool>())
             {
                 Player.SetSkin(Player.ChampionName, Menu["SkinChance"]["SkinName"].GetValue<MenuList>().Index);
             }
-            else if (!Menu["SkinChance"]["Enable"])
+            else if (!Menu["SkinChance"]["Eanble"].GetValue<MenuBool>())
             {
                 Player.SetSkin(Player.ChampionName, SkinID);
             }

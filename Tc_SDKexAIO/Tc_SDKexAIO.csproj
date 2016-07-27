@@ -49,19 +49,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="clipper_library">
-      <HintPath>..\..\..\..\Desktop\L#\LeagueSharp\System\clipper_library.dll</HintPath>
+      <HintPath>C:\Users\user\Desktop\L#\LeagueSharp\System\clipper_library.dll</HintPath>
     </Reference>
     <Reference Include="LeagueSharp">
       <HintPath>C:\Users\user\Desktop\L#\LeagueSharp\System\LeagueSharp.dll</HintPath>
     </Reference>
     <Reference Include="LeagueSharp.Common">
-      <HintPath>..\..\..\..\Desktop\L#\PlaySharp\System\LeagueSharp.Common.dll</HintPath>
+      <HintPath>C:\Users\user\Desktop\L#\LeagueSharp\System\LeagueSharp.Common.dll</HintPath>
     </Reference>
     <Reference Include="LeagueSharp.Data">
       <HintPath>C:\Users\user\Desktop\L#\LeagueSharp\System\LeagueSharp.Data.dll</HintPath>
     </Reference>
     <Reference Include="LeagueSharp.SDKEx">
-      <HintPath>..\..\..\..\Desktop\L#\PlaySharp\System\LeagueSharp.SDKEx.dll</HintPath>
+      <HintPath>C:\Users\user\Desktop\L#\LeagueSharp\System\LeagueSharp.SDKEx.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX">
       <HintPath>C:\Users\user\Desktop\L#\LeagueSharp\System\SharpDX.dll</HintPath>
@@ -91,6 +91,7 @@
     <Compile Include="PlaySharp.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Toolss\AutoWard.cs" />
+    <Compile Include="Toolss\QSS.cs" />
     <Compile Include="Toolss\SkinChance.cs" />
     <Compile Include="Toolss\Tools.cs" />
   </ItemGroup>

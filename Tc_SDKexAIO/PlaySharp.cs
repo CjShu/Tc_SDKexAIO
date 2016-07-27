@@ -4,6 +4,7 @@
     using LeagueSharp.SDK;
     using LeagueSharp.SDK.UI;
     using System;
+    using System.Linq;
     using System.Collections.Generic;
     using System.Reflection;
     using Config;
@@ -31,9 +32,9 @@
 
         #endregion
 
-        #region
+        #region 自動啟動列表英雄名單
 
-        internal static string[] AutoEnableList =
+        public static string[] AutoEnableList =
         {
              "Annie", "Ahri", "Akali", "Anivia", "Annie", "Brand", "Cassiopeia", "Diana", "Evelynn", "FiddleSticks", "Fizz", "Gragas", "Heimerdinger", "Karthus",
              "Kassadin", "Katarina", "Kayle", "Kennen", "Leblanc", "Lissandra", "Lux", "Malzahar", "Mordekaiser", "Morgana", "Nidalee", "Orianna",
@@ -44,13 +45,22 @@
 
         #endregion
 
-        private static void Main(string[] args)
+        #region 支持英雄
+
+        private static string[] SupList =
+        {
+            "Jinx"
+        };
+
+        #endregion
+
+        static void Main(string[] args)
         {
             Bootstrap.Init(args);
             Events.OnLoad += Events_OnLoad;
         }
 
-        private static void Events_OnLoad(object sender, EventArgs e)
+        private static void Events_OnLoad(object sender, EventArgs args)
         {
 
             Player = GameObjects.Player;
@@ -59,14 +69,19 @@
 
             foreach (var ally in GameObjects.AllyHeroes) { Allies.Add(ally); }
 
+            if (!SupList.Contains(GameObjects.Player.ChampionName))
+            {
+                WriteConsole(GameObjects.Player.ChampionName + "Not Support!");
+                {
+                    return;
+                }
+            }
+
+            WriteConsole(GameObjects.Player.ChampionName + "Load OK!");
+
             Menu = new Menu("Top Aio", "Top AIO SDKEx", true).Attach();
             Menu.GetSeparator("By: CjShu");
-            Menu.GetSeparator("Version : " + Assembly.GetExecutingAssembly().GetName().Version);
-
-            Q = new Spell(SpellSlot.Q);
-            W = new Spell(SpellSlot.W);
-            E = new Spell(SpellSlot.E);
-            R = new Spell(SpellSlot.R);
+            Menu.Add(new MenuSeparator("Version", "Version : " + Assembly.GetExecutingAssembly().GetName().Version));
 
             Toolss.Tools.Init();
 
@@ -78,6 +93,13 @@
                 default:
                     break;
             }
+        }
+
+        public static void WriteConsole(string mdg)
+        {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Tc_SDKexAIO :" + mdg);
+            Console.ForegroundColor = ConsoleColor.White;
         }
     }
 }
