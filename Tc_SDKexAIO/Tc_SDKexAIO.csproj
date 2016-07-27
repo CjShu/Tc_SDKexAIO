@@ -83,6 +83,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Champions\Jinx.cs" />
+    <Compile Include="Common\BaseUlti.cs" />
     <Compile Include="Common\Manager.cs" />
     <Compile Include="Core\Dash.cs" />
     <Compile Include="Common\Geometry.cs" />
@@ -91,6 +92,7 @@
     <Compile Include="PlaySharp.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Toolss\AutoWard.cs" />
+    <Compile Include="Toolss\Offensive.cs" />
     <Compile Include="Toolss\QSS.cs" />
     <Compile Include="Toolss\SkinChance.cs" />
     <Compile Include="Toolss\Tools.cs" />

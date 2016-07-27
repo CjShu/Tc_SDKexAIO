@@ -17,7 +17,7 @@
         private Menu Menu;
         public static List<ChampionInfo> ChampionInfoList = new List<ChampionInfo>();
         private Vector3 EnemySpawn = ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(x => x.IsEnemy).Position;
-        private Obj_AI_Hero Me, Rengar = null, Vayne = null;
+        private Obj_AI_Hero Player, Rengar = null, Vayne = null;
         public static List<HiddenObj> HiddenObjList = new List<HiddenObj>();
 
         private Items.Item VisionWard = new Items.Item(ItemId.Oracles_Lens_Trinket, 550f);
@@ -37,7 +37,7 @@
         {
             this.Menu = mainMenu;
 
-            Me = GameObjects.Player;
+            Player = GameObjects.Player;
 
             foreach (var hero in ObjectManager.Get<Obj_AI_Hero>())
             {
@@ -51,11 +51,11 @@
                 }
             }
 
-            Menu AutoWard = new Menu("AutoWard.Menu", "AutoWard(自動守衛)");
-            AutoWard.Add(new MenuBool("Enable", "Enable(開關)"));
-            AutoWard.Add(new MenuBool("BuyBlue", "BuyBlue(自動更換鷹眼晶球)"));
-            AutoWard.Add(new MenuBool("AutoWardCombo", "AutoWardCombo(僅按鍵啟動)", true));
-            AutoWard.Add(new MenuKeyBind("ComboKey", "ComboKey(按鍵開啟!)", System.Windows.Forms.Keys.Space, KeyBindType.Press));
+            Menu AutoWard = new Menu("AutoWard.Menu", "AutoWard | 自動守衛");
+            AutoWard.Add(new MenuBool("Enable", "Enable | 開關"));
+            AutoWard.Add(new MenuBool("BuyBlue", "BuyBlue | 自動更換鷹眼晶球"));
+            AutoWard.Add(new MenuBool("AutoWardCombo", "AutoWardCombo | 僅按鍵啟動", true));
+            AutoWard.Add(new MenuKeyBind("ComboKey", "ComboKey | 按鍵開啟!", System.Windows.Forms.Keys.Space, KeyBindType.Press));
 
             Menu.Add(AutoWard);
 
@@ -103,7 +103,7 @@
                         HiddenObjList.Add(new HiddenObj() { type = 1, pos = sender.Position, endTime = Game.Time + dupa.Mana });
                 }
             }
-            else if (Rengar != null && sender.Position.Distance(Me.Position) < 800)
+            else if (Rengar != null && sender.Position.Distance(Player.Position) < 800)
             {
                 switch (sender.Name)
                 {
@@ -159,7 +159,7 @@
                 if (args.Target == null)
                     AddWard(args.SData.Name.ToLower(), args.End);
 
-                if ((OracleLens.IsReady || VisionWard.IsReady) && sender.Distance(Me.Position) < 1200)
+                if ((OracleLens.IsReady || VisionWard.IsReady) && sender.Distance(Player.Position) < 1200)
                 {
                     switch (args.SData.Name.ToLower())
                     {
@@ -233,12 +233,12 @@
 
             if (Menu["AutoWard.Menu"]["BuyBlue"].GetValue<MenuBool>())
             {
-                if (Me.InFountain() && !ScryingOrb.IsOwned() && Me.Level >= 9)
-                    Me.BuyItem(ItemId.Farsight_Orb_Trinket);
+                if (Player.InFountain() && !ScryingOrb.IsOwned() && Player.Level >= 9)
+                    Player.BuyItem(ItemId.Farsight_Orb_Trinket);
             }
 
-            if (Rengar != null && Me.HasBuff("rengarralertsound"))
-                CastVisionWards(Me.ServerPosition);
+            if (Rengar != null && Player.HasBuff("rengarralertsound"))
+                CastVisionWards(Player.ServerPosition);
 
             if (Vayne != null && Vayne.IsValidTarget(1000) && Vayne.HasBuff("vaynetumblefade"))
                 CastVisionWards(Vayne.ServerPosition);
@@ -250,7 +250,7 @@
                 if (need == null || need.PredictedPos == null)
                     continue;
 
-                var PPDistance = need.PredictedPos.Distance(Me.Position);
+                var PPDistance = need.PredictedPos.Distance(Player.Position);
 
                 if (PPDistance > 1400)
                     continue;
@@ -362,9 +362,9 @@
         private void CastVisionWards(Vector3 position)
         {
             if (OracleLens.IsReady)
-                OracleLens.Cast(Me.Position.Extend(position, OracleLens.Range));
+                OracleLens.Cast(Player.Position.Extend(position, OracleLens.Range));
             else if (VisionWard.IsReady)
-                VisionWard.Cast(Me.Position.Extend(position, VisionWard.Range));
+                VisionWard.Cast(Player.Position.Extend(position, VisionWard.Range));
         }
     }
 

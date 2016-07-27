@@ -10,12 +10,14 @@
 
         internal static void Init()
         {
-            Menu = PlaySharp.Menu.Add(new Menu("Tools", "Tools(通用工具)"));
+            Menu = PlaySharp.Menu.Add(new Menu("Tools", "Tools | 通用工具"));
             PlaySharp.WriteConsole("Tools OK!");
 
+            Offensive.Init();
             SkinChance.Init();
-            new AutoWard(Menu);
             QSS.Init();
+
+            new AutoWard(Menu);
 
             Variables.Orbwalker.Enabled = true;
         }
