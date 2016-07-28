@@ -22,13 +22,7 @@
 
         public static List<Obj_AI_Hero> Allies = new List<Obj_AI_Hero>();
 
-        public static Spell Q { get; set; }
-
-        public static Spell W { get; set; }
-
         public static Spell E { get; set; }
-
-        public static Spell R { get; set; }
 
         #endregion
 
@@ -71,15 +65,15 @@
 
             if (!SupList.Contains(GameObjects.Player.ChampionName))
             {
-                WriteConsole(GameObjects.Player.ChampionName + "Not Support!");
+                Write(GameObjects.Player.ChampionName + "Not Support!");
                 {
                     return;
                 }
             }
 
-            WriteConsole(GameObjects.Player.ChampionName + "Load OK!");
+            Write(GameObjects.Player.ChampionName + "Load OK!");
 
-            Menu = new Menu("Top Aio", "Top AIO SDKEx", true).Attach();
+            Menu = new Menu("TcAioSDK", "Tc AIO SDKEx", true).Attach();
             Menu.GetSeparator("By: CjShu");
             Menu.Add(new MenuSeparator("Version", "Version : " + Assembly.GetExecutingAssembly().GetName().Version));
 
@@ -95,7 +89,7 @@
             }
         }
 
-        public static void WriteConsole(string mdg)
+        public static void Write(string mdg)
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Tc_SDKexAIO :" + mdg);

@@ -47,6 +47,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="clipper_library">
       <HintPath>C:\Users\user\Desktop\L#\LeagueSharp\System\clipper_library.dll</HintPath>
@@ -84,6 +87,7 @@
   <ItemGroup>
     <Compile Include="Champions\Jinx.cs" />
     <Compile Include="Common\BaseUlti.cs" />
+    <Compile Include="Common\HpBarDraw.cs" />
     <Compile Include="Common\Manager.cs" />
     <Compile Include="Core\Dash.cs" />
     <Compile Include="Common\Geometry.cs" />

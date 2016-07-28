@@ -11,7 +11,7 @@
         internal static void Init()
         {
             Menu = PlaySharp.Menu.Add(new Menu("Tools", "Tools | 通用工具"));
-            PlaySharp.WriteConsole("Tools OK!");
+            PlaySharp.Write("Tools OK!");
 
             Offensive.Init();
             SkinChance.Init();
