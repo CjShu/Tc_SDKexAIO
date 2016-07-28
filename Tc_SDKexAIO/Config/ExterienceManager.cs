@@ -1,7 +1,5 @@
 ﻿namespace Tc_SDKexAIO.Config
 {
-
-
     using LeagueSharp.SDK.Enumerations;
     using LeagueSharp.SDK.UI;
     using System.Windows.Forms;

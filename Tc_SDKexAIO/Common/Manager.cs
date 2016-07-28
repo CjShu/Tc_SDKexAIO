@@ -3,6 +3,7 @@
 
     using LeagueSharp;
     using LeagueSharp.SDK;
+    using LeagueSharp.SDK.UI;
     using LeagueSharp.SDK.Utils;
     using LeagueSharp.SDK.Enumerations;
 
@@ -15,6 +16,50 @@
 
     internal static class Manager
     {
+
+        #region 預測
+
+        private static Obj_AI_Hero Me => PlaySharp.Player;
+
+        public static void SpellCast(Spell spell, Obj_AI_Base e)
+        {
+            SkillshotType CoreType = SkillshotType.SkillshotLine;
+            bool aoe2 = false;
+
+            if (spell.Type == SkillshotType.SkillshotCircle)
+            {
+                CoreType = SkillshotType.SkillshotCircle;
+                aoe2 = true;
+            }
+            if (spell.Width > 80 && !spell.Collision)
+                aoe2 = true;
+
+            var predInput2 = new PredictionInput
+            {
+                AoE = aoe2,
+                Collision = spell.Collision,
+                Speed = spell.Speed,
+                Delay = spell.Delay,
+                Range = spell.Range,
+                From = Me.ServerPosition,
+                Radius = spell.Width,
+                Unit = e,
+                Type = CoreType
+            };
+            var poitput2 = Movement.GetPrediction(predInput2);
+
+            if (spell.Speed != float.MaxValue && TcCommon.CollisionYasuo(Me.ServerPosition, poitput2.CastPosition))
+                return;
+
+            if (poitput2.Hitchance >= HitChance.VeryHigh)
+                spell.Cast(poitput2.CastPosition);
+            else if (predInput2.AoE && poitput2.AoeTargetsHitCount > 1 && poitput2.Hitchance >= HitChance.High)
+            {
+                spell.Cast(poitput2.CastPosition);
+            }
+        }
+    
+        #endregion
 
         #region 目標
 
@@ -60,7 +105,6 @@
 
         #region 其他
 
-        public static List<UnitIncomingDamage> IncomingDamageList = new List<UnitIncomingDamage>();
 
         /// <summary>
         /// Judge Target MoveMent Status (This Part From SebbyLib) (來自SebbyLib)
@@ -136,31 +180,14 @@
             return target.Buffs.OrderByDescending(buff => buff.EndTime - Game.Time).Where(buff => buff.Name == buffName).Select(buff => buff.EndTime).FirstOrDefault() - Game.Time;
         }
 
-        /// <summary>
-        /// 來自花邊
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="time"></param>
-        /// <param name="skillshots"></param>
-        /// <returns></returns>
-        public static double GetIncomingDamage(Obj_AI_Hero target, float time = 0.5f, bool skillshots = true)
+        public static int GetMana(SpellSlot slot, AMenuComponent viue)
         {
-            double totalDamage = 0;
+            return viue.GetValue<MenuSlider>().Value + (int)(ObjectManager.Player.Spellbook.GetSpell(slot).ManaCost / ObjectManager.Player.MaxMana * 100);
+        }
 
-            foreach (var damage in IncomingDamageList.Where(damage => damage.TargetNetworkId == target.NetworkId && Game.Time - time < damage.Time))
-            {
-                if (skillshots)
-                {
-                    totalDamage += damage.Damage;
-                }
-                else
-                {
-                    if (!damage.Skillshot)
-                        totalDamage += damage.Damage;
-                }
-            }
-
-            return totalDamage;
+        public static int GetSliderButtonMana(SpellSlot slot, AMenuComponent viue)
+        {
+            return viue.GetValue<MenuSliderButton>().SValue + (int)(ObjectManager.Player.Spellbook.GetSpell(slot).ManaCost / ObjectManager.Player.MaxMana * 100);
         }
 
         #endregion
@@ -453,14 +480,6 @@
             return target.IsInvulnerable;
         }
 
-    }
-
-    public class UnitIncomingDamage
-    {
-        public int TargetNetworkId { get; set; }
-        public float Time { get; set; }
-        public double Damage { get; set; }
-        public bool Skillshot { get; set; }
     }
 
     internal class OnDamageEvent
