@@ -100,11 +100,9 @@
             return Variables.TargetSelector.GetTarget(Spell, Ignote);
         }
 
-
         #endregion
 
         #region 其他
-
 
         /// <summary>
         /// Judge Target MoveMent Status (This Part From SebbyLib) (來自SebbyLib)
@@ -136,6 +134,11 @@
             return GameObjects.EnemyHeroes.Where(x => x.IsValidTarget(Range) && !x.IsZombie && !x.IsDead).ToList();
         }
        
+        /// <summary>
+        /// 來自花邊
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
         public static bool InAutoAttackRange(AttackableUnit target)
         {
             var baseTarget = (Obj_AI_Base)target;
@@ -188,6 +191,39 @@
         public static int GetSliderButtonMana(SpellSlot slot, AMenuComponent viue)
         {
             return viue.GetValue<MenuSliderButton>().SValue + (int)(ObjectManager.Player.Spellbook.GetSpell(slot).ManaCost / ObjectManager.Player.MaxMana * 100);
+        }
+
+        #endregion
+
+        #region 其他2
+
+        /// <summary>
+        /// (This Part From SebbyJinx) (來自SebbyJinx)
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        public static bool CanKill(Obj_AI_Base e)
+        {
+            if (e.HasBuffOfType(BuffType.PhysicalImmunity) || e.HasBuffOfType(BuffType.SpellImmunity) || e.IsZombie
+                || e.IsInvulnerable || e.HasBuffOfType(BuffType.Invulnerability) || e.HasBuffOfType(BuffType.SpellShield)
+                || e.HasBuff("deathdefiedbuff") || e.HasBuff("Undying Rage") || e.HasBuff("Chrono Shift"))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        public static bool CanKillableWith(this Obj_AI_Base t, Spell spell)
+        {
+            return t.Health < spell.GetDamage(t) - 5;
+        }
+
+        public static bool HasPassive(this Obj_AI_Base obj)
+        {
+            return obj.PassiveCooldownEndTime - (Game.Time - 15.5) <= 0;
         }
 
         #endregion

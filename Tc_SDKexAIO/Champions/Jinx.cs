@@ -62,7 +62,7 @@
             var WMenu = Menu.Add(new Menu("W", "W.Set | W 設定"));
             {
                 WMenu.GetBool("ComboW", "ComnoW");
-                WMenu.GetBool("Killsteal", "killstealW");
+                WMenu.GetBool("KSW", "Killsteal W");
                 WMenu.GetKeyBind("AutoW", "Auto W", Keys.T, KeyBindType.Press);
                 WMenu.GetBool("HarassW", "Harass W", false);
                 WMenu.GetSlider("HarassWMana", "Harass W Min Mana > =", 40, 0, 70);
@@ -203,7 +203,30 @@
 
                 if (Player.IsUnderEnemyTurret())
                     return;
-                var target = Variables
+
+                var target = GetTarget(W.Range, DamageType.Physical);
+
+                if (target == null)
+                    return;
+
+                float distance = Player.Position.Distance(target.Position);
+
+                if (distance >= 500)
+                    if (Menu["W"]["WList" + target.ChampionName].GetValue<MenuBool>())
+                        if (target.IsValidTarget(W.Range))
+                            if (W.GetPrediction(target).Hitchance >= HitChance.VeryHigh)
+                                W.Cast(target, true);
+            }
+
+            if (Menu["W"]["KSW"].GetValue<MenuBool>().GetValue<MenuBool>())
+            {
+                var e = GetTarget(W.Range, DamageType.Physical);
+
+                if (e.IsValidTarget() && e.Distance(Player.Position) > 500)
+                    if (GetDamage(e) > e.Health)
+                        if (CanMove(e))
+
+
 
         }
 
