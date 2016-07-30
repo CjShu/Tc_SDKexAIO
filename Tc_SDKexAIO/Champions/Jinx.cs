@@ -4,8 +4,8 @@
     using LeagueSharp;
     using LeagueSharp.SDK;
     using LeagueSharp.SDK.Enumerations;
-
     using LeagueSharp.Data.Enumerations;
+
     using LeagueSharp.SDK.UI;
     using LeagueSharp.SDK.Utils;
 
@@ -30,12 +30,13 @@
 
     internal static class Jinx
     {
-        private static Spell Q, Q2, W, E, R;
 
+        private static Spell Q, Q2, W, E, R;
         private static Menu Menu => PlaySharp.Menu;
         private static Obj_AI_Hero Player => PlaySharp.Player;
+        private static bool BigGun => Player.HasBuff("JinxQ");
+        private static HpBarDraw HpBarDraw = new HpBarDraw();
         private static float DrawSpellTime = 0, DragonDmg = 0, lag = 0, LatFocusTime = Game.Time;
-        private static bool BigGun => Player.HasBuff("BigGun");
 
         internal static void Init()
         {
@@ -56,7 +57,6 @@
                 QMenu.GetBool("LaneClearQ", "LaneClear Q");
                 QMenu.GetSlider("HarassQMana", "Harass Q  Min Mana > =", 40, 0, 99);
                 QMenu.GetSlider("LaneClearQMana", "LaneClearQ Min Mana > =", 50, 0, 99);
-                QMenu.GetBool("blockQ", "Min Mana Ban BigGun(20)", false);
             }
 
             var WMenu = Menu.Add(new Menu("W", "W.Set | W 設定"));
@@ -78,7 +78,7 @@
             var EMenu = Menu.Add(new Menu("E", "E.Set | E 設定"));
             {
                 EMenu.GetSeparator("E: Mobe");
-                EMenu.GetBool("comboE", "Combo E");
+                EMenu.GetBool("ComboE", "Combo E");
                 EMenu.GetSliderButton("AoeE", "Aoe E Min Hit Counts > =", 2, 1, 5);
                 EMenu.GetSeparator("E: Gapcloser | Melee Modes");
                 EMenu.GetBool("Gapcloser", "Gapcloser E", false);
@@ -116,488 +116,259 @@
 
             var DrawMenu = Menu.Add(new Menu("Draw", "Draw"));
             {
-                DrawMenu.GetBool("Draw.Enabl", "Draw Enable", false);
                 DrawMenu.GetBool("Q", "Q Range", false);
                 DrawMenu.GetBool("W", "W Range", false);
                 DrawMenu.GetBool("E", "E Range", false);
-                DrawMenu.GetBool("R", "R Range", false);
-                DrawMenu.GetBool("DrawKSEnemy", "Killable Enemy Notification", false);
-                DrawMenu.GetBool("DrawKillableEnemyMini", "Killable Enemy [Mini Map]", false);
-                DrawMenu.GetBool("DrawDamage", "Draw Combo Damage", false);
+                DrawMenu.GetBool("EnableBuffs", "Draw Buff Enable", false);
                 DrawMenu.GetList("DrawBuffs", "Show Red/Blue Time Circle", new[] { "Off", "Blue Buff", "Red Buff", "Both" });
             }
 
             PlaySharp.Write(GameObjects.Player.ChampionName + "Jinx OK! :)");
 
-            Game.OnUpdate += OnUpdate;
+            Obj_AI_Base.OnBuffAdd += OnBuffAdd;
             Variables.Orbwalker.OnAction += OnAction;
-            Events.OnGapCloser += OnGapCloser;
-            Obj_AI_Base.OnProcessSpellCast += OnProcessSpellCast;
-            Spellbook.OnCastSpell += OnCastSpell;
-            Drawing.OnEndScene += OnEndScene;
             Drawing.OnDraw += OnDraw;
         }
-       
-        private static void OnUpdate(EventArgs args)
+
+        private static void OnDraw(EventArgs args)
         {
-            if (Player.IsDead)
-                return;
+            try
+            {
+                if (Player.IsDead)
+                    return;
 
-            if (Q.IsReady())
-                Qlogic();
-
-            if (W.IsReady())
-                Wlogic();
-
-            if (E.IsReady())
-                Elogic();
-
-            if (R.IsReady())
-                Rlogic();
-
-            AutoRLogic();
+                if (Q.IsReady() && Menu["Draw"]["Q"].GetValue<MenuBool>())
+                {
+                    Render.Circle.DrawCircle(Player.Position, Q.Range, Color.Cyan);
+                }
+                if (W.IsReady() && Menu["Draw"]["W"].GetValue<MenuBool>())
+                {
+                    Render.Circle.DrawCircle(Player.Position, W.Range, Color.CadetBlue);
+                }
+                if (E.IsReady() && Menu["Draw"]["E"].GetValue<MenuBool>())
+                {
+                    Render.Circle.DrawCircle(Player.Position, E.Range, Color.CornflowerBlue);
+                }
+                DrawBuffs();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in On Draw" + ex);
+            }
         }
 
-        #region 邏輯
-
-        private static void AutoRLogic()
+        private static void DrawBuffs()
         {
 
-        }
+            var DrawBuff = Menu["Draw"]["DrawBuffs"].GetValue<MenuList>().Index;
 
-        private static void Rlogic()
-        {
-
-        }
-
-        private static void Elogic()
-        {
-
-        }
-
-        private static void Wlogic()
-        {
-            if (!W.IsReady())
+            if (!Menu["Draw"]["EnableBuffs"].GetValue<MenuBool>())
             {
                 return;
             }
-
-            if (Combo && Menu["W"]["ComboW"].GetValue<MenuBool>())
+            if ((DrawBuff == 1 | DrawBuff == 3) && Player.HasBlueBuff())
             {
-                var target = GetTarget(W.Range, DamageType.Physical);
-
-                if (target == null)
-                    return;
-
-                float distance = Player.Position.Distance(target.Position);
-
-                if (distance >= 550)
-                    if (target.IsValidTarget(W.Range))
-                        SpellCast(W, target);
-            }
-
-            if ((Harass && Menu["W"]["HarassW"].GetValue<MenuBool>()) || Menu["W"]["AutoW"].GetValue<MenuKeyBind>().Active)
-            {
-                if (Player.ManaPercent >= Menu["W"]["HarassWMana"].GetValue<MenuSlider>().Value)
-                    return;
-
-                if (Player.IsUnderEnemyTurret())
-                    return;
-
-                var target = GetTarget(W.Range, DamageType.Physical);
-
-                if (target == null)
-                    return;
-
-                float distance = Player.Position.Distance(target.Position);
-
-                if (distance >= 500)
-                    if (Menu["W"]["WList" + target.ChampionName].GetValue<MenuBool>())
-                        if (target.IsValidTarget(W.Range))
-                            if (W.GetPrediction(target).Hitchance >= HitChance.VeryHigh)
-                                W.Cast(target, true);
-            }
-
-            if (Menu["W"]["KSW"].GetValue<MenuBool>().GetValue<MenuBool>())
-            {
-                var e = GetTarget(W.Range, DamageType.Physical);
-
-                if (e.IsValidTarget() && e.Distance(Player.Position) > 500)
-                    if (GetDamage(e) > e.Health)
-                        if (CanMove(e))
-
-
-
-        }
-
-        private static void Qlogic()
-        {
-
-            if ((Farm) && (Game.Time - lag > 0.1) && !BigGun && !Player.IsWindingUp && Variables.Orbwalker.CanAttack)
-            {
-                if ((Player.ManaPercent >= Menu["Q"]["HarassQMana"].GetValue<MenuSlider>().Value) && Menu["Q"]["HarassQ"].GetValue<MenuBool>())
+                if (BlueBuff.EndTime >= Game.Time)
                 {
-                    foreach (var minion in GetMinions(Player.ServerPosition, 670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level + 30).Where(minion => !InAutoAttackRange(minion) && minion.Health < Player.GetAutoAttackDamage(minion) * 1.2
-                            && (650f + Player.BoundingRadius + minion.BoundingRadius) < (Player.ServerPosition.Distance(Movement.GetPrediction(minion, 0.05f).CastPosition)
-                            + Player.BoundingRadius + minion.BoundingRadius) && (670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level)
-                            < (Player.ServerPosition.Distance(Movement.GetPrediction(minion, 0.05f).CastPosition)
-                            + Player.BoundingRadius + minion.BoundingRadius)))
-                    {
-                        Variables.Orbwalker.ForceTarget = null;
-                        Q.Cast();
-                        return;
-                    }
-                    lag = Game.Time;
-                }
-                var t = GetTarget((670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level)
-                    + 60, DamageType.Physical);
-                if (t.IsValidTarget())
-                {
-                    if (!BigGun && (!InAutoAttackRange(t) || t.CountEnemyHeroesInRange(250) > 2) && Variables.Orbwalker.GetTarget() == null)
-                    {
-                        var distance = Player.ServerPosition.Distance(Movement.GetPrediction(t, 0.05f).CastPosition)
-                            + Player.BoundingRadius + t.BoundingRadius;
+                    var circle1 =
+                        new Geometry.Circle2(
+                            new Vector2(ObjectManager.Player.Position.X + 3, ObjectManager.Player.Position.Y - 3), 170f,
+                            Game.Time - BlueBuff.StartTime, BlueBuff.EndTime - BlueBuff.StartTime).ToPolygon();
+                    circle1.Draw(Color.Black, 4);
 
-                        if (Combo && (Player.Mana > R.Instance.ManaCost + W.Instance.ManaCost + 15 || Player.GetAutoAttackDamage(t) * 3 > t.Health))
-                        {
-                            Q.Cast();
-                        }
-                        else if (Harass && Menu["Q"]["HarassQ"].GetValue<MenuBool>().Value)
-                        {
-                            if (!Player.IsWindingUp)
-                                if (Variables.Orbwalker.CanAttack)
-                                    if (!Player.IsUnderEnemyTurret())
-                                        if (Player.ManaPercent >= Menu["Q"]["HarassQMana"].GetValue<MenuSlider>().Value)
-                                            if (distance < (670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level)
-                                                + t.BoundingRadius + Player.BoundingRadius)
-                                                Q.Cast();
-                        }
-                    }
-                }
-                else if (!BigGun && Combo && Player.Mana > R.Instance.ManaCost + W.Instance.ManaCost + 20 && Player.CountEnemyHeroesInRange(3000) > 0)
-                {
-                    Q.Cast();
-                }
-                else if (BigGun && Combo && Player.Mana > R.Instance.ManaCost + W.Instance.ManaCost + 20)
-                {
-                    Q.Cast();
-                }
-                else if (BigGun && Combo && Player.CountEnemyHeroesInRange(3000) == 0)
-                {
-                    Q.Cast();
-                }
-                else if (BigGun && (LaneClear || Harass || LasHit))
-                {
-                    Q.Cast();
+                    var circle =
+                        new Geometry.Circle2(ObjectManager.Player.Position.ToVector2(), 170f,
+                            Game.Time - BlueBuff.StartTime, BlueBuff.EndTime - BlueBuff.StartTime).ToPolygon();
+                    circle.Draw(Color.Blue, 4);
                 }
             }
-        }
-
-        #endregion
-
-        private static void OnCastSpell(Spellbook sender, SpellbookCastSpellEventArgs args)
-        {
-            if (sender.Owner.IsMe && args.Slot == SpellSlot.Q)
+            if ((DrawBuff == 2 || DrawBuff == 3) && ObjectManager.Player.HasRedBuff())
             {
-                if (Q.IsReady() && Menu["Q"]["blockq"].GetValue<MenuBool>().Value)
+                if (RedBuff.EndTime >= Game.Time)
                 {
-                    if (Player.HasBuff("BigGun"))
-                    {
-                        return;
-                    }
-                    if (Player.ManaPercent < GetMana(W.Slot, Menu["Q"]["LaneClearQ"]))
-                    {
-                        args.Process = false;
-                    }
+                    var circle1 =
+                        new Geometry.Circle2(
+                            new Vector2(ObjectManager.Player.Position.X + 3, ObjectManager.Player.Position.Y - 3), 150f,
+                            Game.Time - RedBuff.StartTime, RedBuff.EndTime - RedBuff.StartTime).ToPolygon();
+                    circle1.Draw(Color.Black, 4);
+
+                    var circle =
+                        new Geometry.Circle2(ObjectManager.Player.Position.ToVector2(), 150f,
+                            Game.Time - RedBuff.StartTime, RedBuff.EndTime - RedBuff.StartTime).ToPolygon();
+                    circle.Draw(Color.Red, 4);
                 }
             }
         }
 
         private static void OnAction(object sender, OrbwalkingActionArgs args)
         {
-            if (args.Type == OrbwalkingType.BeforeAttack)
+            try
             {
-                if (!(args.Target is Obj_AI_Hero))
+                if (args.Type == OrbwalkingType.BeforeAttack)
                 {
-                    return;
-                }
-                if (!Q.IsReady())
-                {
-                    return;
-                }
-                      
-                var t = (Obj_AI_Hero)args.Target;
+                    if (!Q.IsReady())
+                        return;
 
-                if (BigGun && t.IsValidTarget())
-                {
-                    var ReaDistanc = Player.ServerPosition.Distance(Movement.GetPrediction(t, 0.05f).CastPosition)
-                        + Player.BoundingRadius + t.BoundingRadius;
+                    if (!(args.Target is Obj_AI_Hero))
+                        return;
 
-                    if (Combo && Menu["Q"]["ComboQ"].GetValue<MenuBool>())
+                    var t = (Obj_AI_Hero)args.Target;
+
+                    if (BigGun && t.IsValidTarget())
                     {
-                        if (ReaDistanc < (650f + Player.BoundingRadius + t.BoundingRadius))
+                        var RealDistance = Player.Position.Distance(Movement.GetPrediction(t, 0.05f).CastPosition) + Player.BoundingRadius + t.BoundingRadius;
                         {
-                            if (Player.Mana < R.Instance.ManaCost + 20 || Player.GetAutoAttackDamage(t) * 3 < t.Health)
+                            if (Combo && Menu["Q"]["Combo"].GetValue<MenuBool>())
                             {
-                                Q.Cast();
+                                if (RealDistance < (650f + Player.BoundingRadius + t.BoundingRadius))
+                                {
+                                    if (Player.Mana < R.Instance.ManaCost + 20 || Player.GetAutoAttackDamage(t) * 3 < t.Health)
+                                    {
+                                        Q.Cast(t);
+                                    }
+                                }
+                            }
+                            else if ((LaneClear || Harass) && Menu["Q"]["HarassQ"].GetValue<MenuBool>())
+                            {
+                                if ((RealDistance > (670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level) || RealDistance < (650f + Player.BoundingRadius + t.BoundingRadius)
+                                    || Player.Mana < R.Instance.ManaCost + E.Instance.ManaCost + W.Instance.ManaCost + W.Instance.ManaCost))
+                                {
+                                    Q.Cast(t);
+                                }
+                            }
+                        }
+                        if (LaneClear && !BigGun && Menu["Q"]["LaneClearQ"].GetValue<MenuBool>())
+                        {
+                            if (Player.Mana > R.Instance.ManaCost + E.Instance.ManaCost + W.Instance.ManaCost + 30)
+                            {
+                                var minionQ = GetMinions(Player.Position, (670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level));
+                                foreach (var minion in minionQ.Where(minion => args.Target.NetworkId != minion.NetworkId
+                                && minion.Distance(args.Target.Position) < 200 && (5 - Q.Level)
+                                * Player.GetAutoAttackDamage(minion) < args.Target.Health && (5 - Q.Level)
+                                * Player.GetAutoAttackDamage(minion) < minion.Health))
+                                {
+                                    Q.Cast(minion);
+                                }
+                            }
+                        }
+                        if (args.Target is Obj_AI_Hero)
+                        {
+                            var forceFocusEnemy = t;
+                            var aaRange = Player.AttackRange + Player.BoundingRadius + 350;
+
+                            foreach (var enemy in GetEnemies(Q.Range).Where(enemy => enemy.IsValidTarget(aaRange)))
+                            {
+                                if (enemy.Health / Player.GetAutoAttackDamage(enemy) + 1 < forceFocusEnemy.Health / Player.GetAutoAttackDamage(forceFocusEnemy))
+                                {
+                                    forceFocusEnemy = enemy;
+                                    Q.Cast(enemy);
+                                }
+                            }
+                            if (forceFocusEnemy.NetworkId != t.NetworkId && Game.Time - LatFocusTime < 2)
+                            {
+                                args.Process = false;
+                                return;
                             }
                         }
                     }
-                    else if ((Farm) && Menu["Q"]["HarassQ"].GetValue<MenuBool>())
-                    {
-                        if ((ReaDistanc > (670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level)
-                            || ReaDistanc < (650f + Player.BoundingRadius + t.BoundingRadius)
-                            || Player.ManaPercent >= Menu["Q"]["HarassQMana"].GetValue<MenuSlider>().Value))
-                        {
-                            Q.Cast();
-                        }
-                    }
-                }
-                else if (LaneClear && Menu["Q"]["LaneClearQ"] && !BigGun)
-                {
-                    if (Player.ManaPercent >= Menu["Q"]["LaneClearQMana"].GetValue<MenuSlider>().Value)
-                    {
-                        var allMinionsQ = GetMinions(Player.ServerPosition, (670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level));
-
-                        foreach (var m in allMinionsQ.Where(m =>
-                        args.Target.NetworkId != m.NetworkId && m.Distance(args.Target.Position) < 200
-                        && (5 - Q.Level) * Player.GetAutoAttackDamage(m) < args.Target.Health
-                        && (5 - Q.Level) * Player.GetAutoAttackDamage(m) < m.Health))
-                        {
-                            Q.Cast();
-                        }
-                    }
-                }
-                if (args.Target is Obj_AI_Hero)
-                {
-                    var Target = (Obj_AI_Hero)args.Target;
-                    var ForceFocusEnamy = Target;
-                    var aaRange = Player.AttackRange + Player.BoundingRadius + 350;
-
-                    foreach (var e in GameObjects.EnemyHeroes.Where(e => e.IsValidTarget(aaRange)))
-                    {
-                        if (e.Health / Player.GetAutoAttackDamage(e) + 1 < ForceFocusEnamy.Health / Player.GetAutoAttackDamage(ForceFocusEnamy))
-                        {
-                            ForceFocusEnamy = e;
-                        }
-                    }
-                    if (ForceFocusEnamy.NetworkId != Target.NetworkId && Game.Time - LatFocusTime < 2)
-                    {
-                        args.Process = false;
-                        return;
-                    }
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Before Attack Events " + ex);
+            }
+        }
+
+        private static void OnBuffAdd(Obj_AI_Base sender, Obj_AI_BaseBuffAddEventArgs args)
+        {
+           try
+            {
+                if (!E.IsReady())
+                {
+                    return;
+                }
+
+                BuffInstance aBuff = (from fBuffs in sender.Buffs.Where(s =>
+                sender.Team != Player.Team && sender.Distance(Player.Position) < E.Range)
+                from b in new[] { "teleport_", /* Telepor */
+                          "pantheon_grandskyfall_jump", /* Pantheon */ 
+                          "crowstorm", /* FiddleScitck */
+                          "zhonya", "katarinar", /* Katarita */
+                           "MissFortuneBulletTime", /* MissFortune */
+                           "gate", /* Twisted Fate */
+                           "chronorevive" /* Zilean */
+                }
+                where args.Buff.Name.ToLower().Contains(b)
+                select fBuffs).FirstOrDefault();
+
+                if (aBuff != null)
+                {
+                    E.Cast(sender.Position);
+                }
+             }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in On BuffAdd" + ex);             
+            }         
         }
 
         private static void OnGapCloser(object sender, Events.GapCloserEventArgs args)
         {
-            if (Menu["E"]["Gapcloser"].GetValue<MenuBool>().Value)
+            if (E.IsReady() && args.Sender.IsValidTarget(E.Range) && !Invulnerable.Check(
+               args.Sender, DamageType.Magical, false) && Menu["E"]["Gapcloser"].GetValue<MenuBool>().Value)
             {
-                if (E.IsReady() && args.Sender.IsValidTarget(E.Range) && !Invulnerable.Check(args.Sender, DamageType.Magical, false))
-                {
-                    E.Cast(args.IsDirectedToPlayer ? Player.ServerPosition : args.End);
-                }
+                E.Cast(args.IsDirectedToPlayer ? GameObjects.Player.ServerPosition : args.End);
             }
         }
 
         private static void OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            if (sender.IsMinion && !E.IsReady())
-                return;
 
-            if (sender.IsEnemy)
+            try
             {
-                if (Menu["E"]["ProtectE"].GetValue<MenuBool>())
+                if (sender.IsMinion)
+                    return;
+
+                if (!E.IsReady())
+                    return;
+
+                if (sender.IsEnemy)
                 {
-                    if (sender.IsValidTarget(E.Range))
+                    if (Menu["E"]["ProtectE"].GetValue<MenuBool>())
                     {
-                        if (ShouldUseE(args.SData.Name))
+                        if (sender.IsValidTarget(E.Range))
                         {
-                            E.Cast(sender.ServerPosition);
+                            if (ShouldUseE(args.SData.Name))
+                            {
+                                E.Cast(sender.ServerPosition);
+                            }
                         }
                     }
                 }
             }
-        }
-
-        private static void OnEndScene(EventArgs args)
-        {
-            var DrawKillableEnemy = Menu["Draw"]["DrawKillableEnemyMini"].GetValue<MenuBool>();
-            if (DrawKillableEnemy.Value)
+            catch (Exception ex)
             {
-                foreach (var e in GameObjects.EnemyHeroes.Where(e => e.IsVisible && !e.IsDead && !e.IsZombie && e.Health
-                     < GetDamage(e)))
-                {
-                    if ((int)Game.Time % 2 == 1)
-                    {
-                        #pragma warning disable 618
-                        Utility.DrawCircle(e.Position, 850, DrawKillableEnemy, 2, 30, true);
-                        #pragma warning restore 618
-                    }
-                }
+                Console.WriteLine("Error in Process Spell Cast" + ex);
             }
         }
-
-        private static void OnDraw(EventArgs args)
+                           
+        private static float GetSlowEndTime(Obj_AI_Base target)
         {
-            if (!Menu["Draw"]["Draw.Enabl"])
+            return
+                target.Buffs.OrderByDescending(buff => buff.EndTime - Game.Time)
+                    .Where(buff => buff.Type == BuffType.Slow)
+                    .Select(buff => buff.EndTime)
+                    .FirstOrDefault();
+        }
+
+        public static void CastQObjects(Obj_AI_Base t)
+        {
+            if (!Q.CanCast(t))
             {
                 return;
             }
-            DrawSpell();
-            DrawBuffs();
-            DrawKillableEnemy();
-            foreach (var t in GameObjects.EnemyHeroes.Where(e => !e.IsDead && e.Health < GetDamage(e)))
-            {
-                HpBarDraw.DrawText(HpBarDraw.TextStatus, "Can Kill", (int)t.HPBarPosition.X + 145, (int)t.HPBarPosition.Y + 5, SharpDX.Color.Red);
-            }
 
-            if (Menu["Draw"]["DrawDamage"].GetValue<MenuBool>())
-            {
-                foreach (var e in ObjectManager.Get<Obj_AI_Hero>().Where(e => e.IsValidTarget() && e.IsValid && !e.IsDead && !e.IsZombie))
-                {
-                    HpBarDraw.Unit = e;
-                    HpBarDraw.DrawDmg(GetDamage(e), new ColorBGRA(255, 204, 0, 170));
-                }
-            }
-        }
-
-        #region Draw分類
-
-        private static void DrawSpell()
-        {
-            var t = GetTarget(Q.Range + 500, DamageType.Physical);
-            if (t.IsValidTarget())
-            {
-                var target = t.Position + Vector3.Normalize(t.ServerPosition - Player.Position) * 80;
-                Render.Circle.DrawCircle(target, 75f, Color.Red, 2);
-            }
-
-            if (Q != null && Q.IsReady())
-            {
-                if (Menu["Draw"]["Q"] != null && Menu["Draw"]["Q"].GetValue<MenuBool>().Value)
-                {
-                    Render.Circle.DrawCircle(Player.Position, Q.Range, Color.LightGreen, 2);
-                }
-            }
-
-            if (W != null && W.IsReady())
-            {
-                if (Menu["Draw"]["W"] != null && Menu["Draw"]["W"].GetValue<MenuBool>().Value)
-                {
-                    Render.Circle.DrawCircle(Player.Position, W.Range, Color.Purple, 2);
-                }
-            }
-
-            if (E != null && E.IsReady())
-            {
-                if (Menu["Draw"]["E"] != null && Menu["Draw"]["E"].GetValue<MenuBool>().Value)
-                {
-                    Render.Circle.DrawCircle(Player.Position, E.Range, Color.Cyan, 2);
-                }
-            }
-
-            if (R != null && R.IsReady())
-            {
-                if (Menu["Draw"]["R"] != null && Menu["Draw"]["R"].GetValue<MenuBool>().Value)
-                {
-                    Render.Circle.DrawCircle(Player.Position, R.Range, Color.Red, 2);
-                }
-            }
-        }
-
-        private static void DrawBuffs()
-        {
-            var DrawBuffs = Menu["Draw"]["DrawBuffs"].GetValue<MenuList>().Index;
-
-            if ((DrawBuffs == 1 | DrawBuffs == 3) && Player.HasBlueBuff())
-            {
-                if (BlueBuff.EndTime >= Game.Time)
-                {
-                    var Circlel = new Geometry.Circle2(new Vector2(Player.Position.X + 3, Player.Position.Y - 3), 170f,
-                        Game.Time - BlueBuff.StartTime, BlueBuff.EndTime - BlueBuff.StartTime).ToPolygon();
-                    Circlel.Draw(Color.Black, 4);
-
-                    var Circle = new Geometry.Circle2(Player.Position.ToVector2(), 170f,
-                        Game.Time - BlueBuff.StartTime, BlueBuff.EndTime - BlueBuff.StartTime).ToPolygon();
-                    Circle.Draw(Color.Blue, 4);
-                }
-            }
-
-            if ((DrawBuffs == 2 || DrawBuffs == 3) && Player.HasRedBuff())
-            {
-                if (RedBuff.EndTime >= Game.Time)
-                {
-                    var Circlel = new Geometry.Circle2(new Vector2(Player.Position.X + 3, Player.Position.Y - 3), 150f,
-                        Game.Time - RedBuff.StartTime, RedBuff.EndTime - RedBuff.StartTime).ToPolygon();
-                    Circlel.Draw(Color.Black, 4);
-
-                    var Circle = new Geometry.Circle2(Player.Position.ToVector2(), 150f,
-                        Game.Time - RedBuff.StartTime, RedBuff.EndTime - RedBuff.StartTime).ToPolygon();
-                    Circle.Draw(Color.Red, 4);
-                }
-            }
-        }
-
-        public static Obj_AI_Hero GetKillableEnemy
-        {
-            get
-            {
-                if (Menu["Draw"]["DrawKSEnemy"].GetValue<MenuBool>())
-                {
-                    return GameObjects.EnemyHeroes.FirstOrDefault(e => e.IsVisible && !e.IsDead && !e.IsZombie && e.Health < GetDamage(e));
-                }
-                return null;
-            }
-        }
-
-        private static void DrawKillableEnemy()
-        {
-            if (Menu["Draw"]["DrawKSEnemy"].GetValue<MenuBool>())
-            {
-                var t = KillavleEnemyAa;
-                if (t.Item1 != null && t.Item1.IsValidTarget(Player.GetRealAutoAttackRange(null) + 800) && t.Item2 > 0)
-                {
-                    HpBarDraw.DrawText(HpBarDraw.Text, $"{t.Item1.ChampionName}: {t.Item2} Combo = Kill", (int)t.Item1.HPBarPosition.X + 85, (int)t.Item1.HPBarPosition.Y + 5,
-                        SharpDX.Color.GreenYellow);
-                }
-            }
-        }
-
-        #endregion
-
-        #region EXE
-
-        public static void DrawText(Font aFont, String aText, int aPosX, int aPosY, SharpDX.Color aColor)
-        {
-            aFont.DrawText(null, aText, aPosX + 2, aPosY + 2, aColor != SharpDX.Color.Black ? SharpDX.Color.Black : SharpDX.Color.White);
-            aFont.DrawText(null, aText, aPosX, aPosY, aColor);
-        }
-
-        public static float AARange => GameObjects.Player.GetRealAutoAttackRange();
-
-        public static float MegaQRange => 525 + 45 + 25 * ObjectManager.Player.Spellbook.GetSpell(SpellSlot.Q).Level;
-        public static bool MegaQActive => ObjectManager.Player.AttackRange > 565f;
-
-        private static Tuple<Obj_AI_Hero, int> KillavleEnemyAa
-        {
-            get
-            {
-                var x = 0;
-                var t = GetTarget(R.Range, DamageType.Physical);
-                {
-                    if (t.IsValidTarget())
-                    {
-                        if (t.Health <= GetDamage(t))
-                        {
-                            x = (int)Math.Ceiling(t.Health / Player.TotalAttackDamage);
-                        }
-                        return new Tuple<Obj_AI_Hero, int>(t, x);
-                    }
-                }
-                return new Tuple<Obj_AI_Hero, int>(t, x);
-            }
+            Q.CastOnUnit(t);
         }
 
         private static bool ShouldUseE(string SpellName)
@@ -630,43 +401,41 @@
             return false;
         }
 
-        private static float GetDamage(Obj_AI_Base t)
+        private static float GetDamage(Obj_AI_Hero t, Spell spell)
         {
-            var Damage = 0d;
+
+            var Damage = spell.GetDamage(t);
 
             Damage -= t.HPRegenRate;
 
             if (Q.IsReady())
             {
-                Damage += Player.GetSpellDamage(t, SpellSlot.Q);
+                Damage += Q.GetDamage(t);
             }
 
             if (W.IsReady())
             {
-                Damage += Player.GetSpellDamage(t, SpellSlot.W);
+                Damage += W.GetDamage(t);
             }
 
             if (E.IsReady())
             {
-                Damage += Player.GetSpellDamage(t, SpellSlot.E);
+                Damage += E.GetDamage(t);
             }
 
             if (R.IsReady())
             {
-                Damage += Player.GetSpellDamage(t, SpellSlot.R) * 3;
+                Damage += R.GetDamage(t);
             }
-            if (t.IsValidTarget(Q.Range + E.Range) && Q.IsReady() && R.IsReady())
+
+            if (Damage > t.Health)
             {
-                Damage += Player.TotalAttackDamage * 2;
+                if (Player.HasBuff("SummonerExhaust")) Damage = Damage * 0.6f;
+                if (t.HasBuff("FerociousHowl")) Damage = Damage * 0.7f;
+                if (t.ChampionName == "Blitzcrank" && !t.HasBuff("BlitzcrankManaBarrierCD")) Damage -= t.Mana / 2f;
+                if (t.ChampionName == "Moredkaiser") Damage -= t.Mana;               
             }
-            Damage += Player.TotalAttackDamage * 2;
-
-            if (Player.HasBuff("SummonerExhaust"))
-                Damage = Damage * 0.6f;
-
-            return (float)Damage;
+            return Damage;
         }
-
-        #endregion
     }
 }

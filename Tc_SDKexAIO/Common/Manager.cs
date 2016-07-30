@@ -6,6 +6,7 @@
     using LeagueSharp.SDK.UI;
     using LeagueSharp.SDK.Utils;
     using LeagueSharp.SDK.Enumerations;
+    using LeagueSharp.Data.Enumerations;
 
     using SharpDX;
     using SharpDX.Direct3D9;
@@ -17,95 +18,66 @@
     internal static class Manager
     {
 
-        #region 預測
-
-        private static Obj_AI_Hero Me => PlaySharp.Player;
-
-        public static void SpellCast(Spell spell, Obj_AI_Base e)
+        public static List<Obj_AI_Minion> GetMinions(Vector3 From, float Range)
         {
-            SkillshotType CoreType = SkillshotType.SkillshotLine;
-            bool aoe2 = false;
-
-            if (spell.Type == SkillshotType.SkillshotCircle)
-            {
-                CoreType = SkillshotType.SkillshotCircle;
-                aoe2 = true;
-            }
-            if (spell.Width > 80 && !spell.Collision)
-                aoe2 = true;
-
-            var predInput2 = new PredictionInput
-            {
-                AoE = aoe2,
-                Collision = spell.Collision,
-                Speed = spell.Speed,
-                Delay = spell.Delay,
-                Range = spell.Range,
-                From = Me.ServerPosition,
-                Radius = spell.Width,
-                Unit = e,
-                Type = CoreType
-            };
-            var poitput2 = Movement.GetPrediction(predInput2);
-
-            if (spell.Speed != float.MaxValue && TcCommon.CollisionYasuo(Me.ServerPosition, poitput2.CastPosition))
-                return;
-
-            if (poitput2.Hitchance >= HitChance.VeryHigh)
-                spell.Cast(poitput2.CastPosition);
-            else if (predInput2.AoE && poitput2.AoeTargetsHitCount > 1 && poitput2.Hitchance >= HitChance.High)
-            {
-                spell.Cast(poitput2.CastPosition);
-            }
+            return GameObjects.EnemyMinions.Where(x => x.IsValidTarget(Range, false, @From)).ToList();
         }
-    
-        #endregion
 
-        #region 目標
+        public static List<Obj_AI_Minion> GetMobs(Vector3 From, float Range, bool OnlyBig = false)
+        {
+            if (OnlyBig)
+            {
+                return GameObjects.Jungle.Where(x => x.IsValidTarget(Range, false, @From) && !GameObjects.JungleSmall.Contains(x)).ToList();
+            }
+            else
+                return GameObjects.Jungle.Where(x => x.IsValidTarget(Range, false, @From)).ToList();
+        }
 
-        /// <summary>
-        /// 來自花邊
-        /// </summary>
-        /// <param name="Range"></param>
-        /// <param name="DamageType"></param>
-        /// <returns></returns>
+        public static List<Obj_AI_Hero> GetEnemies(float Range)
+        {
+            return GameObjects.EnemyHeroes.Where(x => x.IsValidTarget(Range) && !x.IsZombie && !x.IsDead).ToList();
+        }
+
         public static Obj_AI_Hero GetTarget(float Range, DamageType DamageType = DamageType.Physical)
         {
             return Variables.TargetSelector.GetTarget(Range, DamageType);
         }
 
-        /// <summary>
-        /// 來自花邊
-        /// </summary>
-        /// <param name="Target"></param>
-        /// <returns></returns>
-        public static bool CheckTarget(Obj_AI_Hero Target)
-        {
-            if (Target != null && !Target.IsDead && !Target.IsZombie && Target.IsHPBarRendered)
-            {
-                return true;
-            }
-            else
-                return false;
-        }
-
-        /// <summary>
-        /// 來自花邊
-        /// </summary>
-        /// <param name="Spell"></param>
-        /// <param name="Ignote"></param>
-        /// <returns></returns>
         public static Obj_AI_Hero GetTarget(Spell Spell, bool Ignote = true)
         {
             return Variables.TargetSelector.GetTarget(Spell, Ignote);
         }
 
-        #endregion
+        public static bool InAutoAttackRange(AttackableUnit target)
+        {
+            var baseTarget = (Obj_AI_Base)target;
+            var myRange = GetAttackRange(GameObjects.Player);
 
-        #region 其他
+            if (baseTarget != null)
+            {
+                return baseTarget.IsHPBarRendered &&
+                    Vector2.DistanceSquared(baseTarget.ServerPosition.ToVector2(),
+                    ObjectManager.Player.ServerPosition.ToVector2()) <= myRange * myRange;
+            }
+
+            return target.IsValidTarget() &&
+                Vector2.DistanceSquared(target.Position.ToVector2(),
+                ObjectManager.Player.ServerPosition.ToVector2())
+                <= myRange * myRange;
+        }
+
+        public static float GetAttackRange(Obj_AI_Base Target)
+        {
+            if (Target != null)
+            {
+                return Target.GetRealAutoAttackRange();
+            }
+            else
+                return 0f;
+        }
 
         /// <summary>
-        /// Judge Target MoveMent Status (This Part From SebbyLib) (來自SebbyLib)
+        /// Judge Target MoveMent Status (This Part From SebbyLib)
         /// </summary>
         /// <param name="Target">Target</param>
         /// <returns></returns>
@@ -124,96 +96,65 @@
                 return true;
         }
 
-        /// <summary>
-        /// 來自花邊
-        /// </summary>
-        /// <param name="Range">Search Enemies Range</param>
-        /// <returns></returns>
-        public static List<Obj_AI_Hero> GetEnemies(float Range)
+        public static bool CheckTarget(Obj_AI_Hero Target)
         {
-            return GameObjects.EnemyHeroes.Where(x => x.IsValidTarget(Range) && !x.IsZombie && !x.IsDead).ToList();
-        }
-       
-        /// <summary>
-        /// 來自花邊
-        /// </summary>
-        /// <param name="target"></param>
-        /// <returns></returns>
-        public static bool InAutoAttackRange(AttackableUnit target)
-        {
-            var baseTarget = (Obj_AI_Base)target;
-            var myRange = GetAttackRange(GameObjects.Player);
-
-            if (baseTarget != null)
+            if (Target != null && !Target.IsDead && !Target.IsZombie && Target.IsHPBarRendered)
             {
-                return baseTarget.IsHPBarRendered &&
-                    Vector2.DistanceSquared(baseTarget.ServerPosition.ToVector2(),
-                    GameObjects.Player.ServerPosition.ToVector2()) <= myRange * myRange;
-            }
-
-            return target.IsValidTarget() &&
-                Vector2.DistanceSquared(target.Position.ToVector2(),
-                GameObjects.Player.ServerPosition.ToVector2())
-                <= myRange * myRange;
-        }
-
-        /// <summary>
-        /// 來自花邊
-        /// </summary>
-        /// <param name="Target"></param>
-        /// <returns></returns>
-        public static float GetAttackRange(Obj_AI_Base Target)
-        {
-            if (Target != null)
-            {
-                return Target.GetRealAutoAttackRange();
+                return true;
             }
             else
-                return 0f;
+                return false;
         }
 
-        /// <summary>
-        /// 來自花邊
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="buffName"></param>
-        /// <returns></returns>
-        public static float GetTargetBuffTime(this Obj_AI_Base target, string buffName)
+        #region 模式
+
+        public static bool Combo
         {
-            return target.Buffs.OrderByDescending(buff => buff.EndTime - Game.Time).Where(buff => buff.Name == buffName).Select(buff => buff.EndTime).FirstOrDefault() - Game.Time;
+            get
+            {
+                return Variables.Orbwalker.ActiveMode == OrbwalkingMode.Combo;
+            }
         }
 
-        public static int GetMana(SpellSlot slot, AMenuComponent viue)
+        public static bool Harass
         {
-            return viue.GetValue<MenuSlider>().Value + (int)(ObjectManager.Player.Spellbook.GetSpell(slot).ManaCost / ObjectManager.Player.MaxMana * 100);
+            get
+            {
+                return Variables.Orbwalker.ActiveMode == OrbwalkingMode.Hybrid;
+            }
         }
 
-        public static int GetSliderButtonMana(SpellSlot slot, AMenuComponent viue)
+        public static bool LaneClear
         {
-            return viue.GetValue<MenuSliderButton>().SValue + (int)(ObjectManager.Player.Spellbook.GetSpell(slot).ManaCost / ObjectManager.Player.MaxMana * 100);
+            get
+            {
+                return Variables.Orbwalker.ActiveMode == OrbwalkingMode.LaneClear;
+            }
+        }
+
+        public static bool LastHit
+        {
+            get
+            {
+                return Variables.Orbwalker.ActiveMode == OrbwalkingMode.LastHit;
+            }
+        }
+
+        public static bool None
+        {
+            get
+            {
+                return Variables.Orbwalker.ActiveMode == OrbwalkingMode.None;
+            }
         }
 
         #endregion
 
-        #region 其他2
+        #region BUFF
 
-        /// <summary>
-        /// (This Part From SebbyJinx) (來自SebbyJinx)
-        /// </summary>
-        /// <param name="e"></param>
-        /// <returns></returns>
-        public static bool CanKill(Obj_AI_Base e)
+        public static bool HasSheenBuff(this Obj_AI_Base obj)
         {
-            if (e.HasBuffOfType(BuffType.PhysicalImmunity) || e.HasBuffOfType(BuffType.SpellImmunity) || e.IsZombie
-                || e.IsInvulnerable || e.HasBuffOfType(BuffType.Invulnerability) || e.HasBuffOfType(BuffType.SpellShield)
-                || e.HasBuff("deathdefiedbuff") || e.HasBuff("Undying Rage") || e.HasBuff("Chrono Shift"))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return obj.Buffs.Any(buff => buff.Name == "Sheen");
         }
 
         public static bool CanKillableWith(this Obj_AI_Base t, Spell spell)
@@ -221,108 +162,29 @@
             return t.Health < spell.GetDamage(t) - 5;
         }
 
+        public static bool HasBuffInst(this Obj_AI_Base obj, string buffName)
+        {
+            return obj.Buffs.Any(buff => buff.DisplayName == buffName);
+        }
+
         public static bool HasPassive(this Obj_AI_Base obj)
         {
             return obj.PassiveCooldownEndTime - (Game.Time - 15.5) <= 0;
         }
 
-        #endregion
-
-        #region 小兵
-
-        /// <summary>
-        /// 來自花邊
-        /// </summary>
-        /// <param name="From"></param>
-        /// <param name="Range"></param>
-        /// <returns></returns>
-        public static List<Obj_AI_Minion> GetMinions(Vector3 From, float Range)
+        public static bool HasBlueBuff(this Obj_AI_Base obj)
         {
-            return GameObjects.EnemyMinions.Where(x => x.IsValidTarget(Range, false, @From)).ToList();
+            return obj.Buffs.Any(buff => buff.DisplayName == "CrestoftheAncientGolem");
+        }
+
+        public static bool HasRedBuff(this Obj_AI_Base obj)
+        {
+            return obj.Buffs.Any(buff => buff.DisplayName == "BlessingoftheLizardElder");
         }
 
         #endregion
 
-        #region 幹死對面目標
-
-        public static bool IsAttackableTarget(this Obj_AI_Hero target)
-        {
-            return !target.HasUndyingBuff() && !target.HasSpellShield() && !target.IsInvulnerable;
-        }
-
-        public static bool HasSpellShield(this Obj_AI_Hero target)
-        {
-            return target.HasBuffOfType(BuffType.SpellShield) || target.HasBuffOfType(BuffType.SpellImmunity);
-        }
-
-        private static Obj_AI_Base GetNearObject(String name, Vector3 pos, int maxDistance)
-        {
-            return GameObjects.Get<Obj_AI_Base>()
-                .FirstOrDefault(x => x.Name == name && x.Distance(pos) <= maxDistance);
-        }
-
-        private static Vector3 GetWardPos(Vector3 lastPos, int radius = 165, int precision = 3)
-        {
-            var count = precision;
-            while (count > 0)
-            {
-                var vertices = radius;
-
-                var wardLocations = new WardLocation[vertices];
-                var angle = 2 * Math.PI / vertices;
-
-                for (var i = 0; i < vertices; i++)
-                {
-                    var th = angle * i;
-                    var pos = new Vector3((float)(lastPos.X + radius * Math.Cos(th)),
-                        (float)(lastPos.Y + radius * Math.Sin(angle * i)), 0);
-                    wardLocations[i] = new WardLocation(pos, NavMesh.IsWallOfGrass(pos, 50));
-                }
-
-                var grassLocations = new List<GrassLocation>();
-
-                for (var i = 0; i < wardLocations.Length; i++)
-                {
-                    if (!wardLocations[i].Grass)
-                    {
-                        continue;
-                    }
-                    if (i != 0 && wardLocations[i - 1].Grass)
-                    {
-                        grassLocations.Last().Count++;
-                    }
-                    else
-                    {
-                        grassLocations.Add(new GrassLocation(i, 1));
-                    }
-                }
-
-                var grassLocation = grassLocations.OrderByDescending(x => x.Count).FirstOrDefault();
-
-                if (grassLocation != null)
-                {
-                    var midelement = (int)Math.Ceiling(grassLocation.Count / 2f);
-                    lastPos = wardLocations[grassLocation.Index + midelement - 1].Pos;
-                    radius = (int)Math.Floor(radius / 2f);
-                }
-
-                count--;
-            }
-
-            return lastPos;
-        }
-
-        public static void DrawText(Font aFont, String aText, int aPosX, int aPosY, Color aColor)
-        {
-            aFont.DrawText(null, aText, aPosX + 2, aPosY + 2, aColor != Color.Black ? Color.Black : Color.White);
-            aFont.DrawText(null, aText, aPosX, aPosY, aColor);
-        }
-
-        #endregion
-
-        #region 打野JG
-
-        #region Types
+        #region BUFF2
 
         internal enum FromMobClass
         {
@@ -341,17 +203,9 @@
             Big
         }
 
-        #endregion
-
-        #region mobTeams
-
         private static Dictionary<Vector2, GameObjectTeam> mobTeams;
 
-        #endregion
-
-        #region GetMobTeam 打野位置
-
-        public static GameObjectTeam GetMobTeam(Obj_AI_Base mob, float range)
+        public static GameObjectTeam GetMobTeam(this Obj_AI_Base mob, float range)
         {
             mobTeams = new Dictionary<Vector2, GameObjectTeam>();
             if (Game.MapId == (GameMapId)11)
@@ -378,10 +232,6 @@
 
             return GameObjectTeam.Unknown;
         }
-
-        #endregion
-
-        #region GetMobType
 
         public static MobTypes GetMobType(Obj_AI_Base mob, FromMobClass fromMobClass = FromMobClass.ByName)
         {
@@ -419,141 +269,29 @@
 
             if (fromMobClass == FromMobClass.ByType)
             {
-                Obj_AI_Base oMob = (from fBigBoys in new[]
+                Obj_AI_Base oMob =
+                    (from fBigBoys in
+                        new[]
                         {
                             "SRU_Baron", "SRU_Dragon", "SRU_RiftHerald", "SRU_Blue", "SRU_Gromp", "SRU_Murkwolf",
                             "SRU_Razorbeak", "SRU_Red", "SRU_Krug", "Sru_Crab"
                         }
-                     where fBigBoys == mob.SkinName
-
-                     select mob).FirstOrDefault();
+                     where
+                         fBigBoys == mob.SkinName
+                     select mob)
+                        .FirstOrDefault();
 
                 if (oMob != null)
                 {
                     return MobTypes.Big;
                 }
             }
+
             return MobTypes.Small;
         }
 
         #endregion
 
-        #region GetMobsType2
-
-        /// <summary>
-        /// 來自花邊
-        /// </summary>
-        /// <param name="From"></param>
-        /// <param name="Range"></param>
-        /// <param name="OnlyBig"></param>
-        /// <returns></returns>
-        public static List<Obj_AI_Minion> GetMobs(Vector3 From, float Range, bool OnlyBig = false)
-        {
-            if (OnlyBig)
-            {
-                return GameObjects.Jungle.Where(x => x.IsValidTarget(Range, false, @From) && !GameObjects.JungleSmall.Contains(x)).ToList();
-            }
-            else
-                return GameObjects.Jungle.Where(x => x.IsValidTarget(Range, false, @From)).ToList();
-        }
-
-        #endregion
-
-        #endregion
-
-        #region 走坎模式
-
-        public static bool Combo { get { return Variables.Orbwalker.ActiveMode == OrbwalkingMode.Combo; } }
-
-        public static bool Farm { get { return Variables.Orbwalker.ActiveMode == OrbwalkingMode.LaneClear || Variables.Orbwalker.ActiveMode == OrbwalkingMode.Hybrid; } }
-
-        public static bool LaneClear { get { return Variables.Orbwalker.ActiveMode == OrbwalkingMode.LaneClear; } }
-
-        public static bool None { get { return Variables.Orbwalker.ActiveMode == OrbwalkingMode.None; } }
-
-        public static bool Harass { get { return Variables.Orbwalker.ActiveMode == OrbwalkingMode.Hybrid; } }
-
-        public static bool LasHit { get { return Variables.Orbwalker.ActiveMode == OrbwalkingMode.LastHit; } }
-
-        #endregion
-    }
-
-    internal static class ComBuffs
-    {
-
-        public static bool HasBuffInst(this Obj_AI_Base obj, string buffName)
-        {
-            return obj.Buffs.Any(buff => buff.DisplayName == buffName);
-        }
-
-        public static bool HasBlueBuff(this Obj_AI_Base obj)
-        {
-            return obj.Buffs.Any(buff => buff.DisplayName == "CrestoftheAncientGolem");
-        }
-
-        public static bool HasRedBuff(this Obj_AI_Base obj)
-        {
-            return obj.Buffs.Any(buff => buff.DisplayName == "BlessingoftheLizardElder");
-        }
-
-        public static bool HasSheenBuff(this Obj_AI_Base obj)
-        {
-            return obj.Buffs.Any(buff => buff.Name == "Sheen");
-        }
-
-        public static bool HasUndyingBuff(this Obj_AI_Hero target)
-        {
-            // Various buffs
-            if (target.Buffs.Any(
-                b => b.IsValid &&
-                     (b.DisplayName == "Chrono Shift" /* Zilean R */||
-                      b.DisplayName == "JudicatorIntervention" /* Kayle R */||
-                      b.DisplayName == "Undying Rage" /* Tryndamere R */)))
-            {
-                return true;
-            }
-
-            return target.IsInvulnerable;
-        }
-
-    }
-
-    internal class OnDamageEvent
-    {
-        public int Time;
-        public float Damage;
-
-        internal OnDamageEvent(int time, float damage)
-        {
-            Time = time;
-            Damage = damage;
-        }
-    }
-
-    internal class WardLocation
-    {
-        public readonly Vector3 Pos;
-
-        public readonly bool Grass;
-
-        public WardLocation(Vector3 pos, bool grass)
-        {
-            Pos = pos;
-            Grass = grass;
-        }
-    }
-
-    internal class GrassLocation
-    {
-        public readonly int Index;
-
-        public int Count;
-
-        public GrassLocation(int index, int count)
-        {
-            Index = index;
-            Count = count;
-        }
     }
 
     internal class BlueBuff
@@ -566,31 +304,5 @@
     {
         public static float StartTime { get; set; }
         public static float EndTime { get; set; }
-    }
-
-    internal class EnemyHeros
-    {
-        public Obj_AI_Hero Player;
-        public int LastSeen;
-        public int LastSeenForE;
-
-
-        public EnemyHeros(Obj_AI_Hero player)
-        {
-            Player = player;
-        }
-    }
-
-    internal class YasuoWall
-    {
-        public Vector3 YasuoPosition { get; set; }
-        public float CastTime { get; set; }
-        public Vector3 CastPosition { get; set; }
-        public float WallLvl { get; set; }
-
-        public YasuoWall()
-        {
-            CastTime = 0;
-        }
     }
 }

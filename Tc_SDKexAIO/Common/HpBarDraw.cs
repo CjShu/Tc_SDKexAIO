@@ -1,20 +1,14 @@
 ﻿namespace Tc_SDKexAIO.Common
 {
-
     using LeagueSharp;
-    using LeagueSharp.SDK;
-    using LeagueSharp.SDK.Utils;
     using SharpDX;
     using SharpDX.Direct3D9;
     using System;
-    using System.Linq;
 
     public class HpBarDraw
     {
         public static Device DxDevice = Drawing.Direct3DDevice;
         public static Line DxLine;
-        public static Font TextStatus, Text, TextLittle;
-        public static string Tab => "       ";
         public static float Hight = 9;
         public static float Width = 104;
 
@@ -42,29 +36,6 @@
         {
             DxLine = new Line(DxDevice) { Width = 9 };
 
-            TextStatus = new Font(Drawing.Direct3DDevice, new FontDescription
-                {
-                    FaceName = "Segoe UI",
-                    Height = 17,
-                    OutputPrecision = FontPrecision.Default,
-                    Quality = FontQuality.ClearTypeNatural,
-                    Weight = FontWeight.Bold
-                });
-            Text = new Font(Drawing.Direct3DDevice, new FontDescription
-                {
-                    FaceName = "Segoe UI",
-                    Height = 19,
-                    OutputPrecision = FontPrecision.Default,
-                    Quality = FontQuality.ClearTypeNatural,
-                });
-            TextLittle = new Font(Drawing.Direct3DDevice, new FontDescription
-                {
-                    FaceName = "Segoe UI",
-                    Height = 15,
-                    OutputPrecision = FontPrecision.Default,
-                    Quality = FontQuality.ClearTypeNatural,
-                });
-
             Drawing.OnPreReset += OnPreReset;
             Drawing.OnPostReset += OnPostReset;
             AppDomain.CurrentDomain.DomainUnload += Unload;
@@ -86,21 +57,16 @@
             DxLine.OnLostDevice();
         }
 
+
         private static float GetHpProc(float dmg = 0)
         {
             float Health = ((Unit.Health - dmg) > 0) ? (Unit.Health - dmg) : 0;
             return (Health / Unit.MaxHealth);
         }
 
-        private static float GetManaProc(float manaPer)
-        {
-            return (manaPer / GameObjects.Player.MaxMana);
-        }
-
         private static Vector2 GetHpPosAfterDmg(float dmg)
         {
             float w = GetHpProc(dmg) * Width;
-            float m = GetManaProc(dmg) * Width;
             return new Vector2(StartPosition.X + w, StartPosition.Y);
         }
 
@@ -122,15 +88,6 @@
             }
         }
 
-        private static void FillManaBar(Vector2 pos, ColorBGRA color)
-        {
-            DxLine.Begin();
-            DxLine.Draw(
-                new[] { new Vector2((int)pos.X, (int)pos.Y + 4f), new Vector2((int)pos.X + 2, (int)pos.Y + 4f) },
-                color);
-            DxLine.End();
-        }
-
         private static void FullHPBar(Vector2 from, Vector2 to, ColorBGRA color)
         {
             DxLine.Begin();
@@ -142,40 +99,6 @@
             }, color);
 
             DxLine.End();
-        }
-
-        public static void DrawText(Font vFont, string vText, float vPosX, float vPosY, ColorBGRA vColor)
-        {
-            vFont.DrawText(null, vText, (int)vPosX, (int)vPosY, vColor);
-        }
-
-        public static void DrawRange(Spell spell, System.Drawing.Color color, bool draw = true, bool checkCoolDown = false)
-        {
-            if (!draw)
-            {
-                return;
-            }
-
-            if (checkCoolDown)
-            {
-                Render.Circle.DrawCircle(ObjectManager.Player.Position, spell.Range,
-                    spell.IsReady() ? color : System.Drawing.Color.Gray,
-                    spell.IsReady() ? 5 : 1);
-            }
-            else
-            {
-                Render.Circle.DrawCircle(ObjectManager.Player.Position, spell.Range, color, 1);
-            }
-        }
-
-        public static Vector3 CenterOfVectors(Vector3[] vectors)
-        {
-            var sum = Vector3.Zero;
-            if (vectors == null || vectors.Length == 0)
-                return sum;
-
-            sum = vectors.Aggregate(sum, (current, vec) => current + vec);
-            return sum / vectors.Length;
         }
     }
 }
