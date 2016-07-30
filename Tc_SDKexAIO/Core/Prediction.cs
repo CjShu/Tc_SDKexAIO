@@ -48,6 +48,18 @@ namespace Tc_SDKexAIO.Core
             return GetPrediction(new PredictionInput { Unit = unit, Delay = delay, Radius = radius, Speed = speed });
         }
 
+        public static PredictionOutput GetPrediction(Obj_AI_Base unit, float delay, float radius, float speed, CollisionableObjects collisionable)
+        {
+            return GetPrediction(new PredictionInput
+            {
+                Unit = unit,
+                Delay = delay,
+                Radius = radius,
+                Speed = speed,
+                CollisionObjects = collisionable
+            });
+        }
+        
         public static PredictionOutput GetPrediction(PredictionInput input)
         {
             return GetPrediction(input, true, true);
@@ -56,7 +68,7 @@ namespace Tc_SDKexAIO.Core
         internal static PredictionOutput GetDashingPrediction(PredictionInput input)
         {
             var dashData = input.Unit.GetDashInfo();
-            var result = new PredictionOutput { Input = input, Hitchance = HitChance.Medium };
+            var result = new PredictionOutput { Input = input, Hitchance = HitChance.High };
 
             // Normal dashes.
             if (!dashData.IsBlink)
@@ -104,7 +116,6 @@ namespace Tc_SDKexAIO.Core
 
                 // Figure out where the unit is going.
             }
-
             return result;
         }
 
@@ -166,9 +177,9 @@ namespace Tc_SDKexAIO.Core
                         var cp = a + direction * tDistance;
                         var p = a
                                 + direction
-                                * (i == path.Count - 2
+                                * ((i == path.Count - 2)
                                        ? Math.Min(tDistance + input.RealRadius, d)
-                                       : tDistance + input.RealRadius);
+                                       : (tDistance + input.RealRadius));
 
                         return new PredictionOutput
                         {
@@ -217,7 +228,7 @@ namespace Tc_SDKexAIO.Core
 
                         var p = pos + input.RealRadius * direction;
 
-                        /*if (input.Type == SkillshotType.SkillshotLine)
+                        if (input.Type == SkillshotType.SkillshotLine)
                         {
                             var alpha = (input.From.ToVector2() - p).AngleBetween(a - b);
 
@@ -229,7 +240,7 @@ namespace Tc_SDKexAIO.Core
 
                                 pos = cp1.DistanceSquared(pos) < cp2.DistanceSquared(pos) ? cp1 : cp2;
                             }
-                        }*/
+                        }
 
                         return new PredictionOutput
                         {
@@ -239,18 +250,18 @@ namespace Tc_SDKexAIO.Core
                             Hitchance = HitChance.High
                         };
                     }
-
                     tT += tB;
                 }
             }
 
             var position = path.Last().ToVector3();
             return new PredictionOutput
-            { Input = input, CastPosition = position, UnitPosition = position, Hitchance = HitChance.Medium };
+            { Input = input, CastPosition = position, UnitPosition = position, Hitchance = HitChance.High };
         }
 
         internal static PredictionOutput GetPrediction(PredictionInput input, bool ft, bool checkCollision)
         {
+
             if (!input.Unit.IsValidTarget(float.MaxValue, false))
             {
                 return new PredictionOutput();
@@ -259,11 +270,11 @@ namespace Tc_SDKexAIO.Core
             if (ft)
             {
                 // Increase the delay due to the latency and server tick:
-                input.Delay += Game.Ping / 2000f + 0.05f;
+                input.Delay += Game.Ping / 2000f + 0.06f;
 
                 if (input.AoE)
                 {
-                    return Cluster.GetAoEPrediction(input);
+                    return AoePrediction.GetAoEPrediction(input);
                 }
             }
 
@@ -289,6 +300,10 @@ namespace Tc_SDKexAIO.Core
                 if (remainingImmobileT >= 0d)
                 {
                     result = GetImmobilePrediction(input, remainingImmobileT);
+                }
+                else
+                {
+                    input.Range = input.Range * 100f;
                 }
             }
 
@@ -329,19 +344,10 @@ namespace Tc_SDKexAIO.Core
             if (checkCollision && input.Collision && Math.Abs(input.Speed - float.MaxValue) > float.Epsilon)
             {
                 var positions = new List<Vector3> { result.UnitPosition, input.Unit.Position };
+                var originalUnit = input.Unit;
                 result.CollisionObjects = Collision.GetCollision(positions, input);
                 result.CollisionObjects.RemoveAll(x => x.Compare(input.Unit));
-
-                if (result.CollisionObjects.Count > 0)
-                {
-                    result.Hitchance = HitChance.Collision;
-                }
-            }
-
-            // Calc hitchance again
-            if (result.Hitchance == HitChance.High)
-            {
-                result.Hitchance = GetHitChance(input);
+                result.Hitchance = result.CollisionObjects.Count > 0 ? HitChance.Collision : result.Hitchance;
             }
 
             return result;
@@ -356,8 +362,10 @@ namespace Tc_SDKexAIO.Core
                 // input.Delay /= 2;
                 speed /= 1.5f;
             }
+            var result = GetPositionOnPath(input, input.Unit.GetWaypoints(), speed);
+            if (result.Hitchance >= HitChance.High && input.Unit is Obj_AI_Hero) { }
 
-            return GetPositionOnPath(input, input.Unit.GetWaypoints(), speed);
+            return result;
         }
 
         internal static double UnitIsImmobileUntil(Obj_AI_Base unit)
@@ -365,11 +373,11 @@ namespace Tc_SDKexAIO.Core
             var result =
                 unit.Buffs.Where(
                     buff =>
-                    buff.IsValid
-                    && (buff.Type == BuffType.Knockup || buff.Type == BuffType.Snare || buff.Type == BuffType.Stun
-                        || buff.Type == BuffType.Suppression))
-                    .Aggregate(0f, (current, buff) => Math.Max(buff.EndTime, current));
-            return result - Game.Time;
+                        buff.IsActive && Game.Time <= buff.EndTime &&
+                        (buff.Type == BuffType.Charm || buff.Type == BuffType.Knockup || buff.Type == BuffType.Stun ||
+                         buff.Type == BuffType.Suppression || buff.Type == BuffType.Snare))
+                    .Aggregate(0d, (current, buff) => Math.Max(current, buff.EndTime));
+            return (result - Game.Time);
         }
 
         private static HitChance GetHitChance(PredictionInput input)
@@ -679,7 +687,7 @@ namespace Tc_SDKexAIO.Core
         }
     }
 
-    internal static class Cluster
+    internal static class AoePrediction
     {
 
         public static PredictionOutput GetAoEPrediction(PredictionInput input)
