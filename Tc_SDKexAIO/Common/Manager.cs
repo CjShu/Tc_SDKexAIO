@@ -96,6 +96,20 @@
                 return true;
         }
 
+        public static bool CanKill(Obj_AI_Base e)
+        {
+            if (e.HasBuffOfType(BuffType.PhysicalImmunity) || e.HasBuffOfType(BuffType.SpellImmunity) || e.IsZombie
+                || e.IsInvulnerable || e.HasBuffOfType(BuffType.Invulnerability) || e.HasBuffOfType(BuffType.SpellShield)
+                || e.HasBuff("deathdefiedbuff") || e.HasBuff("Undying Rage") || e.HasBuff("Chrono Shift"))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
         public static bool CheckTarget(Obj_AI_Hero Target)
         {
             if (Target != null && !Target.IsDead && !Target.IsZombie && Target.IsHPBarRendered)

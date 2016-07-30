@@ -19,6 +19,7 @@
     using Color = System.Drawing.Color;
     using Font = SharpDX.Direct3D9.Font;
 
+    using Core;
     using Common;
     using static Common.Manager;
     using Config;
@@ -55,8 +56,6 @@
                 QMenu.GetBool("ComboQ", "Comno Q");
                 QMenu.GetBool("HarassQ", "Harass Q");
                 QMenu.GetBool("LaneClearQ", "LaneClear Q");
-                QMenu.GetSlider("HarassQMana", "Harass Q  Min Mana > =", 40, 0, 99);
-                QMenu.GetSlider("LaneClearQMana", "LaneClearQ Min Mana > =", 50, 0, 99);
             }
 
             var WMenu = Menu.Add(new Menu("W", "W.Set | W 設定"));
@@ -84,9 +83,9 @@
                 EMenu.GetBool("Gapcloser", "Gapcloser E", false);
                 EMenu.GetSeparator("Auto E Set");
                 EMenu.GetBool("SlowE", "Slow E", false);
-                EMenu.GetBool("StunE", "Slow E", false);
-                EMenu.GetBool("TelE", "Slow E", false);
-                EMenu.GetBool("ImmE", "Slow E", false);
+                EMenu.GetBool("StunE", "Stun E", false);
+                EMenu.GetBool("TelE", "Tel E", false);
+                EMenu.GetBool("ImmeE", "Imm E", false);
                 EMenu.GetBool("DashE", "Dash E", false);
                 EMenu.GetBool("ProtectE", "Protect E", false);
             }
@@ -119,7 +118,7 @@
                 DrawMenu.GetBool("Q", "Q Range", false);
                 DrawMenu.GetBool("W", "W Range", false);
                 DrawMenu.GetBool("E", "E Range", false);
-                DrawMenu.GetBool("EnableBuffs", "Draw Buff Enable", false);
+                DrawMenu.GetBool("EnableBuffs", "Draw Buff Enable");
                 DrawMenu.GetList("DrawBuffs", "Show Red/Blue Time Circle", new[] { "Off", "Blue Buff", "Red Buff", "Both" });
             }
 
@@ -127,7 +126,261 @@
 
             Obj_AI_Base.OnBuffAdd += OnBuffAdd;
             Variables.Orbwalker.OnAction += OnAction;
+            Game.OnUpdate += OnUpdate;
             Drawing.OnDraw += OnDraw;
+        }
+
+        private static void OnUpdate(EventArgs args)
+        {
+            try
+            {
+                if (Player.IsDead)
+                    return;
+
+                QLogic(args);
+
+                WLogic(args);
+
+                ELogic(args);
+
+                //AutoRLogic(args);
+
+                //JungleRLogic(args);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in On Update " + ex);
+            }
+        }
+
+        private static void QLogic(EventArgs args)
+        {
+            try
+            {
+                if ((Harass || LaneClear) && (Game.Time - lag > 0.1) && !BigGun && !Player.IsWindingUp && Variables.Orbwalker.CanAttack && Player.Mana < R.Instance.ManaCost + W.Instance.ManaCost + E.Instance.ManaCost + 10
+                    && Menu["Q"]["HarassQ"].GetValue<MenuBool>().Value)
+                {
+                    foreach (var minion in GetMinions(Player.Position, Q.Range).Where(minion => !InAutoAttackRange(minion) && minion.Health < Player.GetAutoAttackDamage(minion) * 1.2 && (650f + Player.BoundingRadius + minion.BoundingRadius)
+                        < (Player.Position.Distance(Prediction.GetPrediction(minion, 0.05f).CastPosition) + Player.BoundingRadius + minion.BoundingRadius) && (670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level)
+                        < (Player.Position.Distance(Prediction.GetPrediction(minion, 0.05f).CastPosition) + Player.BoundingRadius + minion.BoundingRadius)))
+                    {
+                        Variables.Orbwalker.ForceTarget = minion;                             
+                        Q.Cast(minion);
+                        return;
+                    }
+                    lag = Game.Time;
+                }
+                var t = GetTarget((670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level) + 60, DamageType.Physical);
+                if (t.IsValidTarget())
+                {
+                    if (!BigGun && (!InAutoAttackRange(t) || t.CountEnemyHeroesInRange(250) > 2) && GetTarget(Q.Range) == null)
+                    {
+                        var distance = Player.Position.Distance(Prediction.GetPrediction(t, 0.05f).CastPosition) + Player.BoundingRadius + t.BoundingRadius;
+
+                        if (Combo && (Player.Mana > R.Instance.ManaCost + W.Instance.ManaCost + 10 || Player.GetAutoAttackDamage(t) * 3 > t.Health))
+                        {
+                            Q.Cast();
+                        }
+                        else if (Harass || Menu["Q"]["HarassQ"].GetValue<MenuBool>())
+                        {
+                            if (!Player.IsWindingUp)
+                                if (Variables.Orbwalker.CanAttack)
+                                    if (!Player.IsUnderEnemyTurret())
+                                        if (Player.Mana > R.Instance.ManaCost + W.Instance.ManaCost + E.Instance.ManaCost + 20)
+                                            if (distance < (670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level) + t.BoundingRadius + Player.BoundingRadius)
+                                                Q.Cast();
+                        }
+                    }
+                }
+                else if (!BigGun && Combo && Player.Mana > R.Instance.ManaCost + W.Instance.ManaCost + 20 && Player.CountEnemyHeroesInRange(2000) > 0)
+                {
+                    Q.Cast();
+                }
+                else if (BigGun && Combo && Player.Mana > R.Instance.ManaCost + W.Instance.ManaCost + 20)
+                {
+                    Q.Cast();
+                }
+                else if (BigGun && Combo && Player.CountEnemyHeroesInRange(2000) == 0)
+                {
+                    Q.Cast();
+                }
+                else if (BigGun && (Harass || LaneClear || LastHit))
+                {
+                    Q.Cast();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Q Logic " + ex);
+            }
+        }
+
+        private static void WLogic(EventArgs args)
+        {
+            try
+            {
+                if (!W.IsReady())
+                    return;
+
+                if (Combo && Menu["W"]["ComboW"].GetValue<MenuBool>())
+                {
+                    var t = GetTarget(W.Range, DamageType.Physical);
+
+                    if (t == null)
+                        return;
+
+                    float distance = Player.Position.Distance(t.Position);
+
+                    if (distance >= 550)
+                        if (t.IsValidTarget(W.Range))
+                            W.Cast(t, true);
+                }
+                if ((Harass && Menu["W"]["HarassW"].GetValue<MenuBool>()) || Menu["W"]["AutoW"].GetValue<MenuKeyBind>().Active)
+                {
+                    if (Player.ManaPercent >= Menu["W"]["HarassWMana"].GetValue<MenuSlider>().Value)
+                        return;
+
+                    if (Player.IsUnderEnemyTurret())
+                        return;
+
+                    var t = GetTarget(W.Range, DamageType.Physical);
+
+                    if (t == null)
+                        return;
+
+                    float distance = Player.Position.Distance(t.Position);
+
+                    if (distance >= 500)
+                        if (Menu["W"]["WList" + t.ChampionName].GetValue<MenuBool>().Value)
+                            if (t.IsValidTarget(W.Range))
+                                if (W.GetPrediction(t).Hitchance >= HitChance.VeryHigh)
+                                    W.Cast(t, true);
+                }
+                if (Menu["W"]["KSW"].GetValue<MenuBool>().Value)
+                {
+                    var e = GetTarget(W.Range, DamageType.Physical);
+
+                    if (e.IsValidTarget() && e.Distance(Player.Position) > 500)
+                        if (GetDamage(e, W) > e.Health)
+                            if (CanKill(e))
+                                if (Player.Position.Distance(e.Position) >= 600)
+                                    W.Cast(e, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Auto W Logic " + ex);
+            }
+        }
+
+        private static void ELogic(EventArgs args)
+        {
+            try
+            {
+                if (!E.IsReady())
+                    return;
+
+                if (Player.Mana < (E.Instance.ManaCost + R.Instance.ManaCost + W.Instance.ManaCost))
+                    return;
+
+                if (Combo && Menu["E"]["ComboE"].GetValue<MenuBool>().Value)
+                {
+                    var t = GetTarget(E.Range, DamageType.Physical);
+
+                    if (t.IsValidTarget(E.Range) && E.GetPrediction(t).CastPosition.Distance(t.Position) > 200 && (int)E.GetPrediction(t).Hitchance == 5)
+                    {
+                        if (t.HasBuffOfType(BuffType.Slow) || CountEnemiesInRangeDeley(E.GetPrediction(t).CastPosition, 250, E.Delay) > 1)
+                        {
+                            E.CastIfWillHit(t, 2);
+                            E.Cast(t, true);
+                        }
+                        else
+                        {
+                            if (E.GetPrediction(t).CastPosition.Distance(t.Position) > 200)
+                            {
+                                if (Player.Position.Distance(t.ServerPosition) > Player.Position.Distance(t.Position))
+                                {
+                                    if (t.Position.Distance(Player.ServerPosition) > t.Position.Distance(Player.Position))
+                                        E.Cast(t, true);
+                                }
+                                else
+                                {
+                                    if (t.Position.Distance(Player.ServerPosition) > t.Position.Distance(Player.Position))
+                                        E.Cast(t, true);
+                                }
+                            }
+                        }
+                    }
+                }
+                List<Obj_AI_Hero> Enemies = ObjectManager.Get<Obj_AI_Hero>().Where(e => e.IsEnemy && e.IsValidTarget()).ToList();
+
+                foreach (var e in Enemies)
+                {
+                    if (Menu["E"]["StunE"].GetValue<MenuBool>())
+                    {
+                        if (e.HasBuffOfType(BuffType.Stun))
+                        {
+                            if (e.IsValidTarget(E.Range))
+                            {
+                                if (E.GetPrediction(e).Hitchance >= HitChance.VeryHigh)
+                                {
+                                    E.Cast(e, true);
+                                }
+                            }
+                        }
+                    }
+                    if (Menu["E"]["SlowE"].GetValue<MenuBool>())
+                    {
+                        if (e.HasBuffOfType(BuffType.Slow))
+                        {
+                            if (e.IsValidTarget(E.Range))
+                            {
+                                if (E.GetPrediction(e).Hitchance >= HitChance.VeryHigh)
+                                {
+                                    E.Cast(e, true);
+                                }
+                            }
+                        }
+                    }
+                    if (Menu["E"]["ImmeE"].GetValue<MenuBool>())
+                    {
+                        if (!CanMove(e))
+                        {
+                            if (E.GetPrediction(e).Hitchance >= HitChance.VeryHigh)
+                            {
+                                E.Cast(e, true);
+                            }
+                        }
+                        else
+                        {
+                            E.CastIfHitchanceEquals(e, HitChance.Immobile);
+                        }
+                    }
+                    if (Menu["E"]["DashE"].GetValue<MenuBool>())
+                    {
+                        foreach (var ed in ObjectManager.Get<Obj_AI_Hero>().Where(enemy => enemy.IsValidTarget(E.Range - 50)))
+                        {
+                            if (E.IsReady())
+                            {
+                                E.CastIfHitchanceEquals(e, HitChance.Dashing);
+                                E.Cast(e, true);
+                            }
+                        }
+                    }
+                }              
+                if (Menu["E"]["TelE"].GetValue<MenuBool>())
+                {
+                    foreach (var Obj in ObjectManager.Get<Obj_AI_Base>().Where(Obj => Obj.IsEnemy && Obj.Distance(Player.ServerPosition) < E.Range && (Obj.HasBuff("teleport_target") || Obj.HasBuff("Pantheon_GrandSkyfall_Jump"))))
+                    {
+                        E.Cast(Obj.Position);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error in Auto E Logic " + e);
+            }
         }
 
         private static void OnDraw(EventArgs args)
@@ -149,7 +402,7 @@
                 {
                     Render.Circle.DrawCircle(Player.Position, E.Range, Color.CornflowerBlue);
                 }
-                DrawBuffs();
+                DrawBuffs(args);
             }
             catch (Exception ex)
             {
@@ -157,7 +410,7 @@
             }
         }
 
-        private static void DrawBuffs()
+        private static void DrawBuffs(EventArgs args)
         {
 
             var DrawBuff = Menu["Draw"]["DrawBuffs"].GetValue<MenuList>().Index;
@@ -216,9 +469,9 @@
 
                     if (BigGun && t.IsValidTarget())
                     {
-                        var RealDistance = Player.Position.Distance(Movement.GetPrediction(t, 0.05f).CastPosition) + Player.BoundingRadius + t.BoundingRadius;
+                        var RealDistance = Player.Position.Distance(Prediction.GetPrediction(t, 0.05f).CastPosition) + Player.BoundingRadius + t.BoundingRadius;
                         {
-                            if (Combo && Menu["Q"]["Combo"].GetValue<MenuBool>())
+                            if (Combo && Menu["Q"]["ComboQ"].GetValue<MenuBool>())
                             {
                                 if (RealDistance < (650f + Player.BoundingRadius + t.BoundingRadius))
                                 {
@@ -359,6 +612,21 @@
                     .Where(buff => buff.Type == BuffType.Slow)
                     .Select(buff => buff.EndTime)
                     .FirstOrDefault();
+        }
+
+        private static int CountEnemiesInRangeDeley(Vector3 position, float range, float delay)
+        {
+            int count = 0;
+
+            foreach (var t in GameObjects.EnemyHeroes.Where(t => t.IsValidTarget()))
+            {
+                Vector3 prepos = Prediction.GetPrediction(t, delay).CastPosition;
+
+                if (position.Distance(prepos) < range)
+                    count++;
+            }
+
+            return count;
         }
 
         public static void CastQObjects(Obj_AI_Base t)
