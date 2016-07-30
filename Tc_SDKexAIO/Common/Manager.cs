@@ -17,6 +17,7 @@
 
     internal static class Manager
     {
+        private static Obj_AI_Hero Player => PlaySharp.Player;
 
         public static List<Obj_AI_Minion> GetMinions(Vector3 From, float Range)
         {
@@ -35,7 +36,7 @@
 
         public static List<Obj_AI_Hero> GetEnemies(float Range)
         {
-            return GameObjects.EnemyHeroes.Where(x => x.IsValidTarget(Range) && !x.IsZombie && !x.IsDead).ToList();
+            return GameObjects.EnemyHeroes.Where(x => x.IsValidTarget(Range) && x.IsEnemy && !x.IsZombie && !x.IsDead).ToList();
         }
 
         public static Obj_AI_Hero GetTarget(float Range, DamageType DamageType = DamageType.Physical)
@@ -46,6 +47,50 @@
         public static Obj_AI_Hero GetTarget(Spell Spell, bool Ignote = true)
         {
             return Variables.TargetSelector.GetTarget(Spell, Ignote);
+        }
+
+        /// <summary>
+        /// (This Part From SebbyLib)
+        /// </summary>
+        /// <param name="spell"></param>
+        /// <param name="e"></param>
+        public static void SpellCast(Spell spell, Obj_AI_Base Target)
+        {
+            SkillshotType CoreType = SkillshotType.SkillshotLine;
+            bool aoe2 = false;
+
+            if (spell.Type == SkillshotType.SkillshotCircle)
+            {
+                CoreType = SkillshotType.SkillshotCircle;
+                aoe2 = true;
+            }
+
+            if (spell.Width > 80 && !spell.Collision)
+                aoe2 = true;
+
+            var predInput2 = new Core.PredictionInput
+            {
+                AoE = aoe2,
+                Collision = spell.Collision,
+                Speed = spell.Speed,
+                Delay = spell.Delay,
+                Range = spell.Range,
+                From = Player.ServerPosition,
+                Radius = spell.Width,
+                Unit = Target,
+                Type = CoreType
+            };
+            var poutput2 = Core.Prediction.GetPrediction(predInput2);
+
+            if (spell.Speed != float.MaxValue && Core.TCommon.CollisionYasuo(Player.ServerPosition, poutput2.CastPosition))
+                return;
+
+            if (poutput2.Hitchance >= HitChance.VeryHigh)
+                spell.Cast(poutput2.CastPosition);
+            else if (predInput2.AoE && poutput2.AoeTargetsHitCount > 1 && poutput2.Hitchance >= HitChance.High)
+            {
+                spell.Cast(poutput2.CastPosition);
+            }
         }
 
         public static bool InAutoAttackRange(AttackableUnit target)
@@ -96,11 +141,11 @@
                 return true;
         }
 
-        public static bool CanKill(Obj_AI_Base e)
+        public static bool CanKill(Obj_AI_Base Target)
         {
-            if (e.HasBuffOfType(BuffType.PhysicalImmunity) || e.HasBuffOfType(BuffType.SpellImmunity) || e.IsZombie
-                || e.IsInvulnerable || e.HasBuffOfType(BuffType.Invulnerability) || e.HasBuffOfType(BuffType.SpellShield)
-                || e.HasBuff("deathdefiedbuff") || e.HasBuff("Undying Rage") || e.HasBuff("Chrono Shift"))
+            if (Target.HasBuffOfType(BuffType.PhysicalImmunity) || Target.HasBuffOfType(BuffType.SpellImmunity) || Target.IsZombie
+                || Target.IsInvulnerable || Target.HasBuffOfType(BuffType.Invulnerability) || Target.HasBuffOfType(BuffType.SpellShield)
+                || Target.HasBuff("deathdefiedbuff") || Target.HasBuff("Undying Rage") || Target.HasBuff("Chrono Shift"))
             {
                 return false;
             }

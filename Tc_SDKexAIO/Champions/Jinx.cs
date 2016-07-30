@@ -78,7 +78,6 @@
             {
                 EMenu.GetSeparator("E: Mobe");
                 EMenu.GetBool("ComboE", "Combo E");
-                EMenu.GetSliderButton("AoeE", "Aoe E Min Hit Counts > =", 2, 1, 5);
                 EMenu.GetSeparator("E: Gapcloser | Melee Modes");
                 EMenu.GetBool("Gapcloser", "Gapcloser E", false);
                 EMenu.GetSeparator("Auto E Set");
@@ -93,9 +92,8 @@
             var RMenu = Menu.Add(new Menu("R", "R.Set | R設定"));
             {
                 RMenu.GetSeparator("R: Mobe");
-                RMenu.GetSliderButton("AoeR", "Aoe R Min Hit Counts > =", 2, 1, 5);
-                RMenu.GetSlider("Raoe", "Max Range R Aoe", 4000, 0, 15000);
                 RMenu.GetKeyBind("RKey", "Semi Manual Key", Keys.T, KeyBindType.Press);
+                RMenu.GetList("AoeR", "Aoe R Min Hit Counts > =", new[] { "Aoe", "1 Enemy" });
                 RMenu.GetSeparator("Jungle R Modes");
                 RMenu.GetBool("DragonR", "Dragon R", false);
                 RMenu.GetBool("BaronR", "Baron R", false);
@@ -103,13 +101,6 @@
                 RMenu.GetBool("RedR", "Red R", false);
                 RMenu.GetSeparator("Auto R KillSteal");
                 RMenu.GetBool("AutoR", "Auto R Enable");
-                var RList = RMenu.Add(new Menu("RList", "Auto R List"));
-                {
-                    if (GameObjects.EnemyHeroes.Any())
-                    {
-                        GameObjects.EnemyHeroes.ForEach(i => RList.GetBool(i.ChampionName.ToLower(), i.ChampionName, PlaySharp.AutoEnableList.Contains(i.ChampionName)));
-                    }
-                }
             }
             ModeBaseUlti.Init(Menu);
 
@@ -143,7 +134,10 @@
 
                 ELogic(args);
 
-                //AutoRLogic(args);
+                RLogic(args);
+
+                AutoRLogic(args);
+                
 
                 //JungleRLogic(args);
 
@@ -165,7 +159,7 @@
                         < (Player.Position.Distance(Prediction.GetPrediction(minion, 0.05f).CastPosition) + Player.BoundingRadius + minion.BoundingRadius) && (670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level)
                         < (Player.Position.Distance(Prediction.GetPrediction(minion, 0.05f).CastPosition) + Player.BoundingRadius + minion.BoundingRadius)))
                     {
-                        Variables.Orbwalker.ForceTarget = minion;                             
+                        Variables.Orbwalker.ForceTarget = minion;
                         Q.Cast(minion);
                         return;
                     }
@@ -234,11 +228,11 @@
 
                     if (distance >= 550)
                         if (t.IsValidTarget(W.Range))
-                            W.Cast(t, true);
+                            W.Cast(t);
                 }
                 if ((Harass && Menu["W"]["HarassW"].GetValue<MenuBool>()) || Menu["W"]["AutoW"].GetValue<MenuKeyBind>().Active)
                 {
-                    if (Player.ManaPercent >= Menu["W"]["HarassWMana"].GetValue<MenuSlider>().Value)
+                    if (Player.ManaPercent < Menu["W"]["HarassWMana"].GetValue<MenuSlider>().Value)
                         return;
 
                     if (Player.IsUnderEnemyTurret())
@@ -255,7 +249,7 @@
                         if (Menu["W"]["WList" + t.ChampionName].GetValue<MenuBool>().Value)
                             if (t.IsValidTarget(W.Range))
                                 if (W.GetPrediction(t).Hitchance >= HitChance.VeryHigh)
-                                    W.Cast(t, true);
+                                    W.Cast(t);
                 }
                 if (Menu["W"]["KSW"].GetValue<MenuBool>().Value)
                 {
@@ -265,7 +259,7 @@
                         if (GetDamage(e, W) > e.Health)
                             if (CanKill(e))
                                 if (Player.Position.Distance(e.Position) >= 600)
-                                    W.Cast(e, true);
+                                    W.Cast(e);
                 }
             }
             catch (Exception ex)
@@ -293,7 +287,7 @@
                         if (t.HasBuffOfType(BuffType.Slow) || CountEnemiesInRangeDeley(E.GetPrediction(t).CastPosition, 250, E.Delay) > 1)
                         {
                             E.CastIfWillHit(t, 2);
-                            E.Cast(t, true);
+                            E.Cast(t);
                         }
                         else
                         {
@@ -302,12 +296,12 @@
                                 if (Player.Position.Distance(t.ServerPosition) > Player.Position.Distance(t.Position))
                                 {
                                     if (t.Position.Distance(Player.ServerPosition) > t.Position.Distance(Player.Position))
-                                        E.Cast(t, true);
+                                        E.Cast(t);
                                 }
                                 else
                                 {
                                     if (t.Position.Distance(Player.ServerPosition) > t.Position.Distance(Player.Position))
-                                        E.Cast(t, true);
+                                        E.Cast(t);
                                 }
                             }
                         }
@@ -325,7 +319,7 @@
                             {
                                 if (E.GetPrediction(e).Hitchance >= HitChance.VeryHigh)
                                 {
-                                    E.Cast(e, true);
+                                    E.Cast(e);
                                 }
                             }
                         }
@@ -338,7 +332,7 @@
                             {
                                 if (E.GetPrediction(e).Hitchance >= HitChance.VeryHigh)
                                 {
-                                    E.Cast(e, true);
+                                    E.Cast(e);
                                 }
                             }
                         }
@@ -349,7 +343,7 @@
                         {
                             if (E.GetPrediction(e).Hitchance >= HitChance.VeryHigh)
                             {
-                                E.Cast(e, true);
+                                E.Cast(e);
                             }
                         }
                         else
@@ -364,7 +358,7 @@
                             if (E.IsReady())
                             {
                                 E.CastIfHitchanceEquals(e, HitChance.Dashing);
-                                E.Cast(e, true);
+                                E.Cast(e);
                             }
                         }
                     }
@@ -380,6 +374,113 @@
             catch (Exception e)
             {
                 Console.WriteLine("Error in Auto E Logic " + e);
+            }
+        }
+
+        private static void RLogic(EventArgs args)
+        {
+            try
+            {
+                if (!R.IsReady())
+                    return;
+
+                if (Menu["R"]["RKey"].GetValue<MenuKeyBind>().Active)
+                {
+                    var t = GetTarget(R.Range, DamageType.Physical);
+                    if (t.IsValidTarget())
+                    {
+                        if (Menu["R"]["AoeR"].GetValue<MenuList>().Index == 0)
+                        {
+                            R.CastIfWillHit(t, 2);
+                            R.Cast(t);
+                        }
+                        else
+                        {
+                            if (Menu["R"]["AoeR"].GetValue<MenuList>().Index == 1)
+                            {
+                                if (t.HealthPercent < 40)
+                                    R.Cast(t);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Toggle R Logic " + ex);
+            }
+        }
+
+        private static void AutoRLogic(EventArgs args)
+        {
+            try
+            {
+                if (!R.IsReady())
+                    return;
+
+                if (Menu["R"]["AutoR"].GetValue<MenuBool>())
+                {
+                    bool cast = false;
+
+                    foreach (var t in GameObjects.EnemyHeroes.Where(t => t.IsValidTarget() && CanKill(t)))
+                    {
+                        float Health = t.Health + t.HPRegenRate * 2;
+
+                        var Rdmg = R.GetDamage(t);
+
+                        if (Rdmg > Health)
+                        {
+                            cast = true;
+
+                            LeagueSharp.SDK.PredictionOutput output = R.GetPrediction(t);
+
+                            Vector2 direction = output.CastPosition.ToVector2() - Player.Position.ToVector2();
+
+                            direction.Normalize();
+
+                            List<Obj_AI_Hero> enemies = GameObjects.EnemyHeroes.Where(x => x.IsEnemy && x.IsValidTarget()).ToList();
+
+                            foreach (var enemy in enemies)
+                            {
+                                if (enemy.SkinName == t.SkinName || !cast)
+                                    continue;
+
+                                LeagueSharp.SDK.PredictionOutput prediction = R.GetPrediction(enemy);
+
+                                Vector3 predictedPosition = prediction.CastPosition;
+                                Vector3 v = output.CastPosition - Player.ServerPosition;
+                                Vector3 w = predictedPosition - Player.ServerPosition;
+
+                                double c1 = Vector3.Dot(w, v);
+                                double c2 = Vector3.Dot(v, v);
+                                double b = c1 / c2;
+
+                                Vector3 pb = Player.ServerPosition + ((float)b * v);
+
+                                float length = Vector3.Distance(predictedPosition, pb);
+
+                                if (length < (R.Width + 150 + enemy.BoundingRadius / 2) && Player.Distance(predictedPosition) < Player.Distance(t.ServerPosition))
+                                    cast = false;
+                            }
+
+                            if (cast && (Player.ServerPosition.Distance(t.ServerPosition) + Player.BoundingRadius + t.BoundingRadius) > (670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level) + 300 + t.BoundingRadius && t.CountAllyHeroesInRange(600) == 0 && Player.CountEnemyHeroesInRange(400) == 0)
+                            {
+                                List<Vector2> waypoints = t.GetWaypoints();
+
+                                if ((Player.Distance(waypoints.Last().ToVector3()) - Player.Distance(t.Position)) > 400)
+                                    SpellCast(R, t);
+                            }
+                            else if (cast && t.CountEnemyHeroesInRange(200) > 2 && (Player.ServerPosition.Distance(t.ServerPosition) + Player.BoundingRadius + t.BoundingRadius) > (670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level) + 200 + t.BoundingRadius)
+                            {
+                                R.Cast(t);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in Auto R Logic " + ex);
             }
         }
 
@@ -674,35 +775,26 @@
 
             var Damage = spell.GetDamage(t);
 
+            if (Player.HasBuff("SummonerExhaust"))
+                Damage = Damage * 0.6f;
+
+            if (t.HasBuff("FerociousHowl"))
+                Damage = Damage * 0.7f;
+
+            if (t is Obj_AI_Hero)
+            {
+                var Enemey = t;
+                if (t.ChampionName == "Blitzcrank" && !t.HasBuff("BlitzcrankManaBarrierCD") && !t.HasBuff("ManaBarrier"))
+                {
+                    Damage -= Enemey.Mana / 2f;
+                }
+            }
+            var Hp = t.Health - Core.Health.GetPrediction(t, 500);
+
+            Damage += Hp;
             Damage -= t.HPRegenRate;
+            Damage -= t.PercentLifeStealMod * 0.005f * t.FlatPhysicalDamageMod;
 
-            if (Q.IsReady())
-            {
-                Damage += Q.GetDamage(t);
-            }
-
-            if (W.IsReady())
-            {
-                Damage += W.GetDamage(t);
-            }
-
-            if (E.IsReady())
-            {
-                Damage += E.GetDamage(t);
-            }
-
-            if (R.IsReady())
-            {
-                Damage += R.GetDamage(t);
-            }
-
-            if (Damage > t.Health)
-            {
-                if (Player.HasBuff("SummonerExhaust")) Damage = Damage * 0.6f;
-                if (t.HasBuff("FerociousHowl")) Damage = Damage * 0.7f;
-                if (t.ChampionName == "Blitzcrank" && !t.HasBuff("BlitzcrankManaBarrierCD")) Damage -= t.Mana / 2f;
-                if (t.ChampionName == "Moredkaiser") Damage -= t.Mana;               
-            }
             return Damage;
         }
     }
