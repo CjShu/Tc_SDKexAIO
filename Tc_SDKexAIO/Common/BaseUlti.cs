@@ -47,68 +47,76 @@
 
         public static void Init(Menu ParentMenu)
         {
-            MenuLocal = new Menu("Base Ulti", "SDK Base Ulit (基地大招)");
-            MenuLocal.Add(new MenuBool("showRecalls", "Show Recalls | 顯示回城 ", true));
-            MenuLocal.Add(new MenuBool("baseUlt", "Use Base Ult | 使用基地大招", true));
-            MenuLocal.Add(new MenuBool("checkCollision", "Check.Collision | 檢查碰撞傷害", true));
-            MenuLocal.Add(new MenuKeyBind("panicKey", "Panic Key | 此鍵連招不使用", System.Windows.Forms.Keys.Space, LeagueSharp.SDK.Enumerations.KeyBindType.Press));
-            MenuLocal.Add(new MenuKeyBind("regardlessKey", "Regar Dless Key | 默認他就是要殺", System.Windows.Forms.Keys.CapsLock, LeagueSharp.SDK.Enumerations.KeyBindType.Toggle));
-            ParentMenu.Add(MenuLocal);
-            Heroes = ObjectManager.Get<Obj_AI_Hero>().ToList();
-            Enemies = Heroes.Where(x => x.IsEnemy).ToList();
-            Allies = Heroes.Where(x => x.IsAlly).ToList();
-
-            EnemyInfo = Enemies.Select(x => new EnemyInfo(x)).ToList();
-
-            bool compatibleChamp = IsCompatibleChamp(ObjectManager.Player.ChampionName);
-
-            TeamUlt = MenuLocal.Add(new Menu("Team Baseult Friends", "Team Baseult Friends | 隊友大招"));
-            DisabledChampions = MenuLocal.Add(new Menu("Disabled Champion targets", "Disabled Champion targets | 不對英雄使用"));
-
-            if (compatibleChamp)
+            try
             {
-                foreach (Obj_AI_Hero champ in Allies.Where(x => !x.IsMe && IsCompatibleChamp(x.ChampionName)))
-                    TeamUlt.Add(new MenuBool(champ.ChampionName, "Ally with baseult: " + champ.ChampionName, false));
+                MenuLocal = new Menu("Base Ulti", "SDK Base Ulit (基地大招)");
+                MenuLocal.Add(new MenuBool("showRecalls", "Show Recalls | 顯示回城 ", true));
+                MenuLocal.Add(new MenuBool("baseUlt", "Use Base Ult | 使用基地大招", true));
+                MenuLocal.Add(new MenuBool("checkCollision", "Check.Collision | 檢查碰撞傷害", true));
+                MenuLocal.Add(new MenuKeyBind("panicKey", "Panic Key | 此鍵連招不使用", System.Windows.Forms.Keys.Space, LeagueSharp.SDK.Enumerations.KeyBindType.Press));
+                MenuLocal.Add(new MenuKeyBind("regardlessKey", "Regar Dless Key | 默認他就是要殺", System.Windows.Forms.Keys.CapsLock, LeagueSharp.SDK.Enumerations.KeyBindType.Toggle));
+                ParentMenu.Add(MenuLocal);
+                Heroes = ObjectManager.Get<Obj_AI_Hero>().ToList();
+                Enemies = Heroes.Where(x => x.IsEnemy).ToList();
+                Allies = Heroes.Where(x => x.IsAlly).ToList();
 
-                foreach (Obj_AI_Hero champ in Enemies)
-                    DisabledChampions.Add(new MenuBool(champ.ChampionName, "不針對: " + champ.ChampionName));
-            }
+                EnemyInfo = Enemies.Select(x => new EnemyInfo(x)).ToList();
 
-            var NotificationsMenu = MenuLocal.Add(new Menu("Notifications", "Notifications | 顯示回城"));
+                bool compatibleChamp = IsCompatibleChamp(ObjectManager.Player.ChampionName);
 
-            NotificationsMenu.Add(new MenuBool("notifRecFinished", "Notif RecFinished | 回城完成", true));
-            NotificationsMenu.Add(new MenuBool("notifRecAborted", "Notif RecAborted | 回城終止", true));
+                TeamUlt = MenuLocal.Add(new Menu("Team Baseult Friends", "Team Baseult Friends | 隊友大招"));
+                DisabledChampions = MenuLocal.Add(new Menu("Disabled Champion targets", "Disabled Champion targets | 不對英雄使用"));
 
-            var objSpawnPoint = ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(x => x.IsEnemy);
-            if (objSpawnPoint != null)
-            {
-                EnemySpawnPos = objSpawnPoint.Position;
-            }
-
-            Map = Utility.Map.GetMap().Type;
-
-            Ultimate = new Spell(SpellSlot.R);
-
-            Text = new Font(Drawing.Direct3DDevice,
-                new FontDescription
+                if (compatibleChamp)
                 {
-                    FaceName = "Calibri",
-                    Height = 13,
-                    Width = 6,
-                    OutputPrecision = FontPrecision.Default,
-                    Quality = FontQuality.Default
-                });
+                    foreach (Obj_AI_Hero champ in Allies.Where(x => !x.IsMe && IsCompatibleChamp(x.ChampionName)))
+                        TeamUlt.Add(new MenuBool(champ.ChampionName, "Ally with baseult: " + champ.ChampionName, false));
 
-            Obj_AI_Base.OnTeleport += Obj_AI_Base_OnTeleport;
-            Drawing.OnPreReset += Drawing_OnPreReset;
-            Drawing.OnPostReset += Drawing_OnPostReset;
-            Drawing.OnDraw += Drawing_OnDraw;
-            AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
-            AppDomain.CurrentDomain.ProcessExit += CurrentDomain_DomainUnload;
+                    foreach (Obj_AI_Hero champ in Enemies)
+                        DisabledChampions.Add(new MenuBool(champ.ChampionName, "不針對: " + champ.ChampionName));
+                }
 
-            if (compatibleChamp)
+                var NotificationsMenu = MenuLocal.Add(new Menu("Notifications", "Notifications | 顯示回城"));
+
+                NotificationsMenu.Add(new MenuBool("notifRecFinished", "Notif RecFinished | 回城完成", true));
+                NotificationsMenu.Add(new MenuBool("notifRecAborted", "Notif RecAborted | 回城終止", true));
+
+                var objSpawnPoint = ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(x => x.IsEnemy);
+                if (objSpawnPoint != null)
+                {
+                    EnemySpawnPos = objSpawnPoint.Position;
+                }
+
+                Map = Utility.Map.GetMap().Type;
+
+                Ultimate = new Spell(SpellSlot.R);
+
+                Text = new Font(Drawing.Direct3DDevice,
+                    new FontDescription
+                    {
+                        FaceName = "Calibri",
+                        Height = 13,
+                        Width = 6,
+                        OutputPrecision = FontPrecision.Default,
+                        Quality = FontQuality.Default
+                    });
+
+                Obj_AI_Base.OnTeleport += Obj_AI_Base_OnTeleport;
+                Drawing.OnPreReset += Drawing_OnPreReset;
+                Drawing.OnPostReset += Drawing_OnPostReset;
+                Drawing.OnDraw += Drawing_OnDraw;
+                AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
+                AppDomain.CurrentDomain.ProcessExit += CurrentDomain_DomainUnload;
+
+                if (compatibleChamp)
+                {
+                    Game.OnUpdate += Game_OnUpdate;
+                }
+            }
+            catch (Exception ex)
             {
-                Game.OnUpdate += Game_OnUpdate;
+                Console.WriteLine("Error In BaseUlti" + ex);
+                Console.Clear();
             }
         }
 
@@ -233,6 +241,7 @@
 
         static void HandleUltTarget(EnemyInfo enemyInfo)
         {
+
             bool ultNow = false;
             bool me = false;
 
