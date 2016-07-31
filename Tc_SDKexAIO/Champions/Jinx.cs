@@ -34,7 +34,7 @@
         private static Obj_AI_Hero Player => PlaySharp.Player;
         private static bool BigGun => Player.HasBuff("JinxQ");
         private static HpBarDraw HpBarDraw = new HpBarDraw();
-        private static float DrawSpellTime = 0, DragonDmg = 0, lag = 0, LatFocusTime = Game.Time;
+        private static float lag = 0, LatFocusTime = Game.Time;
         public static readonly Dictionary<int, List<OnDamageEvent>> DamagesOnTime = new Dictionary<int, List<OnDamageEvent>>();
         private const float InitialSpeed = 1700;
         private const float ChangerSpeedDistance = 1350;

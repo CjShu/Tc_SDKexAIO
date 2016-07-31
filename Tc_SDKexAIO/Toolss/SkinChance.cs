@@ -32,6 +32,9 @@
                     case "Jinx":
                         SkinMenu.Add(new MenuList<string>("SkinName", "Skin Name", Jinx));
                         break;
+                    case "Jhin":
+                        SkinMenu.Add(new MenuList<string>("SkinName", "Skin Name", Jhin));
+                        break;
                     default:
                         SkinMenu.Add(new MenuList<string>("SkinName", "Skin Name", new[] { "Classic", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" }));
                         break;

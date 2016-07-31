@@ -88,6 +88,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Champions\Jhin.cs" />
     <Compile Include="Champions\Jinx.cs" />
     <Compile Include="Common\BaseUlti.cs" />
     <Compile Include="Common\HpBarDraw.cs" />

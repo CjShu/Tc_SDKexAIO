@@ -84,6 +84,9 @@
                 case "Jinx":
                     Champions.Jinx.Init();
                     break;
+                case "Jhin":
+                    Champions.Jhin.Init();
+                    break;
                 default:
                     break;
             }
