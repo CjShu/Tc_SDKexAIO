@@ -212,6 +212,8 @@
 
         #region BUFF
 
+        public static readonly Dictionary<int, List<OnDamageEvent>> DamagesOnTime = new Dictionary<int, List<OnDamageEvent>>();
+
         public static bool CanKillableWith(this Obj_AI_Base t, Spell spell)
         {
             return t.Health < spell.GetDamage(t) - 5;
