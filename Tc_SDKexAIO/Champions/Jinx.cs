@@ -236,13 +236,9 @@
                 if (Menu["W"]["AutoW"].GetValue<MenuBool>().Value)
                 {
                     var e = GetTarget(W.Range, DamageType.Magical);
-                    if (e.IsValidTarget() && e.Distance(Player.Position) > 500)
-                    {
-                        if (GetDamage(e) > e.Health * 30 && CanKill(e) && Player.Position.Distance(e.Position) >= 600)
-                        {
-                            W.Cast(e);
-                        }
-                    }
+                    if (e.IsValidTarget() && e.HasBuffOfType(BuffType.Slow) && e.HasBuffOfType(BuffType.Stun)
+                        && CanKill(e) && e.DistanceToPlayer() >= 570 && e.IsValidTarget(W.Range))
+                        W.Cast(e);                       
                 }
             }
             catch (Exception ex)
@@ -371,13 +367,12 @@
                         R.Cast(t);
                     }
                 }
-                if (Menu["R"]["AoeR"].GetValue<MenuKeyBind>().Active)
+                if (Menu["R"]["AoeRkey"].GetValue<MenuKeyBind>().Active)
                 {
                     var t = GetTarget(R.Range, DamageType.Physical);
                     if (t.IsValidTarget())
                     {
                         R.CastIfWillHit(t, 2);
-                        R.Cast(t);
                     }
                 }
             }
