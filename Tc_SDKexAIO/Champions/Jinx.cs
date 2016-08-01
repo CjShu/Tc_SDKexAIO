@@ -36,6 +36,7 @@
         private static bool BigGun => Player.HasBuff("JinxQ");
         private static HpBarDraw HpBarDraw = new HpBarDraw();
         public static float DrawSpellTime = 0, DragonDmg = 0, lag = 0, LatFocusTime = Game.Time;
+        public static double DragonTime = 0;
         public static float AARange => GameObjects.Player.GetRealAutoAttackRange();
 
         internal static void Init()
@@ -58,8 +59,6 @@
             var WMenu = Menu.Add(new Menu("W", "W.Set | W 設定"));
             {
                 WMenu.GetBool("ComboW", "ComnoW");
-                WMenu.GetBool("KSW", "Killsteal W", false);
-                WMenu.GetKeyBind("AutoW", "Auto W", Keys.T, KeyBindType.Press);
                 WMenu.GetBool("HarassW", "Harass W", false);
                 WMenu.GetSlider("HarassWMana", "Harass W Min Mana > =", 40, 0, 70);
                 var WList = WMenu.Add(new Menu("WList", "HarassW List:"));
@@ -218,7 +217,7 @@
                     if (target != null && target.IsHPBarRendered && target.DistanceToPlayer() >= 550 && target.IsValidTarget(W.Range))
                         W.Cast(target);
                 }
-                if ((Harass && Menu["W"]["HarassW"].GetValue<MenuBool>()) || Menu["W"]["AutoW"].GetValue<MenuKeyBind>().Active)
+                if (Harass && Menu["W"]["HarassW"].GetValue<MenuBool>())
                 {
                     if (Player.ManaPercent < Menu["W"]["HarassWMana"].GetValue<MenuSlider>().Value)
                         return;
@@ -227,16 +226,6 @@
 
                     if (target != null && target.IsHPBarRendered && Menu["W"]["WList" + target.ChampionName].GetValue<MenuBool>().Value && target.DistanceToPlayer() >= 500 && target.IsValidTarget(W.Range))
                         W.Cast(target);
-                }
-                if (Menu["W"]["KSW"].GetValue<MenuBool>().Value)
-                {
-                   var e = GetTarget(W.Range, DamageType.Physical);
-
-                    if (e.IsValidTarget(W.Range) && e.Distance(Player.Position) > 500)
-                        if (GetDamage(e, W) > e.Health)
-                            if (CanKill(e))
-                                if (Player.Position.Distance(e.Position) >= 600)
-                                    W.Cast(e);
                 }
             }
             catch (Exception ex)
@@ -423,18 +412,18 @@
                         {
                             if (DragonDmg == 0)
                                 DragonDmg = mob.Health;
-                            if (Game.Time - DragonDmg > 3)
+                            if (Game.Time - DragonTime > 3)
                             {
                                 if (DragonDmg - mob.Health > 0)
                                 {
                                     DragonDmg = mob.Health;
                                 }
-                                DragonDmg = Game.Time;
+                                DragonTime = Game.Time;
                             }
                         }
                         else
                         {
-                            var Sec = (DragonDmg - mob.Health) * (Math.Abs(DragonDmg - Game.Time) / 3);
+                            var Sec = (DragonDmg - mob.Health) * (Math.Abs(DragonTime - Game.Time) / 3);
 
                             if (DragonDmg - mob.Health > 0)
                             {
