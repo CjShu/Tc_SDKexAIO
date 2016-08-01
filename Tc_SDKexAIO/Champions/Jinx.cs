@@ -105,6 +105,7 @@
                 DrawMenu.GetBool("Q", "Q Range", false);
                 DrawMenu.GetBool("W", "W Range", false);
                 DrawMenu.GetBool("E", "E Range", false);
+                DrawMenu.GetBool("RDKs", "Draw R KS", false);
                 DrawMenu.GetBool("EnableBuffs", "Draw Buff Enable");
                 DrawMenu.GetList("DrawBuffs", "Show Red/Blue Time Circle", new[] { "Off", "Blue Buff", "Red Buff", "Both" });
             }
@@ -139,6 +140,8 @@
                 AutoRLogic(args);
 
                 JungleLogic(args);
+
+                Drawggg(args);
 
             }
             catch (Exception ex)
@@ -466,29 +469,137 @@
             }
         }
 
-        private static void OnDraw(EventArgs args)
+        private static void Drawggg(EventArgs args)
         {
             try
             {
-                if (Player.IsDead)
-                    return;
+                var drawBuffs = Menu["Draw"]["DrawBuffs"].GetValue<MenuList>().Index;
 
-                if (Q.IsReady() && Menu["Draw"]["Q"].GetValue<MenuBool>())
+                if ((drawBuffs == 1 | drawBuffs == 3) && Player.HasBlueBuff())
                 {
-                    Render.Circle.DrawCircle(Player.Position, Q.Range, Color.Cyan);
+                    BuffInstance b = Player.Buffs.Find(buff =>
+                    buff.DisplayName == "CrestoftheAncientGolem");
+                    if (BlueBuff.EndTime < Game.Time || b.EndTime > BlueBuff.EndTime)
+                    {
+                        BlueBuff.StartTime = b.StartTime;
+                        BlueBuff.EndTime = b.EndTime;
+                    }
                 }
-                if (W.IsReady() && Menu["Draw"]["W"].GetValue<MenuBool>())
+                if ((drawBuffs == 2 | drawBuffs == 3) && Player.HasRedBuff())
                 {
-                    Render.Circle.DrawCircle(Player.Position, W.Range, Color.CadetBlue);
-                }
-                if (E.IsReady() && Menu["Draw"]["E"].GetValue<MenuBool>())
-                {
-                    Render.Circle.DrawCircle(Player.Position, E.Range, Color.CornflowerBlue);
+                    BuffInstance b = Player.Buffs.Find(buff =>
+                    buff.DisplayName == "BlessingoftheLizardElder");
+                    if (RedBuff.EndTime < Game.Time || b.EndTime > RedBuff.EndTime)
+                    {
+                        RedBuff.StartTime = b.StartTime;
+                        RedBuff.EndTime = b.EndTime;
+                    }
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine("Error In On Darwggg" + ex);
+            }
+        }
+
+        private static void OnDraw(EventArgs args)
+        {
+            try
+            {
+                if (Q != null && Q.IsReady())
+                {
+                    if (Menu["Draw"]["Q"] != null && Menu["Draw"]["Q"].GetValue<MenuBool>().Value)
+                    {
+                        Render.Circle.DrawCircle(Player.Position, Q.Range, Color.LightGreen, 2);
+                    }
+                }
+
+                if (W != null && W.IsReady() && Menu["Draw"]["W"] != null && Menu["Draw"]["W"].GetValue<MenuBool>().Value)
+                {
+                    Render.Circle.DrawCircle(Player.Position, W.Range, Color.Purple, 2);
+                }
+
+                if (E != null && E.IsReady() && Menu["Draw"]["E"] != null && Menu["Draw"]["E"].GetValue<MenuBool>().Value)
+                {
+                    Render.Circle.DrawCircle(Player.Position, E.Range, Color.Cyan, 2);
+                }
+
+                if (R != null && R.IsReady())
+                {
+                    if (Menu["Draw"]["R"] != null && Menu["Draw"]["R"].GetValue<MenuBool>().Value)
+                    {
+                        Render.Circle.DrawCircle(Player.Position, R.Range, Color.Red, 2);
+
+                    }
+                }
+
+                if (Menu["Draw"]["RDKs"].GetValue<MenuBool>() && R.IsReady() && R.Level >= 1)
+                {
+                    var spos = Drawing.WorldToScreen(Player.Position);
+                    var target = ObjectManager.Get<Obj_AI_Hero>().Where(x => x.IsEnemy && x.Health <= R.GetDamage(x) * 3
+                    && !x.IsZombie && !x.IsDead);
+                    int addpos = 0;
+                    foreach (var killable in target)
+                    {
+                        Drawing.DrawText(spos.X - 50, spos.Y + 35 + addpos, Color.Red, killable.ChampionName + "Is Killable !!!");
+                        addpos = addpos + 15;
+                    }
+                }
+                DrawBuffs(args);
+            }
+            catch (Exception ex)
+            {
                 Console.WriteLine("Error in On Draw" + ex);
+            }
+        }
+
+        private static void DrawBuffs(EventArgs args)
+        {
+            try
+            {
+                if (!Menu["Draw"]["EnableBuffs"].GetValue<MenuBool>())
+                {
+                    return;
+                }
+
+                var drawBuffs = Menu["Draw"]["DrawBuffs"].GetValue<MenuList>().Index;
+
+                if ((drawBuffs == 1 | drawBuffs == 3) && Player.HasBlueBuff())
+                {
+                    if (BlueBuff.EndTime >= Game.Time)
+                    {
+                        var circle1 =
+                            new Geometry.Circle2(
+                                new Vector2(Player.Position.X + 3, Player.Position.Y - 3), 170f,
+                                Game.Time - BlueBuff.StartTime, BlueBuff.EndTime - BlueBuff.StartTime).ToPolygon();
+                        circle1.Draw(Color.Black, 4);
+
+                        var circle =
+                            new Geometry.Circle2(Player.Position.ToVector2(), 170f,
+                                Game.Time - BlueBuff.StartTime, BlueBuff.EndTime - BlueBuff.StartTime).ToPolygon();
+                        circle.Draw(Color.Blue, 4);
+                    }
+                }
+                if ((drawBuffs == 2 || drawBuffs == 3) && Player.HasRedBuff())
+                {
+                    if (RedBuff.EndTime >= Game.Time)
+                    {
+                        var circle1 =
+                            new Geometry.Circle2(
+                                new Vector2(Player.Position.X + 3, Player.Position.Y - 3), 150f,
+                                Game.Time - RedBuff.StartTime, RedBuff.EndTime - RedBuff.StartTime).ToPolygon();
+                        circle1.Draw(Color.Black, 4);
+
+                        var circle =
+                            new Geometry.Circle2(Player.Position.ToVector2(), 150f,
+                                Game.Time - RedBuff.StartTime, RedBuff.EndTime - RedBuff.StartTime).ToPolygon();
+                        circle.Draw(Color.Red, 4);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in DrawBuffs" + ex);
             }
         }
 
