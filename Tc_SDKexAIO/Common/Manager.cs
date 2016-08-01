@@ -213,7 +213,7 @@
 
         public static bool HasSheenBuff(this Obj_AI_Base obj)
         {
-            return obj.Buffs.Any(buff => buff.Name == "Sheen");
+            return obj.Buffs.Any(buff => buff.Name.ToLower() == "sheen");
         }
 
         public static bool CanKillableWith(this Obj_AI_Base t, Spell spell)

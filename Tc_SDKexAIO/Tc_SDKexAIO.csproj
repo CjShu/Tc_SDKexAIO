@@ -67,7 +67,7 @@
       <HintPath>C:\Users\user\Desktop\L#\LeagueSharp\System\LeagueSharp.SDKEx.dll</HintPath>
     </Reference>
     <Reference Include="SebbyLib">
-      <HintPath>..\..\..\..\Desktop\L#\LeagueSharp\System\SebbyLib.dll</HintPath>
+      <HintPath>C:\Users\user\Desktop\L#\LeagueSharp\System\SebbyLib.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX">
       <HintPath>C:\Users\user\Desktop\L#\LeagueSharp\System\SharpDX.dll</HintPath>

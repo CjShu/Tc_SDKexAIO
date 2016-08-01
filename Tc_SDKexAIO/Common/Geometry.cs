@@ -24,14 +24,15 @@ namespace Tc_SDKexAIO.Common
 
     using LeagueSharp;
     using LeagueSharp.SDK;
-    using LeagueSharp.SDK.Clipper;
-    using LeagueSharp.SDK.Utils;
+
+
+    using ClipperLib;
 
     using SharpDX;
 
 
-    using Path = System.Collections.Generic.List<LeagueSharp.SDK.Clipper.IntPoint>;
-    using Paths = System.Collections.Generic.List<System.Collections.Generic.List<LeagueSharp.SDK.Clipper.IntPoint>>;
+    using Path = System.Collections.Generic.List<ClipperLib.IntPoint>;
+    using Paths = System.Collections.Generic.List<System.Collections.Generic.List<ClipperLib.IntPoint>>;
     using GamePath = System.Collections.Generic.List<SharpDX.Vector2>;
 
     using Color = System.Drawing.Color;
@@ -61,9 +62,10 @@ namespace Tc_SDKexAIO.Common
 
             var solution = new Paths();
             var c = new Clipper();
-            c.AddPaths(subj, PolyType.PtSubject, true);
-            c.AddPaths(clip, PolyType.PtClip, true);
-            c.Execute(ClipType.CtUnion, solution, PolyFillType.PftPositive, PolyFillType.PftEvenOdd);
+
+            c.AddPaths(subj, PolyType.ptSubject, true);
+            c.AddPaths(clip, PolyType.ptClip, true);
+            c.Execute(ClipType.ctUnion, solution, PolyFillType.pftPositive, PolyFillType.pftEvenOdd);
 
             return solution;
         }
@@ -73,6 +75,34 @@ namespace Tc_SDKexAIO.Common
             var from = Drawing.WorldToScreen(start);
             var to = Drawing.WorldToScreen(end);
             Drawing.DrawLine(from[0], from[1], to[0], to[1], width, color);
+        }
+
+        public static void DrawCircle(Vector3 center,
+            float radius,
+            Color color,
+            int thickness = 1,
+            int quality = 254)
+        {
+            var pointList = new List<Vector3>();
+            for (var i = 0; i < quality; i++)
+            {
+                var angle = i * Math.PI * 2 / quality;
+                pointList.Add(
+                    new Vector3(
+                        center.X + radius * (float) Math.Cos(angle), center.Y + radius * (float) Math.Sin(angle),
+                        center.Z));
+            }
+
+            for (var i = 0; i < pointList.Count; i++)
+            {
+                var a = pointList[i];
+                var b = pointList[i == pointList.Count - 1 ? 0 : i + 1];
+
+                var aonScreen = Drawing.WorldToMinimap(a);
+                var bonScreen = Drawing.WorldToMinimap(b);
+
+                Drawing.DrawLine(aonScreen.X, aonScreen.Y, bonScreen.X, bonScreen.Y, thickness, color);
+            }
         }
 
         /// <summary>
@@ -93,6 +123,23 @@ namespace Tc_SDKexAIO.Common
                 distance -= d;
             }
             return self[self.Count - 1];
+        }
+
+        public static Vector2 To2D(this Vector3 v)
+        {
+            return new Vector2(v.X, v.Y);
+        }
+
+        public static bool IsOutside(this Vector3 point, Polygon poly)
+        {
+            var p = new IntPoint(point.X, point.Y);
+            return Clipper.PointInPolygon(p, poly.ToClipperPath()) != 1;
+        }
+
+        public static bool IsOutside(this Vector2 point, Polygon poly)
+        {
+            var p = new IntPoint(point.X, point.Y);
+            return Clipper.PointInPolygon(p, poly.ToClipperPath()) != 1;
         }
 
         public static Vector3 SwitchYZ(this Vector3 v)
@@ -125,75 +172,6 @@ namespace Tc_SDKexAIO.Common
 
         #endregion
 
-
-        public class Arc
-        {
-
-            #region Fields
-
-            public float Distance;
-
-            public Vector2 End;
-
-            public int HitBox;
-
-            public Vector2 Start;
-
-            #endregion
-
-            #region Constructors and Destructors
-
-            public Arc(Vector2 start, Vector2 end, int hitbox)
-            {
-                this.Start = start;
-                this.End = end;
-                this.HitBox = hitbox;
-                this.Distance = this.Start.Distance(this.End);
-            }
-
-            #endregion
-
-            #region Public Methods and Operators
-
-            public Polygon ToPolygon(int offset = 0)
-            {
-                offset += this.HitBox;
-                var result = new Polygon();
-                var innerRadius = -0.1562f * this.Distance + 687.31f;
-                var outerRadius = 0.35256f * this.Distance + 133f;
-                outerRadius = outerRadius / (float)Math.Cos(2 * Math.PI / CircleLineSegmentN);
-                var innerCenters = this.Start.CircleCircleIntersection(this.End, innerRadius, innerRadius);
-                var outerCenters = this.Start.CircleCircleIntersection(this.End, outerRadius, outerRadius);
-                var innerCenter = innerCenters[0];
-                var outerCenter = outerCenters[0];
-                Render.Circle.DrawCircle(innerCenter.ToVector3(), 100, Color.White);
-                var direction = (this.End - outerCenter).Normalized();
-                var end = (this.Start - outerCenter).Normalized();
-                var maxAngle = (float)(direction.AngleBetween(end) * Math.PI / 180);
-                var step = -maxAngle / CircleLineSegmentN;
-                for (var i = 0; i < CircleLineSegmentN; i++)
-                {
-                    var angle = step * i;
-                    var point = outerCenter + (outerRadius + 15 + offset) * direction.Rotated(angle);
-                    result.Add(point);
-                }
-                direction = (this.Start - innerCenter).Normalized();
-                end = (this.End - innerCenter).Normalized();
-                maxAngle = (float)(direction.AngleBetween(end) * Math.PI / 180);
-                step = maxAngle / CircleLineSegmentN;
-                for (var i = 0; i < CircleLineSegmentN; i++)
-                {
-                    var angle = step * i;
-                    var point = innerCenter + Math.Max(0, innerRadius - offset - 100) * direction.Rotated(angle);
-                    result.Add(point);
-                }
-                return result;
-            }
-
-            #endregion
-
-
-        }
 
         public class Circle
         {
