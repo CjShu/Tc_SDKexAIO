@@ -297,10 +297,12 @@
             };
             var poutput2 = Movement.GetPrediction(predInput2);
 
-            if (spell.Speed != float.MaxValue && SebbyLib.OktwCommon.CollisionYasuo(Player.ServerPosition, poutput2.CastPosition))
+            if (spell.Speed != float.MaxValue && Core.TCommon.CollisionYasuo(Player.ServerPosition, poutput2.CastPosition))
                 return;
+
             if (poutput2.Hitchance >= HitChance.VeryHigh)
                 spell.Cast(poutput2.CastPosition);
+
             else if (predInput2.AoE && poutput2.AoeTargetsHitCount > 1 && poutput2.Hitchance >= HitChance.High)
             {
                 spell.Cast(poutput2.CastPosition);

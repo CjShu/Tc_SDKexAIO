@@ -10,19 +10,15 @@
 
     using System;
     using System.Linq;
-    using System.Collections.Generic;
     using System.Windows.Forms;
 
     using SharpDX;
 
     using Common;
     using Config;
-    using Core;
     using static Common.Manager;
 
     using Menu = LeagueSharp.SDK.UI.Menu;
-    using Geometry = Common.Geometry;
-
 
     internal static class Jhin
     {
@@ -31,9 +27,8 @@
         private static Obj_AI_Hero Player => PlaySharp.Player;
         private static HpBarDraw HpBarDraw = new HpBarDraw();
         private static float LasPing = Variables.TickCount;
-        private static Vector3 PosCastR = Vector3.Zero;
-        public static bool IsCastingR => R.Instance.Name == "JhinRShot";
-        private static bool Ractive = false;
+        private static string StartR = "JhinR";
+        private static string IsCastingR = "JhinR";
         private static Spell Q, W, E, R;
 
         internal static void Init()
@@ -53,8 +48,6 @@
                 QMenu.GetBool("LaneClearQ", "LaneClear Q");
                 QMenu.GetBool("JungleQ", "Jungle Q");
                 QMenu.GetBool("KillStealQ", "KillSteal Q", false);
-                QMenu.GetBool("QMinion", "Use Q Minion Harass Enemy", false);
-                QMenu.GetSlider("QMinion", "How much Minion to Use Q Blow Enemy", 2, 3, 4);
             }
 
             var WMenu = Menu.Add(new Menu("W", "W.Set | W 設定"));
@@ -64,16 +57,10 @@
                 WMenu.GetBool("HarassW", "Harass W", false);
                 WMenu.GetBool("LaneClearW", "LaneClear W", false);
                 WMenu.GetBool("StunW", "Stun W", false);
+                WMenu.GetBool("WMO", "W Only Marked Target", false);
                 WMenu.GetKeyBind("WTap", "W Fire On Tap", Keys.G, KeyBindType.Press);
                 WMenu.Add(new MenuKeyBind("AutoW", "Use W Auto (Toggle)", Keys.Y, KeyBindType.Toggle));
                 WMenu.GetSlider("HarassWMana", "Harass W Min Mana > =", 60);
-                var WList = WMenu.Add(new Menu("WList", "HarassW List:"));
-                {
-                    if (GameObjects.EnemyHeroes.Any())
-                    {
-                        GameObjects.EnemyHeroes.ForEach(i => WList.GetBool(i.ChampionName.ToLower(), i.ChampionName, PlaySharp.AutoEnableList.Contains(i.ChampionName)));
-                    }
-                }
             }
 
             var EMenu = Menu.Add(new Menu("E", "E.Set | E 設定"));
@@ -81,21 +68,18 @@
                 EMenu.GetSeparator("E: Mobe");
                 EMenu.GetBool("ComboE", "Combo E");
                 EMenu.GetBool("LaneClearE", "LaneClear E", false);
-                EMenu.GetBool("JungleE", "Jungle E", false);
+                EMenu.GetSlider("LaneClearEMana", "LaneClear E Min Mana", 40, 0, 100);
+                EMenu.GetSlider("LCminions", "LaneClear Min minion", 3, 8, 0);
                 EMenu.GetSeparator("E: Gapcloser | Melee Modes");
                 EMenu.GetBool("Gapcloser", "Gapcloser E", false);
-                EMenu.GetSeparator("Auto E Set");
-                EMenu.GetBool("AutoE", "Auto E", false);
+                EMenu.GetSeparator("Auto E Always");
                 EMenu.GetKeyBind("ETap", "Force E", Keys.H, KeyBindType.Press);
             }
 
             var RMenu = Menu.Add(new Menu("R", "R.Set | R設定"));
             {
-                RMenu.GetSeparator("Auto R KillSteal");
-                RMenu.GetKeyBind("RTap", "R Fire On Tap", Keys.T, KeyBindType.Press);
-                RMenu.GetBool("Ping", "Ping Who Can Killable(Every 3 Seconds)", true);
-                RMenu.GetBool("Rvisable", "enemy is not visable Not R", false);
-                EMenu.GetBool("AutoR", "Enable R Auto");
+                RMenu.GetKeyBind("RTap", "R Fire On Tap", Keys.S, KeyBindType.Press);
+                RMenu.GetBool("Ping", "Ping Who Can Killable(Every 3 Seconds)", false);
             }
 
             var DrawMenu = Menu.Add(new Menu("Draw", "Draw"));
@@ -108,7 +92,7 @@
                 DrawMenu.GetBool("RDind", "Draw R Damage Indicator (3 Fire)", false);
             }
 
-            Menu.GetBool("ComboY", "ComboY", false);
+            Menu.GetBool("ComboY", "Combo Use Youmoo", false);
         
             PlaySharp.Write(GameObjects.Player.ChampionName + "Jhin OK! :)");
 
@@ -127,11 +111,6 @@
 
             try
             {
-                if (sender.IsMe && args.SData.Name == "JhinR")
-                {
-                    PosCastR = args.End;
-                }
-
                 if (!sender.IsMe && !AutoAttack.IsAutoAttack(args.SData.Name) || !args.Target.IsEnemy
                     || !args.Target.IsValid || !(args.Target is Obj_AI_Hero)) return;
                 if (Combo && Menu["ComboY"].GetValue<MenuBool>().Value)
@@ -217,13 +196,270 @@
 
         private static void OnUpdate(EventArgs args)
         {
-            throw new NotImplementedException();
-        }
 
+            try
+            {
+                if (Player.IsDead)
+                    return;
+
+                    ComboLogic(args);
+
+                    HarassLogic(args);
+
+                    LaneClearLogic(args);
+  
+                    KSLogic(args);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in On Update" + ex);
+            }
+        }
+            
         static void CastYoumoo()
         {
             if (Items.CanUseItem(3142))
                 Items.UseItem(3142);
+        }
+
+        private static void KSLogic(EventArgs args)
+        {
+            try
+            {
+                if (Menu["W"]["WTap"].GetValue<MenuKeyBind>().Active)
+                {
+                    if (W.IsReady())
+                    {
+                        var WTarget = GetTarget(W.Range, W.DamageType);
+
+                        if (W.GetPrediction(WTarget).Hitchance >= HitChance.High)
+                        {
+                            W.Cast(W.GetPrediction(WTarget).UnitPosition);
+                        }
+                    }
+                }
+                if (Menu["Q"]["KillStealQ"].GetValue<MenuBool>())
+                {
+                    if (Q.IsReady())
+                    {
+                        var QTarget = GetTarget(Q.Range, Q.DamageType);
+
+                        if (QTarget.Health <= Q.GetDamage(QTarget))
+                        {
+                            Q.Cast(QTarget);
+                        }
+                    }
+                }
+                if (Menu["W"]["KSW"].GetValue<MenuBool>())
+                {
+                    if (W.IsReady())
+                    {
+                        var WTarget = GetTarget(W.Range, W.DamageType);
+
+                        if (WTarget.Health <= W.GetDamage(WTarget) && W.GetPrediction(WTarget).Hitchance >= HitChance.VeryHigh)
+                        {
+                            W.Cast(W.GetPrediction(WTarget).UnitPosition);
+                        }
+                    }
+                }
+                foreach (var e in GameObjects.Get<Obj_AI_Hero>().Where(x => x.IsValidTarget() && x.Health
+                    <= R.GetDamage(x) * 3 && !x.IsZombie && !x.IsDead && !x.IsDead))
+                {
+                    if (LasPing <= Variables.TickCount && Menu["R"]["Ping"])
+                    {
+                        LasPing = Variables.TickCount + 3000;
+                        Game.SendPing(PingCategory.Danger, e);
+                    }
+                }
+                if (Menu["E"]["ETap"].GetValue<MenuKeyBind>().Active)
+                {
+                    if (E.IsReady())
+                    {
+                        var ETarget = GetTarget(E.Range, E.DamageType);
+
+                        if (!ETarget.IsDead && R.GetPrediction(ETarget).Hitchance >= HitChance.High)
+                        {
+                            E.Cast(R.GetPrediction(ETarget).UnitPosition);
+                        }
+                    }
+                }
+                if (Menu["R"]["RTap"].GetValue<MenuKeyBind>().Active)
+                {
+                    if (R.IsReady() && R.Instance.Name == StartR)
+                    {
+                        var RTarget = GetTarget(R.Range, R.DamageType);
+
+                        if (RTarget.Health <= R.GetDamage(RTarget) * 3 && !RTarget.IsZombie && !RTarget.IsDead
+                            && R.GetPrediction(RTarget).Hitchance >= HitChance.VeryHigh)
+                        {
+                            if (Items.CanUseItem(3363))
+                            {
+                                Items.UseItem(3363, RTarget.Position);
+                            }
+                            R.Cast(R.GetPrediction(RTarget).UnitPosition);
+                        }
+                    }
+                }
+                if (Menu["R"]["RTap"].GetValue<MenuKeyBind>().Active)
+                {
+                    if (Q.IsReady() && R.Instance.Name == IsCastingR)
+                    {
+                        var RTarget = GetTarget(R.Range, R.DamageType);
+
+                        if (Items.CanUseItem(3363))
+                        {
+                            Items.UseItem(3363, RTarget.Position);
+                        }
+                        R.Cast(R.GetPrediction(RTarget).UnitPosition);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error In KSLogic" + ex);
+            }
+        }
+
+        private static void ComboLogic(EventArgs args)
+        {
+            try
+            {
+                if (Combo && Menu["W"]["ComboW"].GetValue<MenuBool>())
+                {
+                    if (W.IsReady())
+                    {
+                        var WTarget = GetTarget(2500, W.DamageType);
+
+                        var WMO = Menu["W"]["WMO"].GetValue<MenuBool>();
+
+                        if (W.GetPrediction(WTarget).Hitchance >= HitChance.VeryHigh
+                            && ((WTarget.HasBuff("jhinespotteddebuff") && WMO) || !WMO))
+                        {
+                            W.Cast(W.GetPrediction(WTarget).UnitPosition);
+                        }
+                    }
+                }
+                if (Combo && Menu["Q"]["ComboQ"].GetValue<MenuBool>())
+                {
+                    var QTarget = GetTarget(550, Q.DamageType);
+
+                    if (Q.IsReady() && !Player.IsWindingUp && !Variables.Orbwalker.CanAttack)
+                    {
+                        Q.Cast(QTarget);
+                    }
+                }
+                if (Combo && Menu["E"]["ComboE"].GetValue<MenuBool>())
+                {
+                    var ETarget = Variables.Orbwalker.GetTarget();
+
+                    if (E.IsReady() && ETarget.IsValidTarget())
+                    {
+                        E.Cast(E.GetPrediction((Obj_AI_Base)ETarget).UnitPosition);
+                    }
+                }
+                if (Combo && Menu["W"]["AutoW"].GetValue<MenuKeyBind>().Active)
+                {
+                    if (Player.ManaPercent >= Menu["W"]["HarassWMana"].GetValue<MenuSlider>().Value)
+                    {
+                        var WTarget = GetTarget(2500, W.DamageType);
+
+                        var WMO = Menu["W"]["WMO"].GetValue<MenuBool>();
+
+                        if (W.GetPrediction(WTarget).Hitchance >= HitChance.VeryHigh
+                            && W.IsReady() && ((WTarget.HasBuff("jhinespotteddebuff")
+                            && WMO) && !WMO))
+                        {
+                            W.Cast(W.GetPrediction(WTarget).UnitPosition);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error In ComboLogic" + ex);
+            }
+        }
+
+        private static void HarassLogic(EventArgs args)
+        {
+            try
+            {
+                if (Harass && Menu["W"]["HarassW"].GetValue<MenuBool>())
+                {
+                    var WTarget = GetTarget(2500, W.DamageType);
+
+                    var WMO = Menu["W"]["WMO"].GetValue<MenuBool>();
+
+                    if (W.GetPrediction(WTarget).Hitchance >= HitChance.VeryHigh
+                        && W.IsReady() && ((WTarget.HasBuff("jhinespotteddebuff") && WMO) || !WMO))
+                    {
+                        W.Cast(W.GetPrediction(WTarget).UnitPosition);
+                    }
+                }
+                if (Harass && Menu["Q"]["HarassQ"].GetValue<MenuBool>())
+                {
+                    var QTarget = GetTarget(550, Q.DamageType);
+
+                    if (Q.IsReady() && !Player.IsWindingUp && !Variables.Orbwalker.CanAttack)
+                    {
+                        Q.Cast(QTarget);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error In HarassLogic" + ex);
+            }
+        }
+
+        private static void LaneClearLogic(EventArgs args)
+        {
+            try
+            {
+                if (LaneClear && Menu["Q"]["LaneClearQ"].GetValue<MenuBool>())
+                {
+                    var minionQ = GameObjects.EnemyMinions.Where(x => x.IsValidTarget(Q.Range)).MinOrDefault(x => x.Health);
+
+                    if (minionQ != null)
+                    {
+                        Q.Cast(minionQ);
+                    }
+                }
+
+                if (LaneClear && Menu["Q"]["JungleQ"].GetValue<MenuBool>())
+                {
+                    var JungleQ = GameObjects.JungleLarge.Where(x => x.IsValidTarget(Q.Range)).MinOrDefault(x => x.Health);
+                    if (JungleQ != null)
+                    {
+                        Q.Cast(JungleQ);
+                    }
+                }
+                if (LaneClear && Menu["W"]["LaneClearW"].GetValue<MenuBool>())
+                {
+                    var minionW = GameObjects.EnemyMinions.Where(x => x.IsValidTarget(W.Range)).MinOrDefault(x => x.Health);
+
+                    if (minionW != null)
+                    {
+                        W.Cast(minionW);
+                    }
+                }
+                if (LaneClear && Menu["E"]["LaneClearE"].GetValue<MenuBool>())
+                {
+                    var minionE = GetMinions(Player.ServerPosition, E.Range);
+
+                    var farmPosition = E.GetCircularFarmLocation(minionE, W.Width);
+
+                    if (Player.ManaPercent > Menu["E"]["LaneClearEMana"].GetValue<MenuSlider>().Value)
+                    {
+                        if (farmPosition.MinionsHit >= Menu["E"]["LCminions"].GetValue<MenuSlider>().Value)
+                            E.Cast(farmPosition.Position);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error In LaneClearLogic" + ex);
+            }
         }
 
         private static void OnEndScene(EventArgs args)

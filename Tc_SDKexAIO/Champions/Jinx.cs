@@ -814,7 +814,9 @@
         {
 
             var Dmg = spell.GetDamage(t);
+
             var hp = Health.GetPrediction(t, 500);
+
             Dmg += hp;
             Dmg -= t.HPRegenRate;
             Dmg -= t.PercentLifeStealMod * 0.005f * t.FlatPhysicalDamageMod;

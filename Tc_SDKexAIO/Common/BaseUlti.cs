@@ -116,7 +116,6 @@
             catch (Exception ex)
             {
                 Console.WriteLine("Error In BaseUlti" + ex);
-                Console.Clear();
             }
         }
 
