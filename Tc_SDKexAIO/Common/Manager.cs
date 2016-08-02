@@ -49,49 +49,7 @@
             return Variables.TargetSelector.GetTarget(Spell, Ignote);
         }
 
-        /// <summary>
-        /// (This Part From SebbyLib)
-        /// </summary>
-        /// <param name="spell"></param>
-        /// <param name="e"></param>
-        public static void SpellCast(Spell spell, Obj_AI_Base Target)
-        {
-            SkillshotType CoreType = SkillshotType.SkillshotLine;
-            bool aoe2 = false;
-
-            if (spell.Type == SkillshotType.SkillshotCircle)
-            {
-                CoreType = SkillshotType.SkillshotCircle;
-                aoe2 = true;
-            }
-
-            if (spell.Width > 80 && !spell.Collision)
-                aoe2 = true;
-
-            var predInput2 = new Core.PredictionInput
-            {
-                AoE = aoe2,
-                Collision = spell.Collision,
-                Speed = spell.Speed,
-                Delay = spell.Delay,
-                Range = spell.Range,
-                From = Player.ServerPosition,
-                Radius = spell.Width,
-                Unit = Target,
-                Type = CoreType
-            };
-            var poutput2 = Core.Prediction.GetPrediction(predInput2);
-
-            if (spell.Speed != float.MaxValue && Core.TCommon.CollisionYasuo(Player.ServerPosition, poutput2.CastPosition))
-                return;
-
-            if (poutput2.Hitchance >= HitChance.VeryHigh)
-                spell.Cast(poutput2.CastPosition);
-            else if (predInput2.AoE && poutput2.AoeTargetsHitCount > 1 && poutput2.Hitchance >= HitChance.High)
-            {
-                spell.Cast(poutput2.CastPosition);
-            }
-        }
+        public static int GetMana(SpellSlot slot, AMenuComponent value) => value.GetValue<MenuSliderButton>().SValue + (int)(GameObjects.Player.Spellbook.GetSpell(slot).ManaCost / GameObjects.Player.MaxMana * 100);
 
         public static bool InAutoAttackRange(AttackableUnit target)
         {
@@ -141,11 +99,36 @@
                 return true;
         }
 
+        private static bool CanMovee(Obj_AI_Hero target)
+        {
+            if (target.HasBuffOfType(BuffType.Stun)
+                || target.HasBuffOfType(BuffType.Snare)
+                || target.HasBuffOfType(BuffType.Knockup)
+                || target.HasBuffOfType(BuffType.Charm)
+                || target.HasBuffOfType(BuffType.Fear)
+                || target.HasBuffOfType(BuffType.Knockback)
+                || target.HasBuffOfType(BuffType.Taunt)
+                || target.HasBuffOfType(BuffType.Suppression)
+                || target.IsStunned || target.IsCastingInterruptableSpell()
+                || target.MoveSpeed < 50f)
+            {
+                return false;
+            }
+            else
+                return true;
+        }
+
         public static bool CanKill(Obj_AI_Base Target)
         {
-            if (Target.HasBuffOfType(BuffType.PhysicalImmunity) || Target.HasBuffOfType(BuffType.SpellImmunity) || Target.IsZombie
-                || Target.IsInvulnerable || Target.HasBuffOfType(BuffType.Invulnerability) || Target.HasBuffOfType(BuffType.SpellShield)
-                || Target.HasBuff("deathdefiedbuff") || Target.HasBuff("Undying Rage") || Target.HasBuff("Chrono Shift"))
+            if (Target.HasBuffOfType(BuffType.PhysicalImmunity)
+                || Target.HasBuffOfType(BuffType.SpellImmunity)
+                || Target.IsZombie
+                || Target.IsInvulnerable
+                || Target.HasBuffOfType(BuffType.Invulnerability)
+                || Target.HasBuffOfType(BuffType.SpellShield)
+                || Target.HasBuff("deathdefiedbuff")
+                || Target.HasBuff("Undying Rage")
+                || Target.HasBuff("Chrono Shift"))
             {
                 return false;
             }
@@ -164,7 +147,70 @@
             else
                 return false;
         }
-        public static bool HasSheenBuff() => Player.HasBuff("sheen") || Player.HasBuff("LichBane") || Player.HasBuff("dianaarcready") || Player.HasBuff("ItemFrozenFist");
+
+        public static double GetDamage(Obj_AI_Hero Target, bool CalCulateAttackDamage = true,
+            bool CalCulateQDamage = true, bool CalCulateWDamage = true,
+            bool CalCulateEDamage = true, bool CalCulateRDamage = true)
+        {
+            if (CheckTarget(Target))
+            {
+                double Damage = 0d;
+
+                if (CalCulateAttackDamage)
+                {
+                    Damage += GameObjects.Player.GetAutoAttackDamage(Target);
+                }
+
+                if (CalCulateQDamage)
+                {
+                    Damage += GameObjects.Player.Spellbook.GetSpell(SpellSlot.Q).IsReady() ? GameObjects.Player.GetSpellDamage(Target, SpellSlot.Q) : 0d;
+                }
+
+                if (CalCulateWDamage)
+                {
+                    Damage += GameObjects.Player.Spellbook.GetSpell(SpellSlot.W).IsReady() ? GameObjects.Player.GetSpellDamage(Target, SpellSlot.W) : 0d;
+                }
+
+                if (CalCulateEDamage)
+                {
+                    Damage += GameObjects.Player.Spellbook.GetSpell(SpellSlot.E).IsReady() ? GameObjects.Player.GetSpellDamage(Target, SpellSlot.E) : 0d;
+                }
+
+                if (CalCulateRDamage)
+                {
+                    Damage += GameObjects.Player.Spellbook.GetSpell(SpellSlot.R).IsReady() ? GameObjects.Player.GetSpellDamage(Target, SpellSlot.R) : 0d;
+                }
+
+                return Damage;
+            }
+            else
+            {
+                return 0d;
+            }
+        }
+
+        public static int GetCustomDamage(this Obj_AI_Hero source, string auraname, Obj_AI_Hero target)
+        {
+            if (auraname == "sheen")
+            {
+                return
+                    (int)
+                        source.CalculateDamage(target, DamageType.Physical,
+                            1.0 * source.FlatPhysicalDamageMod + source.BaseAttackDamage);
+            }
+
+            if (auraname == "lichbane")
+            {
+                return
+                    (int)
+                        source.CalculateDamage(target, DamageType.Magical,
+                            (0.75 * source.FlatPhysicalDamageMod + source.BaseAttackDamage) +
+                            (0.50 * source.FlatMagicDamageMod));
+            }
+
+            return 0;
+        }
+
 
         #region 模式
 

@@ -96,7 +96,6 @@
     <Compile Include="Core\Dash.cs" />
     <Compile Include="Common\Geometry.cs" />
     <Compile Include="Config\ExterienceManager.cs" />
-    <Compile Include="Core\Prediction.cs" />
     <Compile Include="Core\TCommon.cs" />
     <Compile Include="Core\WallDashLogic.cs" />
     <Compile Include="PlaySharp.cs" />

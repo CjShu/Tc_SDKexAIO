@@ -16,38 +16,152 @@
 
 namespace Tc_SDKexAIO.Common
 {
-    #region
-
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-
+    using ClipperLib;
     using LeagueSharp;
     using LeagueSharp.SDK;
-
-
-    using ClipperLib;
-
     using SharpDX;
-
-
+    using Color = System.Drawing.Color;
+    using SharpDX.Direct3D9;
+    using System.Linq;
     using Path = System.Collections.Generic.List<ClipperLib.IntPoint>;
     using Paths = System.Collections.Generic.List<System.Collections.Generic.List<ClipperLib.IntPoint>>;
     using GamePath = System.Collections.Generic.List<SharpDX.Vector2>;
 
-    using Color = System.Drawing.Color;
-
-    #endregion
-
     public static class Geometry
     {
-        #region Constants
-
         private const int CircleLineSegmentN = 22;
+        public static Font Text;
+        public static Font TextPassive;
 
-        #endregion
+        public static Vector3 CenterOfVectors(Vector3[] vectors)
+        {
+            var sum = Vector3.Zero;
+            if (vectors == null || vectors.Length == 0)
+                return sum;
 
-        #region Public Methods and Operators
+            sum = vectors.Aggregate(sum, (current, vec) => current + vec);
+
+            return sum / vectors.Length;
+        }
+
+        public static bool IsWallBetween(Vector3 start, Vector3 end, int step = 3)
+        {
+            if (start.IsValid() && end.IsValid() && step > 0)
+            {
+                var distance = start.Distance(end);
+                for (var i = 0; i < distance; i = i + step)
+                {
+                    if (NavMesh.GetCollisionFlags(start.Extend(end, i)) == CollisionFlags.Wall)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private static void CurrentDomainOnDomainUnload(object sender, EventArgs eventArgs)
+        {
+            Text.Dispose();
+            TextPassive.Dispose();
+        }
+
+        private static void DrawingOnOnPostReset(EventArgs args)
+        {
+            Text.OnResetDevice();
+            TextPassive.OnResetDevice();
+        }
+
+        private static void DrawingOnOnPreReset(EventArgs args)
+        {
+            Text.OnLostDevice();
+            TextPassive.OnLostDevice();
+        }
+
+        public static void Init()
+        {
+
+
+            Text = new Font(
+                Drawing.Direct3DDevice,
+                new FontDescription
+                {
+                    FaceName = "Tahoma",
+                    Height = 13,
+                    OutputPrecision = FontPrecision.Default,
+                    Quality = FontQuality.Default
+                });
+            TextPassive = new Font(
+               Drawing.Direct3DDevice,
+               new FontDescription
+               {
+                   FaceName = "Calibri",
+                   Height = 11,
+                   OutputPrecision = FontPrecision.Default,
+                   Quality = FontQuality.Draft
+               });
+            Drawing.OnPreReset += DrawingOnOnPreReset;
+            Drawing.OnPostReset += DrawingOnOnPostReset;
+            AppDomain.CurrentDomain.DomainUnload += CurrentDomainOnDomainUnload;
+            AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnDomainUnload;
+        }
+        public static void DrawBox(float positionX, float positionY, float width, int height, System.Drawing.Color color, int borderwidth, System.Drawing.Color borderColor, string text = "")
+        {
+            if (color != Color.Transparent)
+            {
+                Drawing.DrawLine(positionX, positionY, positionX + width, positionY, height, color);
+            }
+
+            if (borderwidth > 0)
+            {
+                Drawing.DrawLine(positionX, positionY, positionX + width - 1, positionY, borderwidth, borderColor);
+                Drawing.DrawLine(positionX, positionY + height, positionX + width - 1, positionY + height, borderwidth, borderColor);
+                Drawing.DrawLine(positionX, positionY + 1, positionX, positionY + height, borderwidth,
+                    borderColor);
+                Drawing.DrawLine(positionX + width, positionY + 1, positionX + width, positionY + height,
+                    borderwidth, borderColor);
+            }
+
+            if (text != "")
+            {
+
+            }
+        }
+
+        public static void DrawBox(Vector2 position, float width, int height, System.Drawing.Color color, int borderwidth, System.Drawing.Color borderColor, string text = "")
+        {
+            if (color != Color.Transparent)
+            {
+                Drawing.DrawLine(position.X, position.Y, position.X + width, position.Y, height, color);
+            }
+
+            if (borderwidth > 0)
+            {
+                Drawing.DrawLine(position.X, position.Y, position.X + width - 1, position.Y, borderwidth, borderColor);
+                Drawing.DrawLine(position.X, position.Y + height, position.X + width - 1, position.Y + height, borderwidth, borderColor);
+                Drawing.DrawLine(position.X, position.Y + 1, position.X, position.Y + height, borderwidth,
+                    borderColor);
+                Drawing.DrawLine(position.X + width, position.Y + 1, position.X + width, position.Y + height,
+                    borderwidth, borderColor);
+            }
+
+            if (text != "")
+            {
+
+            }
+        }
+
+        public static void DrawText(Font vFont, string vText, float vPosX, float vPosY, ColorBGRA vColor, bool shadow = false)
+        {
+            if (shadow)
+            {
+                vFont.DrawText(null, vText, (int)vPosX + 2, (int)vPosY + 2, SharpDX.Color.Black);
+            }
+
+            vFont.DrawText(null, vText, (int)vPosX, (int)vPosY, vColor);
+        }
 
         public static Paths ClipPolygons(List<Polygon> polygons)
         {
@@ -62,7 +176,6 @@ namespace Tc_SDKexAIO.Common
 
             var solution = new Paths();
             var c = new Clipper();
-
             c.AddPaths(subj, PolyType.ptSubject, true);
             c.AddPaths(clip, PolyType.ptClip, true);
             c.Execute(ClipType.ctUnion, solution, PolyFillType.pftPositive, PolyFillType.pftEvenOdd);
@@ -75,34 +188,6 @@ namespace Tc_SDKexAIO.Common
             var from = Drawing.WorldToScreen(start);
             var to = Drawing.WorldToScreen(end);
             Drawing.DrawLine(from[0], from[1], to[0], to[1], width, color);
-        }
-
-        public static void DrawCircle(Vector3 center,
-            float radius,
-            Color color,
-            int thickness = 1,
-            int quality = 254)
-        {
-            var pointList = new List<Vector3>();
-            for (var i = 0; i < quality; i++)
-            {
-                var angle = i * Math.PI * 2 / quality;
-                pointList.Add(
-                    new Vector3(
-                        center.X + radius * (float) Math.Cos(angle), center.Y + radius * (float) Math.Sin(angle),
-                        center.Z));
-            }
-
-            for (var i = 0; i < pointList.Count; i++)
-            {
-                var a = pointList[i];
-                var b = pointList[i == pointList.Count - 1 ? 0 : i + 1];
-
-                var aonScreen = Drawing.WorldToMinimap(a);
-                var bonScreen = Drawing.WorldToMinimap(b);
-
-                Drawing.DrawLine(aonScreen.X, aonScreen.Y, bonScreen.X, bonScreen.Y, thickness, color);
-            }
         }
 
         /// <summary>
@@ -123,23 +208,6 @@ namespace Tc_SDKexAIO.Common
                 distance -= d;
             }
             return self[self.Count - 1];
-        }
-
-        public static Vector2 To2D(this Vector3 v)
-        {
-            return new Vector2(v.X, v.Y);
-        }
-
-        public static bool IsOutside(this Vector3 point, Polygon poly)
-        {
-            var p = new IntPoint(point.X, point.Y);
-            return Clipper.PointInPolygon(p, poly.ToClipperPath()) != 1;
-        }
-
-        public static bool IsOutside(this Vector2 point, Polygon poly)
-        {
-            var p = new IntPoint(point.X, point.Y);
-            return Clipper.PointInPolygon(p, poly.ToClipperPath()) != 1;
         }
 
         public static Vector3 SwitchYZ(this Vector3 v)
@@ -169,9 +237,6 @@ namespace Tc_SDKexAIO.Common
 
             return result;
         }
-
-        #endregion
-
 
         public class Circle
         {
@@ -364,6 +429,7 @@ namespace Tc_SDKexAIO.Common
                 {
                     var nextIndex = (this.Points.Count - 1 == i) ? i : (i + 1);
                     DrawLineInWorld(this.Points[i].ToVector3(), this.Points[nextIndex].ToVector3(), width, color);
+                    //DrawLineInWorld(this.Points[i].ToVector3(), this.Points[nextIndex].ToVector3(), width, color);
                 }
             }
 
