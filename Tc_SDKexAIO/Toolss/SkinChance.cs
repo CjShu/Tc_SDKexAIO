@@ -5,13 +5,15 @@
     using LeagueSharp.SDK.UI;
     using System;
     using System.Collections.Generic;
+    using Config;
+
+    using Menu = LeagueSharp.SDK.UI.Menu;
 
     internal class SkinChance
     {
 
         private static Obj_AI_Hero Player => PlaySharp.Player;
         private static Menu Menu => Tools.Menu;
-        //private static IEnumerable<string> Name;
 
         private static int SkinID;
 
@@ -23,7 +25,7 @@
 
             var SkinMenu = Menu.Add(new Menu("SkinChance", "Skin | 造型皮膚"));
             {
-                SkinMenu.Add(new MenuBool("Enable", "Enable", false));
+                SkinMenu.GetBool("Eanble", "Enabled", false);
 
                 switch (Player.ChampionName)
                 {
@@ -60,7 +62,7 @@
 
         #endregion
 
-        #region SkinNama 造型名稱
+        #region 造型名稱 SkinNama
 
         private static IEnumerable<string> Aatrox = new[]
         {
@@ -716,6 +718,7 @@
         {
             "Classic", "Wildfire Zyra", "Haunted Zyra", "SKT T1 Zyra"
         };
+
         #endregion
     }
 }

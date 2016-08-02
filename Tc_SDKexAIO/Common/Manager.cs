@@ -10,6 +10,7 @@
 
     using SharpDX;
     using SharpDX.Direct3D9;
+    using Collision = LeagueSharp.SDK.Collision;
 
     using System;
     using System.Collections.Generic;
@@ -17,6 +18,8 @@
 
     internal static class Manager
     {
+        private static List<UnitIncomingDamage> IncomingDamageList = new List<UnitIncomingDamage>();
+
         private static Obj_AI_Hero Player => PlaySharp.Player;
 
         public static List<Obj_AI_Minion> GetMinions(Vector3 From, float Range)
@@ -211,6 +214,98 @@
             return 0;
         }
 
+        public static double GetIncomingDamage(Obj_AI_Hero Target, float time = 0.5f, bool skillshots = true)
+        {
+            double Damage = 0;
+
+            foreach (var damage in IncomingDamageList.Where(damage => damage.TargetNetworkId == Target.NetworkId && Game.Time - time < damage.Time))
+            {
+                if (skillshots)
+                {
+                    Damage += damage.Damage;
+                }
+                else
+                {
+                    if (!damage.Skillshot)
+                        Damage += damage.Damage;
+                }
+            }
+            return Damage;
+        }
+
+        public static bool SpellCollision(Obj_AI_Hero t, Spell spell, int extraWith = 50)
+        {
+            foreach (var hero in GameObjects.EnemyHeroes.Where(hero => hero.IsValidTarget(spell.Range + spell.Width, true, spell.RangeCheckFrom) && t.NetworkId != hero.NetworkId))
+            {
+                var prediction = spell.GetPrediction(hero);
+                var powCalc = Math.Pow((spell.Width + extraWith + hero.BoundingRadius), 2);
+                if (prediction.UnitPosition.ToVector2().DistanceSquared(spell.From.ToVector2(), spell.GetPrediction(t).CastPosition.ToVector2(), true) <= powCalc)
+                {
+                    return true;
+                }
+                else if (prediction.UnitPosition.ToVector2().Distance(spell.From.ToVector2(), t.ServerPosition.ToVector2(), true) <= powCalc)
+                {
+                    return true;
+                }
+
+            }
+            return false;
+        }
+
+        public static bool ValidUlt(Obj_AI_Hero target)
+        {
+            if (target.HasBuffOfType(BuffType.PhysicalImmunity) || target.HasBuffOfType(BuffType.SpellImmunity)
+                || target.IsZombie || target.IsInvulnerable || target.HasBuffOfType(BuffType.Invulnerability) || target.HasBuff("kindredrnodeathbuff")
+                || target.HasBuffOfType(BuffType.SpellShield) || target.Health - GetIncomingDamage(target) < 1)
+                return false;
+            else
+                return true;
+        }
+
+        public static bool CanHarras()
+        {
+            if (!Player.IsWindingUp && !Player.IsUnderEnemyTurret() && Variables.Orbwalker.CanMove)
+                return true;
+            else
+                return false;
+        }
+
+        public static void CastSpell(Spell spell, Obj_AI_Base target)
+        {
+            SkillshotType CoreType2 = SkillshotType.SkillshotLine;
+            bool aoe2 = false;
+            if (spell.Type == SkillshotType.SkillshotCircle)
+            {
+                CoreType2 = SkillshotType.SkillshotCircle;
+                aoe2 = true;
+            }
+
+            if (spell.Width > 80 && !spell.Collision)
+                aoe2 = true;
+
+            var predInput2 = new PredictionInput
+            {
+                AoE = aoe2,
+                Collision = spell.Collision,
+                Speed = spell.Speed,
+                Delay = spell.Delay,
+                Range = spell.Range,
+                From = Player.ServerPosition,
+                Radius = spell.Width,
+                Unit = target,
+                Type = CoreType2
+            };
+            var poutput2 = Movement.GetPrediction(predInput2);
+
+            if (spell.Speed != float.MaxValue && SebbyLib.OktwCommon.CollisionYasuo(Player.ServerPosition, poutput2.CastPosition))
+                return;
+            if (poutput2.Hitchance >= HitChance.VeryHigh)
+                spell.Cast(poutput2.CastPosition);
+            else if (predInput2.AoE && poutput2.AoeTargetsHitCount > 1 && poutput2.Hitchance >= HitChance.High)
+            {
+                spell.Cast(poutput2.CastPosition);
+            }
+        }
 
         #region 模式
 
@@ -311,5 +406,13 @@
             Time = time;
             Damage = damage;
         }
+    }
+
+    internal class UnitIncomingDamage
+    {
+        public int TargetNetworkId;
+        public float Time;
+        public double Damage;
+        public bool Skillshot;
     }
 }
