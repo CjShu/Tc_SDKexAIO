@@ -252,6 +252,11 @@
             return false;
         }
 
+        /// <summary>
+        /// (Sebby Lib)
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
         public static bool ValidUlt(Obj_AI_Hero target)
         {
             if (target.HasBuffOfType(BuffType.PhysicalImmunity) || target.HasBuffOfType(BuffType.SpellImmunity)
@@ -262,6 +267,10 @@
                 return true;
         }
 
+        /// <summary>
+        /// (Sebby Lib)
+        /// </summary>
+        /// <returns></returns>
         public static bool CanHarras()
         {
             if (!Player.IsWindingUp && !Player.IsUnderEnemyTurret() && Variables.Orbwalker.CanMove)
@@ -270,6 +279,11 @@
                 return false;
         }
 
+        /// <summary>
+        /// (Sebby Lib)
+        /// </summary>
+        /// <param name="spell"></param>
+        /// <param name="target"></param>
         public static void CastSpell(Spell spell, Obj_AI_Base target)
         {
             SkillshotType CoreType2 = SkillshotType.SkillshotLine;

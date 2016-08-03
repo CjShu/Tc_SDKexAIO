@@ -43,7 +43,7 @@
 
         private static string[] SupList =
         {
-            "Jinx", "Jhin"
+            "Jinx", "Jhin", "Teemo"
         };
 
         #endregion

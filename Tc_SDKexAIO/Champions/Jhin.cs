@@ -56,7 +56,7 @@
                 WMenu.GetBool("KSW", "Killsteal W");
                 WMenu.GetBool("HarassW", "Harass W", false);
                 WMenu.GetBool("LaneClearW", "LaneClear W", false);
-                WMenu.GetBool("StunW", "Stun W", false);
+                //WMenu.GetBool("StunW", "Stun W", false);
                 WMenu.GetBool("WMO", "W Only Marked Target", false);
                 WMenu.GetKeyBind("WTap", "W Fire On Tap", Keys.G, KeyBindType.Press);
                 WMenu.Add(new MenuKeyBind("AutoW", "Use W Auto (Toggle)", Keys.Y, KeyBindType.Toggle));
