@@ -185,6 +185,6 @@
 
             Menu["QSS"]["CleanDelay"].GetValue<MenuSlider>().Value += UseCleanTime = Variables.TickCount;
             return CanUse;
-        }      
+        }
     }
 }
