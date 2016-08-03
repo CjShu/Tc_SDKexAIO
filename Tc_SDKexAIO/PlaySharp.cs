@@ -87,6 +87,9 @@
                 case "Jhin":
                     Champions.Jhin.Init();
                     break;
+                case "Teemo":
+                    Champions.Teemo.Init();
+                    break;
                 default:
                     break;
             }

@@ -732,39 +732,6 @@
             return count;
         }
 
-        private static float GetUltTravelTime(Obj_AI_Hero source, float speed, float delay, Vector3 targetpos)
-        {
-            float distance = Vector3.Distance(source.ServerPosition, targetpos);
-            float missilespeed = speed;
-            if (source.ChampionName == "Jinx" && distance > 1350)
-            {
-                const float accelerationrate = 0.3f;
-                var acceldifference = distance - 1350f;
-                if (acceldifference > 150f)
-                    acceldifference = 150f;
-                var difference = distance - 1500f;
-                missilespeed = (1350f * speed + acceldifference * (speed + accelerationrate * acceldifference) + difference * 2200f) / distance;
-            }
-            return (distance / missilespeed + delay);
-        }
-
-        private static float GetRDamage(Obj_AI_Hero target)
-        {
-            var maxDmg = new double[] { 160, 224, 288 }[R.Level - 1] + new double[] { 20, 24, 28 }[R.Level - 1] / 100 * (target.MaxHealth - target.Health) + 0.8 * Player.FlatPhysicalDamageMod;
-
-            var dis = Player.Distance(target);
-            if (Player.Distance(target) > 1500)
-            {
-                return (float)Player.CalculateDamage(target, DamageType.Physical, maxDmg);
-            }
-            else
-            {
-                var x = dis / 100;
-                var y = x * 6;
-                return (float)Player.CalculateDamage(target, DamageType.Physical, maxDmg * 0.01 * y);
-            }
-        }
-
         private static float Q2Range()
         {
             return 670f + Player.BoundingRadius + 25 * Player.Spellbook.GetSpell(SpellSlot.Q).Level;
