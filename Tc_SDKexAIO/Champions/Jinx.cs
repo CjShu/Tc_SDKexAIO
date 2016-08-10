@@ -47,20 +47,22 @@
             var QMenu = Menu.Add(new Menu("Q", "Q.Set | Q 設定"));
             {
                 QMenu.GetSeparator("Q: Always On");
-                QMenu.GetBool("ComboQ", "Comno Q");
-                QMenu.GetBool("HarassQ", "Harass Q");
-                QMenu.GetBool("LaneClearQ", "LaneClear Q");
+                QMenu.Add(new MenuBool("ComboQ", "Comno Q", true));
+                QMenu.Add(new MenuBool("HarassQ", "Harass Q", true));
+                QMenu.Add(new MenuBool("LaneClearQ", "LaneClear Q", true));
             }
 
             var WMenu = Menu.Add(new Menu("W", "W.Set | W 設定"));
             {
-                WMenu.GetBool("Auto", "W Auto", false);
-                WMenu.GetBool("Mix", "Mix W");
-                var WList = WMenu.Add(new Menu("WList", "HarassW List:", false));
+                WMenu.Add(new MenuBool("ComboW", "Combo W", true));
+                WMenu.Add(new MenuBool("HarassW", "Harass W", true));
+                WMenu.Add(new MenuSlider("ManaW", "Mana Min Mana >= &", 40));
+                WMenu.Add(new MenuBool("KSW", "W Ks", true));
+                var WList = WMenu.Add(new Menu("WList", "HarassW List:"));
                 {
                     if (GameObjects.EnemyHeroes.Any())
                     {
-                        GameObjects.EnemyHeroes.ForEach(i => WList.GetBool(i.ChampionName.ToLower(), i.ChampionName, PlaySharp.AutoEnableList.Contains(i.ChampionName)));
+                        GameObjects.EnemyHeroes.ForEach(i => WList.Add(new MenuBool(i.ChampionName.ToLower(), i.ChampionName, PlaySharp.AutoEnableList.Contains(i.ChampionName))));
                     }
                 }
             }
@@ -68,32 +70,32 @@
             var EMenu = Menu.Add(new Menu("E", "E.Set | E 設定"));
             {
                 EMenu.GetSeparator("E: Mobe");
-                EMenu.GetBool("ComboE", "Combo E");
+                EMenu.Add(new MenuBool("ComboE", "Combo E", true));
                 EMenu.GetSeparator("E: Gapcloser | Melee Modes");
-                EMenu.GetBool("Gapcloser", "Gapcloser E", false);
+                EMenu.Add(new MenuBool("Gapcloser", "Gapcloser E", true));
                 EMenu.GetSeparator("Auto E Set");
-                EMenu.GetBool("SlowE", "Slow E", false);
-                EMenu.GetBool("StunE", "Stun E", false);
-                EMenu.GetBool("TelE", "Tel E", false);
-                EMenu.GetBool("ImmeE", "Imm E", false);
-                EMenu.GetBool("ProtectE", "Protect E", false);
+                EMenu.Add(new MenuBool("SlowE", "Slow E", true));
+                EMenu.Add(new MenuBool("StunE", "Stun E", true));
+                EMenu.Add(new MenuBool("TelE", "Tel E", true));
+                EMenu.Add(new MenuBool("ImmeE", "Imm E", true));
+                EMenu.Add(new MenuBool("ProtectE", "Protect E", true));
             }
 
             var RMenu = Menu.Add(new Menu("R", "R.Set | R設定"));
             {
                 RMenu.GetSeparator("R: Mobe");
-                RMenu.GetBool("Auto", "Auto R ", false);
+                RMenu.Add(new MenuBool("Auto", "Auto R ", true));
             }
             ModeBaseUlti.Init(Menu);
 
             var DrawMenu = Menu.Add(new Menu("Draw", "Draw"));
             {
-                DrawMenu.GetBool("Q", "Q Range", false);
-                DrawMenu.GetBool("W", "W Range", false);
-                DrawMenu.GetBool("E", "E Range", false);
-                DrawMenu.GetBool("RDKs", "Draw R KS", false);
-                DrawMenu.GetBool("EnableBuffs", "Draw Buff Enable");
-                DrawMenu.GetList("DrawBuffs", "Show Red/Blue Time Circle", new[] { "Off", "Blue Buff", "Red Buff", "Both" });
+                DrawMenu.Add(new MenuBool("Q", "Q Range"));
+                DrawMenu.Add(new MenuBool("W", "W Range"));
+                DrawMenu.Add(new MenuBool("E", "E Range"));
+                DrawMenu.Add(new MenuBool("RDKs", "Draw R KS", true));
+                DrawMenu.Add(new MenuBool("EnableBuffs", "Draw Buff Enable", true));
+                DrawMenu.GetList("DrawBuffs", "Show Red/Blue Time Circle", new[] { "Off", "Blue Buff", "Red Buff", "Both" }, 3);
             }
 
             PlaySharp.Write(GameObjects.Player.ChampionName + "Jinx OK! :)");
@@ -225,44 +227,36 @@
         {
             try
             {
-                var t = GetTarget(W);
-                if (t.IsValidTarget())
+                if (Menu["W"]["HarassW"].GetValue<MenuBool>() && W.IsReady() && Harass)
                 {
-                    foreach (var enemy in GameObjects.EnemyHeroes.Where(enemy => enemy.IsValidTarget(W.Range) && enemy.Distance(Player) > Q2Range()))
+                    foreach (var e in GetEnemies(W.Range))
                     {
-                        var comboDmg = GetDamage(t, W);
-                        if (R.IsReady() && Player.Mana > R.Instance.ManaCost + W.Instance.ManaCost + 20)
+                        if (Menu["W"]["WList" + PlaySharp.AutoEnableList.Contains(e.ChampionName)].GetValue<MenuBool>() && !Player.IsUnderEnemyTurret()
+                            && Player.ManaPercent >= Menu["W"]["ManaW"].GetValue<MenuSlider>().Value)
                         {
-                            comboDmg += R.GetDamage(enemy);
+                            W.Cast(e);
                         }
-                        if (comboDmg > enemy.Health && ValidUlt(enemy))
-                        {
-                            CastSpell(W, enemy);
-                            return;
-                        }
-                    }
-
-                    if (Player.CountEnemyHeroesInRange(Q2Range()) == 0)
-                    {
-                        if (Combo && Player.Mana > R.Instance.ManaCost + W.Instance.ManaCost + 10)
-                        {
-                            foreach (var enemy in GameObjects.EnemyHeroes.Where(enemy => enemy.IsValidTarget(W.Range) && GetRealDistance(enemy) > Q2Range()).OrderBy(enemy => enemy.Health))
-                                CastSpell(W, enemy);
-                        }
-                        else if (LaneClear || Harass && Player.Mana > R.Instance.ManaCost + E.Instance.ManaCost + W.Instance.ManaCost + W.Instance.ManaCost + 30
-                            && CanHarras())
-                        {
-                            foreach (var enemy in GameObjects.EnemyHeroes.Where(enemy => enemy.IsValidTarget(W.Range) && Menu["WList" + t.ChampionName]))
-                                CastSpell(W, enemy);
-                        }
-                    }
-                    if (!None && Player.Mana > R.Instance.ManaCost + W.Instance.ManaCost && Player.CountEnemyHeroesInRange(Q1Range(t)) == 0)
-                    {
-                        foreach (var enemy in GameObjects.EnemyHeroes.Where(enemy => enemy.IsValidTarget(W.Range) && !CanMove(enemy)))
-                            W.Cast(enemy, true);
                     }
                 }
-            }
+                if (Menu["W"]["ComboW"].GetValue<MenuBool>() && W.IsReady() && Combo)
+                {
+                    var WTarget = GetTarget(W);
+                    {
+                        if (WTarget != null && WTarget.IsValidTarget(W.Range) && WTarget.IsHPBarRendered)
+                        {
+                            W.Cast(WTarget);
+                        }
+                    }
+                }
+                foreach (var e in GetEnemies(W.Range))
+                {
+                    if (W.GetDamage(e) > e.Health && Menu["W"]["KSW"].GetValue<MenuBool>())
+                    {
+                        if (e.IsValidTarget(W.Range))
+                            W.Cast(e);
+                    }
+                }                      
+           }
             catch (Exception ex)
             {
                 Console.WriteLine("Error in Auto W Logic " + ex);

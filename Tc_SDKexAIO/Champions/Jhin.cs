@@ -43,57 +43,56 @@
             var QMenu = Menu.Add(new Menu("Q", "Q.Set | Q 設定"));
             {
                 QMenu.GetSeparator("Q: Always On");
-                QMenu.GetBool("ComboQ", "Comno Q");
-                QMenu.GetBool("HarassQ", "Harass Q");
-                QMenu.GetBool("LaneClearQ", "LaneClear Q");
-                QMenu.GetBool("JungleQ", "Jungle Q");
-                QMenu.GetBool("KillStealQ", "KillSteal Q", false);
+                QMenu.Add(new MenuBool("ComboQ", "Comno Q", true));
+                QMenu.Add(new MenuBool("HarassQ", "Harass Q", true));
+                QMenu.Add(new MenuBool("LaneClearQ", "LaneClear Q", true));
+                QMenu.Add(new MenuBool("JungleQ", "Jungle Q", true));
+                QMenu.Add(new MenuBool("KillStealQ", "KillSteal Q", true));
             }
 
             var WMenu = Menu.Add(new Menu("W", "W.Set | W 設定"));
             {
-                WMenu.GetBool("ComboW", "ComnoW");
-                WMenu.GetBool("KSW", "Killsteal W");
-                WMenu.GetBool("HarassW", "Harass W", false);
-                WMenu.GetBool("LaneClearW", "LaneClear W", false);
-                //WMenu.GetBool("StunW", "Stun W", false);
-                WMenu.GetBool("WMO", "W Only Marked Target", false);
-                WMenu.GetKeyBind("WTap", "W Fire On Tap", Keys.G, KeyBindType.Press);
+                WMenu.Add(new MenuBool("ComboW", "ComnoW", true));
+                WMenu.Add(new MenuBool("KSW", "Killsteal W", true));
+                WMenu.Add(new MenuBool("HarassW", "Harass W", true));
+                WMenu.Add(new MenuBool("LaneClearW", "LaneClear W", true));
+                WMenu.Add(new MenuBool("WMO", "W Only Marked Target", true));
+                WMenu.Add(new MenuKeyBind("WTap", "W Fire On Tap", Keys.G, KeyBindType.Press));
                 WMenu.Add(new MenuKeyBind("AutoW", "Use W Auto (Toggle)", Keys.Y, KeyBindType.Toggle));
-                WMenu.GetSlider("HarassWMana", "Harass W Min Mana > =", 60);
+                WMenu.Add(new MenuSlider("HarassWMana", "Harass W Min Mana > =", 60));
             }
 
             var EMenu = Menu.Add(new Menu("E", "E.Set | E 設定"));
             {
                 EMenu.GetSeparator("E: Mobe");
-                EMenu.GetBool("ComboE", "Combo E");
-                EMenu.GetBool("LaneClearE", "LaneClear E", false);
-                EMenu.GetSlider("LaneClearEMana", "LaneClear E Min Mana", 40, 0, 100);
-                EMenu.GetSlider("LCminions", "LaneClear Min minion", 3, 8, 0);
+                EMenu.Add(new MenuBool("ComboE", "Combo E", true));
+                EMenu.Add(new MenuBool("LaneClearE", "LaneClear E", true));
+                EMenu.Add(new MenuSlider("LaneClearEMana", "LaneClear E Min Mana", 40, 0, 100));
+                EMenu.Add(new MenuSlider("LCminions", "LaneClear Min minion", 5, 3, 8));
                 EMenu.GetSeparator("E: Gapcloser | Melee Modes");
-                EMenu.GetBool("Gapcloser", "Gapcloser E", false);
+                EMenu.Add(new MenuBool("Gapcloser", "Gapcloser E", true));
                 EMenu.GetSeparator("Auto E Always");
-                EMenu.GetKeyBind("ETap", "Force E", Keys.H, KeyBindType.Press);
+                EMenu.Add(new MenuKeyBind("ETap", "Force E", Keys.H, KeyBindType.Press));
             }
 
             var RMenu = Menu.Add(new Menu("R", "R.Set | R設定"));
             {
-                RMenu.GetKeyBind("RTap", "R Fire On Tap", Keys.S, KeyBindType.Press);
-                RMenu.GetBool("Ping", "Ping Who Can Killable(Every 3 Seconds)", false);
+                RMenu.Add(new MenuKeyBind("RTap", "R Fire On Tap", Keys.S, KeyBindType.Press));
+                RMenu.Add(new MenuBool("Ping", "Ping Who Can Killable(Every 3 Seconds)", true));
             }
 
             var DrawMenu = Menu.Add(new Menu("Draw", "Draw"));
             {
-                DrawMenu.GetBool("Q", "Q Range", false);
-                DrawMenu.GetBool("W", "W Range", false);
-                DrawMenu.GetBool("E", "E Range", false);
-                DrawMenu.GetBool("R", "R Range", false);
-                DrawMenu.GetBool("RDKs", "Draw Who Can Killable With R (3 Fire)", false);
-                DrawMenu.GetBool("RDind", "Draw R Damage Indicator (3 Fire)", false);
+                DrawMenu.Add(new MenuBool("Q", "Q Range"));
+                DrawMenu.Add(new MenuBool("W", "W Range"));
+                DrawMenu.Add(new MenuBool("E", "E Range"));
+                DrawMenu.Add(new MenuBool("R", "R Range"));
+                DrawMenu.Add(new MenuBool("RDKs", "Draw Who Can Killable With R (3 Fire)", true));
+                DrawMenu.Add(new MenuBool("RDind", "Draw R Damage Indicator (3 Fire)", true));
             }
 
-            Menu.GetBool("ComboY", "Combo Use Youmoo", false);
-        
+            Menu.Add(new MenuBool("ComboY", "Combo Use Youmoo", true));
+
             PlaySharp.Write(GameObjects.Player.ChampionName + "Jhin OK! :)");
 
 
@@ -202,20 +201,20 @@
                 if (Player.IsDead)
                     return;
 
-                    ComboLogic(args);
+                ComboLogic(args);
 
-                    HarassLogic(args);
+                HarassLogic(args);
 
-                    LaneClearLogic(args);
-  
-                    KSLogic(args);
+                LaneClearLogic(args);
+
+                KSLogic(args);
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error in On Update" + ex);
             }
         }
-            
+
         static void CastYoumoo()
         {
             if (Items.CanUseItem(3142))
@@ -519,6 +518,6 @@
             {
                 Console.WriteLine("Error In On Draw" + ex);
             }
-        }          
+        }
     }
 }

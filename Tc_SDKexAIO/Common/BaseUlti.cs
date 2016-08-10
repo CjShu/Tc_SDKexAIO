@@ -143,12 +143,12 @@
                 x.Player.IsValid<Obj_AI_Hero>() &&
                 !x.Player.IsDead &&
                 !DisabledChampions[x.Player.ChampionName] &&
-                #pragma warning disable 618
+#pragma warning disable 618
                 x.RecallInfo.Recall.Status == Packet.S2C.Teleport.Status.Start &&
-                #pragma warning restore 618
-                #pragma warning disable 618
+#pragma warning restore 618
+#pragma warning disable 618
                 x.RecallInfo.Recall.Type == Packet.S2C.Teleport.Type.Recall)
-                #pragma warning restore 618
+#pragma warning restore 618
                 .OrderBy(x => x.RecallInfo.GetRecallCountdown()))
             {
                 if (Utils.TickCount - LastUltCastT > 15000)
@@ -375,21 +375,21 @@
                 return;
             }
 
-            #pragma warning disable 618
+#pragma warning disable 618
             var recall = Packet.S2C.Teleport.Decoded(unit, args);
-            #pragma warning restore 618
+#pragma warning restore 618
             var enemyInfo =
                 EnemyInfo.Find(x => x.Player.NetworkId == recall.UnitNetworkId).RecallInfo.UpdateRecall(recall);
 
-            #pragma warning disable 618
+#pragma warning disable 618
             if (recall.Type == Packet.S2C.Teleport.Type.Recall)
-            #pragma warning restore 618
+#pragma warning restore 618
             {
                 switch (recall.Status)
                 {
-                #pragma warning disable 618
+#pragma warning disable 618
                     case Packet.S2C.Teleport.Status.Abort:
-                #pragma warning restore 618
+#pragma warning restore 618
                         if (MenuLocal["notifRecAborted"])
                         {
                             ShowNotification(enemyInfo.Player.ChampionName + ": Recall ABORTED",
@@ -397,9 +397,9 @@
                         }
 
                         break;
-                    #pragma warning disable 618
+#pragma warning disable 618
                     case Packet.S2C.Teleport.Status.Finish:
-                    #pragma warning restore 618
+#pragma warning restore 618
                         if (MenuLocal["notifRecFinished"])
                         {
                             ShowNotification(enemyInfo.Player.ChampionName + ": Recall FINISHED", NotificationColor,
@@ -537,10 +537,10 @@
     {
         public EnemyInfo EnemyInfo;
         public Dictionary<int, float> IncomingDamage; //from, damage
-        #pragma warning disable 618
+#pragma warning disable 618
         public Packet.S2C.Teleport.Struct Recall;
         public Packet.S2C.Teleport.Struct AbortedRecall;
-        #pragma warning restore 618
+#pragma warning restore 618
         public bool LockedTarget;
         public float EstimatedShootT;
         public int AbortedT;
@@ -549,9 +549,9 @@
         public RecallInfo(EnemyInfo enemyInfo)
         {
             EnemyInfo = enemyInfo;
-            #pragma warning disable 618
+#pragma warning disable 618
             Recall = new Packet.S2C.Teleport.Struct(EnemyInfo.Player.NetworkId, Packet.S2C.Teleport.Status.Unknown, Packet.S2C.Teleport.Type.Unknown, 0);
-            #pragma warning restore 618
+#pragma warning restore 618
             IncomingDamage = new Dictionary<int, float>();
         }
 
@@ -562,29 +562,29 @@
 
         public bool IsPorting()
         {
-            #pragma warning disable 618
+#pragma warning disable 618
             return Recall.Type == Packet.S2C.Teleport.Type.Recall && Recall.Status == Packet.S2C.Teleport.Status.Start;
-            #pragma warning restore 618
+#pragma warning restore 618
         }
 
         public bool WasAborted()
         {
-            #pragma warning disable 618
+#pragma warning disable 618
             return Recall.Type == Packet.S2C.Teleport.Type.Recall && Recall.Status == Packet.S2C.Teleport.Status.Abort;
-            #pragma warning restore 618
+#pragma warning restore 618
         }
 
-        #pragma warning disable 618
+#pragma warning disable 618
         public EnemyInfo UpdateRecall(Packet.S2C.Teleport.Struct newRecall)
-        #pragma warning restore 618
+#pragma warning restore 618
         {
             IncomingDamage.Clear();
             LockedTarget = false;
             EstimatedShootT = 0;
 
-            #pragma warning disable 618
+#pragma warning disable 618
             if (newRecall.Type == Packet.S2C.Teleport.Type.Recall && newRecall.Status == Packet.S2C.Teleport.Status.Abort)
-            #pragma warning restore 618
+#pragma warning restore 618
             {
                 AbortedRecall = Recall;
                 AbortedT = Utils.TickCount;
