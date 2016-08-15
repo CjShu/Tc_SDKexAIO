@@ -88,10 +88,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Champions\Diana.cs" />
     <Compile Include="Champions\Ezreal.cs" />
     <Compile Include="Champions\Jhin.cs" />
     <Compile Include="Champions\Jinx.cs" />
     <Compile Include="Champions\Kayle.cs" />
+    <Compile Include="Champions\Quinn.cs" />
     <Compile Include="Champions\Teemo.cs" />
     <Compile Include="Common\BaseUlti.cs" />
     <Compile Include="Common\HpBarDraw.cs" />
