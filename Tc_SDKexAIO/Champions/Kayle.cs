@@ -37,7 +37,7 @@
             E = new Spell(SpellSlot.E, 660);
             R = new Spell(SpellSlot.R, 900);
 
-            var QMenu = Menu.Add(new Menu("Q", "Q.Set | Q 設定"));
+            var QMenu = Menu.Add(new Menu("Q", "Q.Set"));
             {
                 QMenu.GetSeparator("Q: Always On");
                 QMenu.GetBool("AutoQ", "Auto Q");
@@ -52,7 +52,7 @@
                 }
             }
 
-            var WMenu = Menu.Add(new Menu("W", "W.Set | W 設定"));
+            var WMenu = Menu.Add(new Menu("W", "W.Set"));
             {
                 WMenu.GetBool("AutoW", "Auto W");
                 WMenu.GetBool("AutoWSpeed", "Auto W Speed", false);
@@ -65,14 +65,14 @@
                 WMenu.GetSlider("WallyMp", "W ally Min Mp", 40);
             }
 
-            var EMenu = Menu.Add(new Menu("E", "E.Set | E 設定"));
+            var EMenu = Menu.Add(new Menu("E", "E.Set"));
             {
                 EMenu.GetBool("AutoE", "Auto E Combo");
                 EMenu.GetBool("HarrasE", "Harras E", false);
                 EMenu.GetBool("LaneClearE", "LaneClear E", false);
                 EMenu.GetBool("JungleE", "Jungle E", false);
             }
-            var RMenu = Menu.Add(new Menu("R", "R.Set | R 設定"));
+            var RMenu = Menu.Add(new Menu("R", "R.Set"));
             {
                 RMenu.GetBool("AutoR", "Auto R Me", false);
                 RMenu.GetSeparator("Auto R ally Mobs");
@@ -101,7 +101,7 @@
                 DrawMenu.GetBool("R", "R Range", false);
             }
 
-            var MiscMenu = Menu.Add(new Menu("Misc", "Draw"));
+            var MiscMenu = Menu.Add(new Menu("Misc", "Misc"));
             {
                 MiscMenu.GetSliderButton("ComboIgnite", "Combo Use Ignite Min Hp%", 10);
                 MiscMenu.Add(new MenuBool("ClearEnable", "Clear Enable", true));

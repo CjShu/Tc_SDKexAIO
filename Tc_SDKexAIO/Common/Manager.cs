@@ -349,7 +349,7 @@
             }
         }
 
-        public static bool LastHit
+        public static bool Hit
         {
             get
             {

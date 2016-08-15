@@ -41,7 +41,7 @@
             E = new Spell(SpellSlot.E);
             R = new Spell(SpellSlot.R, 300).SetSkillshot(0.5f, 120f, 1000f, false, SkillshotType.SkillshotCircle);
 
-            var QMenu = Menu.Add(new Menu("Q", "Q.Set | Q 設定"));
+            var QMenu = Menu.Add(new Menu("Q", "Q.Set"));
             {
                 QMenu.GetBool("ComboQ", "Comno Q");
                 QMenu.GetBool("HarassQ", "Harass Q");
@@ -52,13 +52,13 @@
                 QMenu.GetBool("CheckAA", "Check AA", false);
             }
 
-            var WMenu = Menu.Add(new Menu("W", "W.Set | W 設定"));
+            var WMenu = Menu.Add(new Menu("W", "W.Set"));
             {
                 WMenu.GetBool("ComboW", "Combo W", false);
                 WMenu.GetBool("WRange", "Use W if enemy is in range only", false);
                 WMenu.GetKeyBind("FleeKey", "Flee Use W Key", Keys.Z, KeyBindType.Press);
             }
-            var RMenu = Menu.Add(new Menu("R", "R.Set | R 設定"));
+            var RMenu = Menu.Add(new Menu("R", "R.Set"));
             {
                 RMenu.GetSlider("Charge", "Charges of R before using R :)", 2, 1, 3);
                 RMenu.Add(new MenuKeyBind("AutoR", "Auto R Key", Keys.T, KeyBindType.Toggle));

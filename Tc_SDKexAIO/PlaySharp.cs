@@ -34,7 +34,7 @@
              "Kassadin", "Katarina", "Kayle", "Kennen", "Leblanc", "Lissandra", "Lux", "Malzahar", "Mordekaiser", "Morgana", "Nidalee", "Orianna",
              "Ryze", "Sion", "Swain", "Syndra", "Teemo", "TwistedFate", "Veigar", "Viktor", "Vladimir", "Xerath", "Ziggs", "Zyra", "Velkoz", "Azir", "Ekko",
              "Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Graves", "Jayce", "Jinx", "KogMaw", "Lucian", "MasterYi", "MissFortune", "Quinn", "Shaco", "Sivir",
-             "Talon", "Tristana", "Twitch", "Urgot", "Varus", "Vayne", "Yasuo", "Zed", "Kindred", "AurelionSol"
+             "Talon", "Tristana", "Twitch", "Urgot", "Varus", "Vayne", "Yasuo", "Zed", "Kindred", "AurelionSol", "Kled"
         };
 
         #endregion
@@ -43,7 +43,7 @@
 
         private static string[] SupList =
         {
-            "Jinx", "Jhin", "Teemo",
+            "Jinx", "Jhin", "Teemo", "Ezreal"
         };
 
         #endregion
@@ -89,6 +89,9 @@
                     break;
                 case "Teemo":
                     Champions.Teemo.Init();
+                    break;
+                case "Ezreal":
+                    Champions.Ezreal.Init();
                     break;
                 default:
                     break;
