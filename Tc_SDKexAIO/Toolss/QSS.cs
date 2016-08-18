@@ -41,7 +41,7 @@
                 }
                 QSSMenu.GetSeparator("Mode | 模式");
                 QSSMenu.GetBool("CleanEnable", "Enable | 啟動按鍵)", false);
-                QSSMenu.GetSlider("CleanDelay", "Clean Delay(ms) | 水銀使用延遲(毫秒)", 0, 0, 2000);
+                QSSMenu.GetSlider("CleanDelay", "Clean Delay(ms) | 水銀使用延遲(毫秒)", 1000, 0, 2000);
                 QSSMenu.GetSlider("CleanBuffTime", "Debuff Less End Times(ms) | 解除延遲(毫秒)", 800, 0, 1000);
             }
             Game.OnUpdate += OnUpdate;
