@@ -135,20 +135,16 @@
 
             if (args.Type == OrbwalkingType.AfterAttack)
             {
-                var QTarget = GetTarget(Q.Range, Q.DamageType);
-                var RTarget = GetTarget(R.Range, R.DamageType);
+                var Target = GetTarget(Q.Range, Q.DamageType);
 
                 if (Variables.Orbwalker.ActiveMode == OrbwalkingMode.Combo)
                 {
-                    if (QTarget != null && Combo && Menu["Q"]["ComboQ"].GetValue<MenuBool>())
+                    if (Target != null && Menu["R"]["RAD"].GetValue<MenuBool>())
                     {
-                        if (CheckTarget(QTarget))
+                        if (Marksman.Contains(Target.CharData.BaseSkinName) && Q.IsReady() && R.IsReady() && R.IsInRange(Target))
                         {
-                            if (Menu["R"]["RAD"].GetValue<MenuBool>() && Marksman.Contains(QTarget.CharData.BaseSkinName) && Q.IsReady() && Q.IsInRange(QTarget) && R.IsReady() && R.IsInRange(RTarget))
-                            {
-                                R.Cast(RTarget);
-                                Q.Cast(QTarget);
-                            }
+                            R.Cast(Target);
+                            Q.Cast(Target);
                         }
                     }
                 }
