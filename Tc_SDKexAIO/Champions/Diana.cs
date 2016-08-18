@@ -7,18 +7,19 @@
     using LeagueSharp.SDK.UI;
     using LeagueSharp.SDK.Utils;
 
+    using LeagueSharp.Data.Enumerations;
+
     using System;
     using System.Linq;
-    using System.Drawing;
 
     using Color = System.Drawing.Color;
 
-    using SharpDX;
 
     using Tc_SDKexAIO.Common;
     using static Common.Manager;
 
     using Config;
+
 
     internal static class Diana
     {
@@ -32,10 +33,6 @@
         private static SpellSlot Ignite = Player.GetSpellSlot("SummonerDot");
 
         private static float IgniteRange = 600f;
-
-        private static float SwitchTime = Game.Time;
-
-        private static int LastR;
 
         internal static void Init()
         {
@@ -54,9 +51,10 @@
                 QMenu.GetSeparator("LaneClear Mobe");
                 QMenu.Add(new MenuBool("LaneClearQ", "LaneClear Q", true));
                 QMenu.Add(new MenuBool("JungleQ", "Jungle Q", true));
+                QMenu.Add(new MenuSlider("JungleQMana", "Jungle Q Min Mana >= ", 40));
                 QMenu.Add(new MenuSlider("LaneClearQMana", "LaneClear Q Min Mana >= ", 40, 0, 100));
                 QMenu.Add(new MenuSlider("LaneClearMinMinions", "LaneClear Q Min Minions", 3, 1, 5));
-                var QList = QMenu.Add(new Menu("QList", "Q List"));
+                var QList = QMenu.Add(new Menu("QList", "Q Harass List"));
                 {
                     if (GameObjects.EnemyHeroes.Any())
                     {
@@ -74,6 +72,7 @@
                 WMenu.GetSeparator("LaneClear Mobe");
                 WMenu.Add(new MenuBool("LaneClearW", "LaneClear W", true));
                 WMenu.Add(new MenuBool("JungleW", "Jungle W", true));
+                WMenu.Add(new MenuSlider("JungleWMana", "Jungle W Min Mana >= ", 40));
                 WMenu.Add(new MenuSlider("WMinMana", "W Spell Min Mana", 40, 0, 100));
                 WMenu.Add(new MenuSeparator("MISC", "    "));
                 WMenu.Add(new MenuBool("AntiMelee", "Anti Melee Auto W", true));
@@ -89,6 +88,7 @@
                 EMenu.GetSeparator("Misc Mobe");
                 EMenu.Add(new MenuBool("InterruptE", "Use E Interrupt Enemy Spell", true));
                 EMenu.Add(new MenuBool("GapcloserE", "Use E Gapcloser", true));
+
             }
 
             var RMenu = Menu.Add(new Menu("R", "R.Set"));
@@ -98,20 +98,16 @@
                 RMenu.Add(new MenuBool("ComboR2", "Combo R2", true));
                 RMenu.Add(new MenuSlider("RLimitation", "Use R2 Nearby Enemy Counts Kill >= ", 2, 1, 5));
                 RMenu.GetSeparator("R or R2 Mobe");
-                RMenu.GetList("ComboRMobe", "Combo R Mobe", new[] { "RQ", "QR", "RQR" }, 1);
-                RMenu.Add(new MenuSlider("ComboRMisayaMinRange", "Combo RQ Min Range", Convert.ToInt32(R.Range * 0.8), 0, Convert.ToInt32(R.Range)));
+                RMenu.Add(new MenuList<string>("ComboRMobe", "Combo R Mobe", new[] { "QR", "RQ", "RQR" }));
                 RMenu.GetSeparator("Misc Mobe");
                 RMenu.Add(new MenuSlider("PreventMeMinUseR", "Prevent Me Hp Min Use R >= ", 20));
-                RMenu.Add(new MenuBool("RPreventUnderTower", "R Prevent Under Tower Use R", true));
                 RMenu.Add(new MenuBool("RAD", "Battle priority Use R AD Hero", true));
-                RMenu.Add(new MenuKeyBind("RQQRKey", "If Can kill Use R Q Q R Key", System.Windows.Forms.Keys.T, KeyBindType.Press));
             }
 
             var FleeMenu = Menu.Add(new Menu("Flee", "Flee.Set"));
             {
                 FleeMenu.GetSeparator("Flee Mobe");
-                FleeMenu.Add(new MenuBool("FleeEnable", "Enable Flee", true));
-                FleeMenu.Add(new MenuKeyBind("FleeKey", "Use R Q R Flee Key", System.Windows.Forms.Keys.Z, KeyBindType.Press));
+                FleeMenu.Add(new MenuKeyBind("FleeKey", "Use Q R Flee Key", System.Windows.Forms.Keys.Z, KeyBindType.Press));
                 FleeMenu.Add(new MenuKeyBind("FleeKey2", "Use R Flee Key", System.Windows.Forms.Keys.A, KeyBindType.Press));
             }
 
@@ -120,46 +116,439 @@
                 DrawMenu.Add(new MenuBool("Q", "Q Range"));
                 DrawMenu.Add(new MenuBool("E", "E Range"));
                 DrawMenu.Add(new MenuBool("R", "R Range"));
-                DrawMenu.Add(new MenuBool("DrawRQ", "Draw RQ Range", true));
                 DrawMenu.Add(new MenuBool("DrawDamage", "Draw Combo Damage", true));
             }
+
+            Menu.Add(new MenuBool("ComboIgnite", "Combo Ignite", true));
 
             Game.OnUpdate += OnUpdate;
             Drawing.OnDraw += OnDraw;
             Drawing.OnEndScene += OnEndScene;
-            Events.OnDash += OnDash;
+            Variables.Orbwalker.OnAction += OnAction;
             Events.OnGapCloser += OnGapCloser;
             Events.OnInterruptableTarget += OnInterruptableTarget;
+            Obj_AI_Base.OnProcessSpellCast += OnProcessSpellCast;
         }
 
-        private static void OnInterruptableTarget(object sender, Events.InterruptableTargetEventArgs e)
+        private static void OnAction(object sender, OrbwalkingActionArgs args)
         {
-            throw new NotImplementedException();
+
+            if (args.Type == OrbwalkingType.AfterAttack)
+            {
+                var QTarget = GetTarget(Q.Range, Q.DamageType);
+                var RTarget = GetTarget(R.Range, R.DamageType);
+
+                if (Variables.Orbwalker.ActiveMode == OrbwalkingMode.Combo)
+                {
+                    if (QTarget != null && Combo && Menu["Q"]["ComboQ"].GetValue<MenuBool>())
+                    {
+                        if (CheckTarget(QTarget))
+                        {
+                            if (Menu["R"]["RAD"].GetValue<MenuBool>() && Marksman.Contains(QTarget.CharData.BaseSkinName) && Q.IsReady() && Q.IsInRange(QTarget) && R.IsReady() && R.IsInRange(RTarget))
+                            {
+                                R.Cast(RTarget);
+                                Q.Cast(QTarget);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        private static void OnGapCloser(object sender, Events.GapCloserEventArgs e)
+        private static void OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            throw new NotImplementedException();
+            if (Menu["W"]["AntiMelee"].GetValue<MenuBool>() && W.IsReady())
+            {
+                if (sender != null && sender.IsEnemy && args.Target != null && args.Target.IsMe)
+                {
+                    if (sender.Type == Player.Type && sender.IsMelee)
+                    {
+                        W.Cast(Player);
+                    }
+                }
+            }
         }
 
-        private static void OnDash(object sender, Events.DashArgs e)
+        private static void OnInterruptableTarget(object sender, Events.InterruptableTargetEventArgs args)
         {
-            throw new NotImplementedException();
+            if (Menu["E"]["InterruptE"] && args.DangerLevel >= DangerLevel.High)
+            {
+                if (E.IsReady() && args.Sender.IsValidTarget(E.Range))
+                {
+                    E.Cast();
+                }
+            }
+        }
+
+        private static void OnGapCloser(object sender, Events.GapCloserEventArgs args)
+        {
+            if (args.IsDirectedToPlayer && E.IsReady() && Menu["E"]["GapcloserE"])
+            {
+                if (args.Sender.IsValidTarget(E.Range))
+                {
+                    E.Cast(args.Sender);
+                }
+            }
         }
 
         private static void OnEndScene(EventArgs args)
         {
-            throw new NotImplementedException();
+            if (!Menu["Draw"]["DrawDamage"].GetValue<MenuBool>())
+                return;
+
+            foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(e => e.IsValidTarget(1500) && !e.IsDead && e.IsVisible))
+            {
+                HpBarDraw.Unit = enemy;
+                HpBarDraw.DrawDmg(GetDamage(enemy), SharpDX.Color.LightCyan);
+            }
         }
 
         private static void OnDraw(EventArgs args)
         {
-            throw new NotImplementedException();
+            if (Player.IsDead)
+                return;
+
+            if (Menu["Draw"]["Q"].GetValue<MenuBool>() && Q.IsReady())
+                Render.Circle.DrawCircle(Player.Position, Q.Range, Color.BlueViolet);
+
+            if (Menu["Draw"]["E"].GetValue<MenuBool>() && E.IsReady())
+                Render.Circle.DrawCircle(Player.Position, E.Range, Color.BlueViolet);
+
+            if (Menu["Draw"]["R"].GetValue<MenuBool>() && R.IsReady())
+                Render.Circle.DrawCircle(Player.Position, R.Range, Color.BlueViolet);
         }
 
         private static void OnUpdate(EventArgs args)
         {
-            throw new NotImplementedException();
+            if (Player.IsDead)
+            {
+                return;
+            }
+
+            switch (Variables.Orbwalker.ActiveMode)
+            {
+                case OrbwalkingMode.Combo:
+                    ComboLogic();
+                    break;
+                case OrbwalkingMode.Hybrid:
+                    HarassLogic();
+                    break;
+                case OrbwalkingMode.LaneClear:
+                    LaneClearLogic();
+                    JungleLogic();
+                    break;
+                case OrbwalkingMode.LastHit:
+                    break;
+                case OrbwalkingMode.None:
+                    FleeLogic();
+                    break;
+            }
         }
+
+        private static float GetDamage(Obj_AI_Hero target)
+        {
+            var Damage = 0d;
+
+            Damage -= target.HPRegenRate;
+
+            if (Q.IsReady())
+            {
+                Damage += Player.GetSpellDamage(target, SpellSlot.Q) * 2;
+            }
+
+            if (W.IsReady())
+            {
+                Damage += W.GetDamage(target);
+            }
+
+            if (R.IsReady())
+            {
+                Damage += R.GetDamage(target);
+            }
+
+            return (float)Damage;
+        }
+
+        private static double GetIgniteDamage(Obj_AI_Hero target)
+        {
+            return 50 + 20 * GameObjects.Player.Level - (target.HPRegenRate / 5 * 3);
+        }
+
+        private static void ComboLogic()
+        {
+            var Target = GetTarget(Q.Range, Q.DamageType);
+            var MinHpToDive = Menu["R"]["PreventMeMinUseR"].GetValue<MenuSlider>().Value;
+
+            if (Target == null || !Target.IsValid)
+            {
+                return;
+            }
+
+            if (Menu["ComboIgnite"].GetValue<MenuBool>() && Ignite.IsReady() && Ignite != SpellSlot.Unknown)
+            {
+                var targetIgnite = GetTarget(IgniteRange, DamageType.True);
+
+                if (CheckTarget(targetIgnite))
+                {
+                    if (targetIgnite.IsValidTarget(IgniteRange) && targetIgnite.HealthPercent < 20)
+                    {
+                        Player.Spellbook.CastSpell(Ignite, targetIgnite);
+                        return;
+                    }
+
+                    if (GetIgniteDamage(targetIgnite) > targetIgnite.Health && targetIgnite.IsValidTarget(IgniteRange))
+                    {
+                        Player.Spellbook.CastSpell(Ignite, targetIgnite);
+                        return;
+                    }
+                }
+            }
+
+            if (Menu["W"]["ComboW"].GetValue<MenuBool>() && W.IsReady() && W.IsInRange(Target))
+            {
+                W.Cast();
+            }
+
+            if (Menu["E"]["ComboE"].GetValue<MenuBool>() && E.IsReady() && E.IsInRange(Target))
+            {
+                var prediction = E.GetPrediction(Target);
+
+                if (prediction.Hitchance >= HitChance.VeryHigh)
+                {
+                    E.Cast();
+                }
+            }
+
+            if (Menu["Q"]["ComboQ"].GetValue<MenuBool>() && Q.IsReady() && Q.IsInRange(Target))
+            {
+                var prediction = Q.GetPrediction(Target);
+
+                if (prediction.Hitchance >= HitChance.VeryHigh)
+                {
+                    Q.Cast();
+                }
+            }
+
+            if (Menu["R"]["ComboRMobe"].GetValue<MenuList>().Index != 3)
+            {
+                var UseR = Menu["R"]["ComboR"].GetValue<MenuBool>() && (!Target.IsUnderEnemyTurret() || (MinHpToDive <= Player.HealthPercent));
+                var UseR2 = Menu["R"]["ComboR2"].GetValue<MenuBool>() && (!Target.IsUnderEnemyTurret() || (MinHpToDive <= Player.HealthPercent));
+                var UseQ = Menu["Q"]["ComboQ"].GetValue<MenuBool>();
+
+                if (Menu["R"]["ComboRMobe"].GetValue<MenuList>().Index == 0)
+                {
+                    if (UseQ && Q.IsReady() && Q.IsInRange(Target))
+                    {
+                        var pred = Q.GetPrediction(Target);
+
+                        if (pred.Hitchance >= HitChance.VeryHigh)
+                        {
+                            Q.Cast(Target);
+                        }
+                    }
+
+                    if (UseR && R.IsReady() && R.IsInRange(Target) && Target.HasBuff("dianamoonlight"))
+                    {
+                        R.Cast(Target);
+                    }
+                }
+                if (Menu["R"]["ComboRMobe"].GetValue<MenuList>().Index == 1)
+                {
+                    if (R.IsReady() && Q.IsReady() && R.IsInRange(Target))
+                    {
+                        R.Cast(Target);
+                        Q.Cast(Target);
+                    }
+                }
+
+                if (Menu["R"]["ComboRMobe"].GetValue<MenuList>().Index == 2)
+                {
+                    if (R.IsReady() && Q.IsReady() && R.IsInRange(Target))
+                    {
+                        R.Cast(Target);
+                        Q.Cast(Target);
+                    }
+                    else
+                    {
+                        if (R.IsReady() && R.IsInRange(Target))
+                            DelayAction.Add(250, () => R.Cast(Target));
+                    }
+                }
+            }
+
+            if (Menu["R"]["ComboR2"].GetValue<MenuBool>())
+            {
+                var enemy = GetEnemies(R.Range * 2).Count;
+                var RLim = Menu["R"]["RLimitation"].GetValue<MenuSlider>().Value;
+
+                if (enemy <= RLim && Menu["R"]["ComboR"].GetValue<MenuBool>() && !Q.IsReady() && R.IsReady())
+                {
+                    if (Target.Health < GetDamage(Target))
+                    {
+                        R.Cast(Target);
+                    }
+                }
+
+                if (enemy <= RLim && R.IsReady())
+                {
+                    if (Target.Health < GetDamage(Target))
+                    {
+                        R.Cast(Target);
+                    }
+                }
+            }
+        }
+    
+        private static void HarassLogic()
+        {
+            var Target = GetTarget(Q.Range, Q.DamageType);
+            var QMana = Menu["Q"]["HarassQMana"].GetValue<MenuSlider>().Value;
+            var EMana = Menu["E"]["HarassEMana"].GetValue<MenuSlider>().Value;
+
+            if (Target == null || !Target.IsValid)
+            {
+                return;
+            }
+
+            if (Player.ManaPercent < QMana + EMana)
+            {
+                return;
+            }
+
+            if (Menu["Q"]["HarassQ"].GetValue<MenuBool>() && Q.IsReady() && Q.IsInRange(Target))
+            {
+                var QPred = Q.GetPrediction(Target);
+
+                if (QPred.Hitchance >= HitChance.VeryHigh)
+                {
+                    if (Menu["Q"]["QList"][Target.ChampionName.ToLower()].GetValue<MenuBool>() && !Player.IsUnderEnemyTurret())
+                    {
+                        Q.Cast(Target);
+                    }                    
+                }
+            }
+
+            if (Menu["W"]["HarassW"].GetValue<MenuBool>() && W.IsReady() && W.IsInRange(Target))
+            {
+                W.Cast();
+            }
+
+            if (Menu["E"]["HarassE"].GetValue<MenuBool>() && E.IsReady() && Player.Distance(Target) <= E.Range)
+            {
+                E.Cast();
+            }
+        }
+
+        private static void LaneClearLogic()
+        {
+            var minion = GetMinions(Player.Position, Q.Range).FirstOrDefault();
+            var minions = GetMinions(Player.Position, Q.Range);
+            var QMinion = minions.FindAll(qx => minion.IsValidTarget(Q.Range));
+            var QMinions = QMinion.Find(qx => qx.IsValidTarget());
+
+            if (minion == null || minion.Name.ToLower().Contains("ward"))
+            {
+                return;
+            }
+
+            if (Menu["Q"]["LaneClearQ"].GetValue<MenuBool>() && Q.IsReady())
+            {
+                if (Player.ManaPercent >= Menu["Q"]["LaneClearQMana"].GetValue<MenuSlider>().Value)
+                {
+                    if (Q.GetCircularFarmLocation(minions).MinionsHit >= Menu["Q"]["LaneClearMinMinions"].GetValue<MenuSlider>().Value)
+                    {
+                        Q.Cast(QMinions);
+                    }
+                }
+            }
+
+            if (Menu["W"]["LaneClearW"].GetValue<MenuBool>() && W.IsReady())
+            {
+                if (Player.ManaPercent >= Menu["W"]["WMinMana"].GetValue<MenuSlider>().Value)
+                {
+                    if (W.GetCircularFarmLocation(minions).MinionsHit >= 3)
+                    {
+                        W.Cast();
+                    }
+                }
+            }
+        }
+
+        private static void JungleLogic()
+        {
+
+            var JungleQ = GetMobs(Player.Position, Q.Range);
+            var Qminions = JungleQ.FindAll(minion => minion.IsValidTarget(Q.Range));
+            var Qminion = Qminions.FirstOrDefault();
+
+            if (Qminion == null)
+            {
+                return;
+            }
+
+            if (Menu["Q"]["JungleQ"].GetValue<MenuBool>() && Q.IsReady())
+            {
+                if (Player.ManaPercent >= Menu["Q"]["JungleQMana"].GetValue<MenuSlider>().Value)
+                {
+                    if (Qminion.IsValidTarget())
+                    {
+                        Q.Cast(Qminion);
+                    }
+                }
+            }
+
+            if (Menu["W"]["JungleW"].GetValue<MenuBool>() && W.IsReady())
+            {
+                if (Player.ManaPercent >= Menu["W"]["JungleWMana"].GetValue<MenuSlider>().Value)
+                {
+                    W.Cast(Player);
+                }
+            }
+        }
+
+        private static void FleeLogic()
+        {
+
+            if (Player.IsDead)
+                return;
+
+            if (Menu["Flee"]["FleeKey2"].GetValue<MenuKeyBind>().Active)
+            {
+                var target = GetTarget(R.Range, R.DamageType);
+
+                GameObjects.Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+
+                var minions = GetMinions(Player.Position, R.Range).Find(x => x.IsValidTarget());
+
+                if (minions != null && R.IsReady())
+                {
+                    R.CastOnUnit(minions);
+                }
+                return;
+            }
+
+            if (Menu["Flee"]["FleeKey"].GetValue<MenuKeyBind>().Active)
+            {
+                var target = GetTarget(Q.Range, Q.DamageType);
+
+                GameObjects.Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+
+                var minions = GetMinions(Player.Position, Q.Range).Find(x => x.IsValidTarget());
+
+                if (minions != null && Q.IsReady() && R.IsReady())
+                {
+                    Q.CastOnUnit(minions);
+                    DelayAction.Add(500, () => R.CastOnUnit(minions));
+                }
+                return;
+            }
+        }
+            
+        private static string[] Marksman =
+        {
+            "Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Jinx", "Kalista",
+            "KogMaw", "Lucian", "MissFortune", "Quinn", "Sivir", "Teemo", "Tristana", "Twitch", "Urgot", "Varus",
+            "Vayne"
+        };
     }
 }

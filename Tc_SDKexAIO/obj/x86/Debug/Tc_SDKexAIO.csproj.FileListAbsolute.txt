@@ -10,7 +10,6 @@ C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\SebbyLib.dll
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\SharpDX.Direct3D9.dll
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\SharpDX.dll
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\Newtonsoft.Json.dll
-C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\clipper_library.pdb
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\LeagueSharp.Common.pdb
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\LeagueSharp.Data.pdb
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\LeagueSharp.SDKEx.pdb
@@ -18,4 +17,5 @@ C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\SebbyLib.pdb
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\obj\x86\Debug\Tc_SDKexAIO.csprojResolveAssemblyReference.cache
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\obj\x86\Debug\Tc_SDKexAIO.exe
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\obj\x86\Debug\Tc_SDKexAIO.pdb
+C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\clipper_library.pdb
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\obj\x86\Debug\Tc_SDKexAIO.csproj.Tc_SDKexAIO.exe.config
