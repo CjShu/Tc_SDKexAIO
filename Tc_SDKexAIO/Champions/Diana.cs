@@ -321,7 +321,7 @@
 
                 if (prediction.Hitchance >= HitChance.VeryHigh)
                 {
-                    Q.Cast();
+                    Q.Cast(Target);
                 }
             }
 
@@ -362,7 +362,7 @@
                     if (R.IsReady() && Q.IsReady() && R.IsInRange(Target))
                     {
                         R.Cast(Target);
-                        Q.Cast(Target);
+                        DelayAction.Add(250, () => Q.Cast(Target));
                     }
                     else
                     {
