@@ -52,7 +52,7 @@
 
             var WMenu = Menu.Add(new Menu("W", "W.Set"));
             {
-                WMenu.Add(new MenuBool("ComboW", "ComnoW", true));
+                WMenu.Add(new MenuBool("ComboW", "Comno W", true));
                 WMenu.Add(new MenuBool("KSW", "Killsteal W", true));
                 WMenu.Add(new MenuBool("HarassW", "Harass W", true));
                 WMenu.Add(new MenuBool("LaneClearW", "LaneClear W", true));

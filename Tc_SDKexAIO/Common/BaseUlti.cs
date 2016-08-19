@@ -73,7 +73,7 @@
                         TeamUlt.Add(new MenuBool(champ.ChampionName, "Ally with baseult: " + champ.ChampionName, false));
 
                     foreach (Obj_AI_Hero champ in Enemies)
-                        DisabledChampions.Add(new MenuBool(champ.ChampionName, "不針對: " + champ.ChampionName));
+                        DisabledChampions.Add(new MenuBool(champ.ChampionName, "NO Use: " + champ.ChampionName));
                 }
 
                 var NotificationsMenu = MenuLocal.Add(new Menu("Notifications", "Notifications | 顯示回城"));

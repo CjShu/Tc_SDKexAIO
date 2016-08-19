@@ -23,7 +23,7 @@
         {
             SkinID = Player.BaseSkinId;
 
-            var SkinMenu = Menu.Add(new Menu("SkinChance", "Skin | 造型皮膚"));
+            var SkinMenu = Menu.Add(new Menu("SkinChance", "Skin Chance"));
             {
                 SkinMenu.GetBool("Eanble", "Enabled", false);
 
