@@ -44,7 +44,7 @@
             var QMenu = Menu.Add(new Menu("Q", "Q.Set"));
             {
                 QMenu.GetSeparator("Q: Always On");
-                QMenu.Add(new MenuBool("ComboQ", "Comno Q", true));
+                QMenu.Add(new MenuBool("ComboQ", "Combo Q", true));
                 QMenu.Add(new MenuBool("HarassQ", "Harass Q", true));
                 QMenu.Add(new MenuBool("LaneClearQ", "LaneClear Q", true));
             }
@@ -53,7 +53,7 @@
             {
                 WMenu.Add(new MenuBool("ComboW", "Combo W", true));
                 WMenu.Add(new MenuBool("HarassW", "Harass W", true));
-                WMenu.Add(new MenuSlider("ManaW", "Mana Min Mana >= &", 40));
+                WMenu.Add(new MenuSlider("ManaW", "W Min Mana >= ", 40));
                 WMenu.Add(new MenuBool("KSW", "W Ks", true));
                 var WList = WMenu.Add(new Menu("WList", "W List:"));
                 {
