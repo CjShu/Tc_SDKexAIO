@@ -19,19 +19,19 @@
 
         internal static void Init()
         {
-            var OffMenu = Menu.Add(new Menu("Offensive", "Offensive | 功能道具"));
+            var OffMenu = Menu.Add(new Menu("Offensive", "Offensive"));
             {
-                OffMenu.GetSeparator("Youmuus Mode | 妖夢鬼刀設定");
-                OffMenu.Add(new MenuBool("Youmuus", "Use Youmuu | 使用妖夢鬼刀", true));
-                OffMenu.GetSlider("Youmuus.s", "Youmuus enemy  HP Min >= | 目標血量低於多少開", 70, 0, 100);
-                OffMenu.GetSeparator("Cutlass Mode | 彎刀設定");
-                OffMenu.Add(new MenuBool("Cutlass", "Use Cutlass | 使用彎刀", true));
-                OffMenu.GetSlider("Cutlass.s", "Cutlass enemy HP Min >= | 目標血量低於多少開", 70, 0, 100);
-                OffMenu.GetSeparator("Botrk Mode | 殞落王者之劍設定");
-                OffMenu.Add(new MenuBool("Botrk", "Use Botrk | 使用殞落", true));
-                OffMenu.GetSlider("Botrk.s", "Botrk enemy HP Min >= | 目標血量多少開", 70, 0, 100);
-                OffMenu.GetSeparator("Combo Mode | 連招模式");
-                OffMenu.Add(new MenuBool("Combo", "Combo Use | 連招使用", true));
+                OffMenu.GetSeparator("Youmuus Mode");
+                OffMenu.Add(new MenuBool("Youmuus", "Use Youmuu", true));
+                OffMenu.GetSlider("Youmuus.s", "Youmuus enemy  HP Min >=", 70, 0, 100);
+                OffMenu.GetSeparator("Cutlass Mode");
+                OffMenu.Add(new MenuBool("Cutlass", "Use Cutlass", true));
+                OffMenu.GetSlider("Cutlass.s", "Cutlass enemy HP Min >=", 70, 0, 100);
+                OffMenu.GetSeparator("Botrk Mode");
+                OffMenu.Add(new MenuBool("Botrk", "Use Botrk", true));
+                OffMenu.GetSlider("Botrk.s", "Botrk enemy HP Min >=", 70, 0, 100);
+                OffMenu.GetSeparator("Combo Mode");
+                OffMenu.Add(new MenuBool("Combo", "Combo Use", true));
             }
             Game.OnUpdate += OnUpdate;
         }

@@ -22,11 +22,11 @@
 
         internal static void Init()
         {
-            var QSSMenu = Menu.Add(new Menu("QSS", "QSS | 水銀QSS"));
+            var QSSMenu = Menu.Add(new Menu("QSS", "QSS Set"));
             {
-                var CleanseMenu = QSSMenu.Add(new Menu("CleanseBuffs", "Cleanse Buffs | 解除項目"));
+                var CleanseMenu = QSSMenu.Add(new Menu("CleanseBuffs", "Cleanse Buffs"));
                 {
-                    CleanseMenu.GetSeparator("Buffs | 解除項目");
+                    CleanseMenu.GetSeparator("Buffs");
                     CleanseMenu.GetBool("blind", "Blind", false);
                     CleanseMenu.GetBool("charm", "Charm", false);
                     CleanseMenu.GetBool("fear", "Fear", false);
@@ -39,10 +39,10 @@
                     CleanseMenu.GetBool("polymorph", "Polymorph");
                     CleanseMenu.GetBool("silence", "Silence");
                 }
-                QSSMenu.GetSeparator("Mode | 模式");
-                QSSMenu.GetBool("CleanEnable", "Enable | 啟動按鍵)", false);
-                QSSMenu.GetSlider("CleanDelay", "Clean Delay(ms) | 水銀使用延遲(毫秒)", 1000, 0, 2000);
-                QSSMenu.GetSlider("CleanBuffTime", "Debuff Less End Times(ms) | 解除延遲(毫秒)", 800, 0, 1000);
+                QSSMenu.GetSeparator("Mode");
+                QSSMenu.GetBool("CleanEnable", "Enable", false);
+                QSSMenu.GetSlider("CleanDelay", "Clean Delay(ms)", 1000, 0, 2000);
+                QSSMenu.GetSlider("CleanBuffTime", "Debuff Less End Times(ms)", 800, 0, 1000);
             }
             Game.OnUpdate += OnUpdate;
         }

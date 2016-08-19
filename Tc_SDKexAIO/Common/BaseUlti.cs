@@ -49,12 +49,12 @@
         {
             try
             {
-                MenuLocal = new Menu("Base Ulti", "SDK Base Ulit (基地大招)");
-                MenuLocal.Add(new MenuBool("showRecalls", "Show Recalls | 顯示回城 ", true));
-                MenuLocal.Add(new MenuBool("baseUlt", "Use Base Ult | 使用基地大招", true));
-                MenuLocal.Add(new MenuBool("checkCollision", "Check.Collision | 檢查碰撞傷害", true));
-                MenuLocal.Add(new MenuKeyBind("panicKey", "Panic Key | 此鍵連招不使用", System.Windows.Forms.Keys.Space, LeagueSharp.SDK.Enumerations.KeyBindType.Press));
-                MenuLocal.Add(new MenuKeyBind("regardlessKey", "Regar Dless Key | 默認他就是要殺", System.Windows.Forms.Keys.CapsLock, LeagueSharp.SDK.Enumerations.KeyBindType.Toggle));
+                MenuLocal = new Menu("Base Ulti", "SDK Base Ulit");
+                MenuLocal.Add(new MenuBool("showRecalls", "Show Recalls", true));
+                MenuLocal.Add(new MenuBool("baseUlt", "Use Base Ult", true));
+                MenuLocal.Add(new MenuBool("checkCollision", "Check.Collision", true));
+                MenuLocal.Add(new MenuKeyBind("panicKey", "Panic Key", System.Windows.Forms.Keys.Space, LeagueSharp.SDK.Enumerations.KeyBindType.Press));
+                MenuLocal.Add(new MenuKeyBind("regardlessKey", "Regar Dless Key", System.Windows.Forms.Keys.CapsLock, LeagueSharp.SDK.Enumerations.KeyBindType.Toggle));
                 ParentMenu.Add(MenuLocal);
                 Heroes = ObjectManager.Get<Obj_AI_Hero>().ToList();
                 Enemies = Heroes.Where(x => x.IsEnemy).ToList();
@@ -64,8 +64,8 @@
 
                 bool compatibleChamp = IsCompatibleChamp(ObjectManager.Player.ChampionName);
 
-                TeamUlt = MenuLocal.Add(new Menu("Team Baseult Friends", "Team Baseult Friends | 隊友大招"));
-                DisabledChampions = MenuLocal.Add(new Menu("Disabled Champion targets", "Disabled Champion targets | 不對英雄使用"));
+                TeamUlt = MenuLocal.Add(new Menu("Team Baseult Friends", "Team Baseult Friends"));
+                DisabledChampions = MenuLocal.Add(new Menu("Disabled Champion targets", "Disabled Champion targets"));
 
                 if (compatibleChamp)
                 {
@@ -76,10 +76,10 @@
                         DisabledChampions.Add(new MenuBool(champ.ChampionName, "NO Use: " + champ.ChampionName));
                 }
 
-                var NotificationsMenu = MenuLocal.Add(new Menu("Notifications", "Notifications | 顯示回城"));
+                var NotificationsMenu = MenuLocal.Add(new Menu("Notifications", "Notification"));
 
-                NotificationsMenu.Add(new MenuBool("notifRecFinished", "Notif RecFinished | 回城完成", true));
-                NotificationsMenu.Add(new MenuBool("notifRecAborted", "Notif RecAborted | 回城終止", true));
+                NotificationsMenu.Add(new MenuBool("notifRecFinished", "Notif RecFinished", true));
+                NotificationsMenu.Add(new MenuBool("notifRecAborted", "Notif RecAborted", true));
 
                 var objSpawnPoint = ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(x => x.IsEnemy);
                 if (objSpawnPoint != null)

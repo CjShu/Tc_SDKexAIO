@@ -51,11 +51,11 @@
                 }
             }
 
-            Menu AutoWard = new Menu("AutoWard.Menu", "AutoWard | 自動守衛");
-            AutoWard.Add(new MenuBool("Enable", "Enable | 開關"));
-            AutoWard.Add(new MenuBool("BuyBlue", "BuyBlue | 自動更換鷹眼晶球"));
-            AutoWard.Add(new MenuBool("AutoWardCombo", "AutoWardCombo | 僅按鍵啟動", true));
-            AutoWard.Add(new MenuKeyBind("ComboKey", "ComboKey | 按鍵開啟!", System.Windows.Forms.Keys.Space, KeyBindType.Press));
+            Menu AutoWard = new Menu("AutoWard.Menu", "AutoWard");
+            AutoWard.Add(new MenuBool("Enable", "Enable"));
+            AutoWard.Add(new MenuBool("BuyBlue", "BuyBlue"));
+            AutoWard.Add(new MenuBool("AutoWardCombo", "AutoWardCombo", true));
+            AutoWard.Add(new MenuKeyBind("ComboKey", "ComboKey!", System.Windows.Forms.Keys.Space, KeyBindType.Press));
 
             Menu.Add(AutoWard);
 

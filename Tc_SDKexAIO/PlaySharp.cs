@@ -75,7 +75,7 @@
 
             Menu = new Menu("TcAioSDK", "Tc AIO SDKEx", true).Attach();
             Menu.GetSeparator("By: CjShu");
-            Menu.Add(new MenuSeparator("Version", "Version : " + Assembly.GetExecutingAssembly().GetName().Version));
+            Menu.Add(new MenuSeparator("Version", "版本號 : " + Assembly.GetExecutingAssembly().GetName().Version));
 
             Toolss.Tools.Init();
 
