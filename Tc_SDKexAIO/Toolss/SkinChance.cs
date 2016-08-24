@@ -243,7 +243,7 @@
 
         private static IEnumerable<string> Gragas = new[]
         {
-            "Classic", "Hillbilly Gragas", "Santa Gragas", "Gragas, Esq.", "Vandal Gragas", "Oktoberfest Gragas", "Superfan Gragas", "Fnatic Gragas", "Gragas Caskbreaker"
+            "Classic", "Scuba Gragas", "Hillbilly Gragas", "Santa Gragas", "Gragas, Esq.", "Vandal Gragas", "Oktoberfest Gragas", "Superfan Gragas", "Fnatic Gragas", "Gragas Caskbreaker"
         };
 
         private static IEnumerable<string> Graves = new[]
