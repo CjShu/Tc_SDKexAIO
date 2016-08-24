@@ -26,7 +26,7 @@
             var PotionsMenu = Menu.Add(new Menu("Potions", "Potions"));
             {
                 PotionsMenu.GetSeparator("Health Potion");
-                PotionsMenu.GetSliderButton("HealthPotion", "Player Health = ", 50, 35, 80, true);
+                PotionsMenu.GetSliderButton("HealthPotion", "Player Health = ", 50, 35, 80, false);
                 PotionsMenu.GetSeparator("Corrupting Potion");
                 PotionsMenu.GetSliderButton("CorruptingPotion", "Player Health = ", 50, 35, 80, false);
                 PotionsMenu.GetSeparator("Refillable Potion");
