@@ -95,10 +95,10 @@
 
             var DrawMenu = Menu.Add(new Menu("Draw", "Draw"));
             {
-                DrawMenu.GetBool("Q", "Q Range", false);
-                DrawMenu.GetBool("W", "W Range", false);
-                DrawMenu.GetBool("E", "E Range", false);
-                DrawMenu.GetBool("R", "R Range", false);
+                DrawMenu.GetBool("Q", "Q Range");
+                DrawMenu.GetBool("W", "W Range");
+                DrawMenu.GetBool("E", "E Range");
+                DrawMenu.GetBool("R", "R Range");
             }
 
             var MiscMenu = Menu.Add(new Menu("Misc", "Misc"));
