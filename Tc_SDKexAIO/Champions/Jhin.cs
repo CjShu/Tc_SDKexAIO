@@ -93,7 +93,7 @@
 
             Menu.Add(new MenuBool("ComboY", "Combo Use Youmoo", true));
 
-            PlaySharp.Write(GameObjects.Player.ChampionName + "Jhin OK! :)");
+            PlaySharp.Write(GameObjects.Player.ChampionName + "OK! :)");
 
 
             Obj_AI_Base.OnDoCast += OnDoCast;

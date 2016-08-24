@@ -90,7 +90,7 @@
                 Draw.Add(new MenuBool("DrawDamage", "Draw Combo Damage", true));
             }
 
-            PlaySharp.Write(GameObjects.Player.ChampionName + "Ezreal OK! :)");
+            PlaySharp.Write(GameObjects.Player.ChampionName + "OK! :)");
 
             Game.OnUpdate += OnUpdate;
             Drawing.OnDraw += OnDraw;

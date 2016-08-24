@@ -76,7 +76,7 @@
                 DrawMenu.GetBool("DrawDamge", "Draw Damge", false);
             }
 
-            PlaySharp.Write(GameObjects.Player.ChampionName + "Teemo OK! :)");
+            PlaySharp.Write(GameObjects.Player.ChampionName + "OK! :)");
 
             Game.OnUpdate += OnUpdate;
             Obj_AI_Base.OnProcessSpellCast += OnProcessSpellCast;

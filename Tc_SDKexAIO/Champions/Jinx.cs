@@ -97,7 +97,7 @@
                 DrawMenu.GetList("DrawBuffs", "Show Red/Blue Time Circle", new[] { "Off", "Blue Buff", "Red Buff", "Both" }, 3);
             }
 
-            PlaySharp.Write(GameObjects.Player.ChampionName + "Jinx OK! :)");
+            PlaySharp.Write(GameObjects.Player.ChampionName + "OK! :)");
 
             Obj_AI_Base.OnProcessSpellCast += OnProcessSpellCast;
             Events.OnGapCloser += OnGapCloser;

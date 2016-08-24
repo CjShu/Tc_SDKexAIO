@@ -120,7 +120,7 @@
 
             Menu.Add(new MenuBool("ComboIgnite", "Combo Ignite", true));
 
-            PlaySharp.Write(GameObjects.Player.ChampionName + "Diana OK! :)");
+            PlaySharp.Write(GameObjects.Player.ChampionName + "OK! :)");
 
             Game.OnUpdate += OnUpdate;
             Drawing.OnDraw += OnDraw;
