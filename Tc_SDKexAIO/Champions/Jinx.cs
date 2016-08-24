@@ -18,6 +18,7 @@
     using Common;
     using static Common.Manager;
     using Config;
+    using static Core.TCommon;
 
     using Menu = LeagueSharp.SDK.UI.Menu;
     using Geometry = Common.Geometry;
@@ -29,7 +30,9 @@
         private static Menu Menu => PlaySharp.Menu;
         private static Obj_AI_Hero Player => PlaySharp.Player;
         private static bool BigGun => Player.HasBuff("JinxQ");
+
         private static HpBarDraw HpBarDraw = new HpBarDraw();
+
         public static float LatFocusTime = Game.Time;
 
         internal static void Init()
@@ -87,7 +90,6 @@
 
             var DrawMenu = Menu.Add(new Menu("Draw", "Draw"));
             {
-                DrawMenu.Add(new MenuBool("Q", "Q Range"));
                 DrawMenu.Add(new MenuBool("W", "W Range"));
                 DrawMenu.Add(new MenuBool("E", "E Range"));
                 DrawMenu.Add(new MenuBool("RDKs", "Draw R KS", true));
@@ -451,29 +453,21 @@
         {
             try
             {
-                if (Q != null && Q.IsReady())
-                {
-                    if (Menu["Draw"]["Q"] != null && Menu["Draw"]["Q"].GetValue<MenuBool>().Value)
-                    {
-                        Render.Circle.DrawCircle(GameObjects.Player.Position, Q.Range, Color.LightGreen, 2);
-                    }
-                }
-
                 if (W != null && W.IsReady() && Menu["Draw"]["W"] != null && Menu["Draw"]["W"].GetValue<MenuBool>().Value)
                 {
-                    Render.Circle.DrawCircle(GameObjects.Player.Position, W.Range, Color.Purple, 2);
+                    Render.Circle.DrawCircle(Player.Position, W.Range, Color.Purple, 2);
                 }
 
                 if (E != null && E.IsReady() && Menu["Draw"]["E"] != null && Menu["Draw"]["E"].GetValue<MenuBool>().Value)
                 {
-                    Render.Circle.DrawCircle(GameObjects.Player.Position, E.Range, Color.Cyan, 2);
+                    Render.Circle.DrawCircle(Player.Position, E.Range, Color.Cyan, 2);
                 }
 
                 if (R != null && R.IsReady())
                 {
                     if (Menu["Draw"]["R"] != null && Menu["Draw"]["R"].GetValue<MenuBool>().Value)
                     {
-                        Render.Circle.DrawCircle(GameObjects.Player.Position, R.Range, Color.Red, 2);
+                        Render.Circle.DrawCircle(Player.Position, R.Range, Color.Red, 2);
 
                     }
                 }

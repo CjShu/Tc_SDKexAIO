@@ -18,8 +18,6 @@
 
     internal static class Manager
     {
-        private static List<UnitIncomingDamage> IncomingDamageList = new List<UnitIncomingDamage>();
-
         private static Obj_AI_Hero Player => PlaySharp.Player;
 
         public static List<Obj_AI_Minion> GetMinions(Vector3 From, float Range)
@@ -31,7 +29,7 @@
         {
             if (OnlyBig)
             {
-                return GameObjects.Jungle.Where(x => x.IsValidTarget(Range, false, @From) && !GameObjects.JungleSmall.Contains(x)).ToList();
+                return GameObjects.Jungle.Where(x => x.IsValidTarget(Range, false, @From) && (x.Name.Contains("Crab") || !GameObjects.JungleSmall.Contains(x))).ToList();
             }
             else
                 return GameObjects.Jungle.Where(x => x.IsValidTarget(Range, false, @From)).ToList();
@@ -214,25 +212,6 @@
             return 0;
         }
 
-        public static double GetIncomingDamage(Obj_AI_Hero Target, float time = 0.5f, bool skillshots = true)
-        {
-            double Damage = 0;
-
-            foreach (var damage in IncomingDamageList.Where(damage => damage.TargetNetworkId == Target.NetworkId && Game.Time - time < damage.Time))
-            {
-                if (skillshots)
-                {
-                    Damage += damage.Damage;
-                }
-                else
-                {
-                    if (!damage.Skillshot)
-                        Damage += damage.Damage;
-                }
-            }
-            return Damage;
-        }
-
         public static bool SpellCollision(Obj_AI_Hero t, Spell spell, int extraWith = 50)
         {
             foreach (var hero in GameObjects.EnemyHeroes.Where(hero => hero.IsValidTarget(spell.Range + spell.Width, true, spell.RangeCheckFrom) && t.NetworkId != hero.NetworkId))
@@ -250,21 +229,6 @@
 
             }
             return false;
-        }
-
-        /// <summary>
-        /// (Sebby Lib)
-        /// </summary>
-        /// <param name="target"></param>
-        /// <returns></returns>
-        public static bool ValidUlt(Obj_AI_Hero target)
-        {
-            if (target.HasBuffOfType(BuffType.PhysicalImmunity) || target.HasBuffOfType(BuffType.SpellImmunity)
-                || target.IsZombie || target.IsInvulnerable || target.HasBuffOfType(BuffType.Invulnerability) || target.HasBuff("kindredrnodeathbuff")
-                || target.HasBuffOfType(BuffType.SpellShield) || target.Health - GetIncomingDamage(target) < 1)
-                return false;
-            else
-                return true;
         }
 
         /// <summary>

@@ -24,7 +24,7 @@
     internal static class Diana
     {
 
-        private static Spell Q, W, E, R, R1;
+        private static Spell Q, W, E, R;
         private static Menu Menu => PlaySharp.Menu;
         private static Obj_AI_Hero Player => PlaySharp.Player;
 
@@ -120,6 +120,8 @@
             }
 
             Menu.Add(new MenuBool("ComboIgnite", "Combo Ignite", true));
+
+            PlaySharp.Write(GameObjects.Player.ChampionName + "Diana OK! :)");
 
             Game.OnUpdate += OnUpdate;
             Drawing.OnDraw += OnDraw;

@@ -6,6 +6,7 @@
     using LeagueSharp;
     using LeagueSharp.SDK;
     using SharpDX;
+    using Common;
 
     /// <summary>
     /// (This Part From SebbyLib)
@@ -54,6 +55,16 @@
             }
 
             return totalDamage;
+        }
+
+        public static bool ValidUlt(Obj_AI_Hero target)
+        {
+            if (target.HasBuffOfType(BuffType.PhysicalImmunity) || target.HasBuffOfType(BuffType.SpellImmunity)
+                || target.IsZombie || target.IsInvulnerable || target.HasBuffOfType(BuffType.Invulnerability) || target.HasBuff("kindredrnodeathbuff")
+                || target.HasBuffOfType(BuffType.SpellShield) || target.Health - GetIncomingDamage(target) < 1)
+                return false;
+            else
+                return true;
         }
 
         public static bool CollisionYasuo(Vector3 from, Vector3 to)
@@ -129,6 +140,32 @@
             {
                 args.Process = false;
             }
+        }
+
+        public static bool CanHitSkillShot(Obj_AI_Base target, GameObjectProcessSpellCastEventArgs Args)
+        {
+            if (Args.Target == null && target.IsValidTarget(1000))
+            {
+                var pred = Movement.GetPrediction(target, 0.25f).CastPosition;
+                if (pred == null)
+                    return false;
+
+                if (Args.SData.LineWidth > 0)
+                {
+                    var powCalc = Math.Pow(Args.SData.LineWidth + target.BoundingRadius, 2);
+
+                    if (pred.ToVector2().Distance(Args.End.ToVector2(), Args.Start.ToVector2(), true, true) <= powCalc ||
+                        target.ServerPosition.ToVector2().Distance(Args.End.ToVector2(), Args.Start.ToVector2(), true, true) <= powCalc)
+                    {
+                        return true;
+                    }
+                }
+                else if (target.Distance(Args.End) < 50 + target.BoundingRadius || pred.Distance(Args.End) < 50 + target.BoundingRadius)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
     }

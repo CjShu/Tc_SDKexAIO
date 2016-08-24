@@ -11,6 +11,7 @@
         internal static void Init()
         {
             Menu = PlaySharp.Menu.Add(new Menu("Tools", "Tools"));
+
             PlaySharp.Write("Tools OK!");
 
             Offensive.Init();

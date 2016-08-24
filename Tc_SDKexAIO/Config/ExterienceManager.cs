@@ -37,9 +37,9 @@
             return Menu.Add(new MenuSlider(name, display, cur, min, max));
         }
 
-        public static MenuSliderButton GetSliderButton(this Menu Menu, string name, string display, int cur, int min = 0, int max = 100)
+        public static MenuSliderButton GetSliderButton(this Menu Menu, string name, string display, int cur, int min = 0, int max = 100, bool state = true)
         {
-            return Menu.Add(new MenuSliderButton(name, display, cur, min, max) { BValue = true });
+            return Menu.Add(new MenuSliderButton(name, display, cur, min, max, state));
         }
     }
 }

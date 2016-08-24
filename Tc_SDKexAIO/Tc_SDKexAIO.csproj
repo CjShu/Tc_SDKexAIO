@@ -66,9 +66,6 @@
     <Reference Include="LeagueSharp.SDKEx">
       <HintPath>C:\Users\user\Desktop\L#\RbPbmy2n2\References\LeagueSharp.SDKEx.dll</HintPath>
     </Reference>
-    <Reference Include="SebbyLib">
-      <HintPath>C:\Users\user\Desktop\L#\RbPbmy2n2\References\SebbyLib.dll</HintPath>
-    </Reference>
     <Reference Include="SharpDX">
       <HintPath>C:\Users\user\Desktop\L#\RbPbmy2n2\References\SharpDX.dll</HintPath>
     </Reference>
@@ -107,6 +104,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Toolss\AutoWard.cs" />
     <Compile Include="Toolss\Offensive.cs" />
+    <Compile Include="Toolss\Potions.cs" />
     <Compile Include="Toolss\QSS.cs" />
     <Compile Include="Toolss\SkinChance.cs" />
     <Compile Include="Toolss\Tools.cs" />

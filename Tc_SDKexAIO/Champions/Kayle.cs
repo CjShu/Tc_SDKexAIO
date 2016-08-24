@@ -138,7 +138,7 @@
                     foreach (var ally in PlaySharp.Allies.Where(ally => ally.IsValid && !ally.IsDead && ally.HealthPercent < 70
                      && Player.ServerPosition.Distance(ally.ServerPosition) < R.Range && Menu["R"]["Rally" + ally.ChampionName].GetValue<MenuBool>()))
                     {
-                        if (SebbyLib.OktwCommon.CanHitSkillShot(ally, args))
+                        if (TCommon.CanHitSkillShot(ally, args))
                         {
                             R.CastOnUnit(ally);
                         }

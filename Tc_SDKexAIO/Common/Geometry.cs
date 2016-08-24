@@ -46,6 +46,68 @@ namespace Tc_SDKexAIO.Common
             return sum / vectors.Length;
         }
 
+        public static float Distance(Obj_AI_Base anotherUnit, bool squared = false)
+        {
+            return GameObjects.Player.Distance(anotherUnit, squared);
+        }
+
+        public static float Distance(this Obj_AI_Base unit, Obj_AI_Base anotherUnit, bool squared = false)
+        {
+            return unit.ServerPosition.ToVector2().Distance(anotherUnit.ServerPosition.ToVector2(), squared);
+        }
+
+        public static float Distance(this Obj_AI_Base unit, AttackableUnit anotherUnit, bool squared = false)
+        {
+            return unit.ServerPosition.ToVector2().Distance(anotherUnit.Position.ToVector2(), squared);
+        }
+
+        public static float Distance(this Obj_AI_Base unit, Vector3 point, bool squared = false)
+        {
+            return unit.ServerPosition.ToVector2().Distance(point.ToVector2(), squared);
+        }
+
+        public static float Distance(this Obj_AI_Base unit, Vector2 point, bool squared = false)
+        {
+            return unit.ServerPosition.ToVector2().Distance(point, squared);
+        }
+
+        public static float Distance3D(this Obj_AI_Base unit, Obj_AI_Base anotherUnit, bool squared = false)
+        {
+            return squared ? Vector3.DistanceSquared(unit.Position, anotherUnit.Position) : Vector3.Distance(unit.Position, anotherUnit.Position);
+        }
+
+        public static float Distance(this Vector3 v, Vector3 other, bool squared = false)
+        {
+            return v.ToVector2().Distance(other, squared);
+        }
+
+        public static float Distance(this Vector2 v, Vector2 to, bool squared = false)
+        {
+            return squared ? Vector2.DistanceSquared(v, to) : Vector2.Distance(v, to);
+        }
+
+        public static float Distance(this Vector2 v, Vector3 to, bool squared = false)
+        {
+            return v.Distance(to.ToVector2(), squared);
+        }
+
+        public static float Distance(this Vector2 v, Obj_AI_Base to, bool squared = false)
+        {
+            return v.Distance(to.ServerPosition.ToVector2(), squared);
+        }
+
+        public static float Distance(this Vector2 point, Vector2 segmentStart, Vector2 segmentEnd, bool onlyIfOnSegment = false, bool squared = false)
+        {
+            var objects = point.ProjectOn(segmentStart, segmentEnd);
+
+            if (objects.IsOnSegment || onlyIfOnSegment == false)
+            {
+                return squared ? Vector2.DistanceSquared(objects.SegmentPoint, point) : Vector2.Distance(objects.SegmentPoint, point);
+            }
+
+            return float.MaxValue;
+        }
+
         public static bool IsWallBetween(Vector3 start, Vector3 end, int step = 3)
         {
             if (start.IsValid() && end.IsValid() && step > 0)
@@ -82,8 +144,6 @@ namespace Tc_SDKexAIO.Common
 
         public static void Init()
         {
-
-
             Text = new Font(
                 Drawing.Direct3DDevice,
                 new FontDescription
@@ -107,6 +167,7 @@ namespace Tc_SDKexAIO.Common
             AppDomain.CurrentDomain.DomainUnload += CurrentDomainOnDomainUnload;
             AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnDomainUnload;
         }
+
         public static void DrawBox(float positionX, float positionY, float width, int height, System.Drawing.Color color, int borderwidth, System.Drawing.Color borderColor, string text = "")
         {
             if (color != Color.Transparent)
