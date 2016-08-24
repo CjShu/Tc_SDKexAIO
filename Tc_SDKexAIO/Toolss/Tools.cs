@@ -14,6 +14,7 @@
 
             PlaySharp.Write("Tools OK!");
 
+            Potions.Init();
             Offensive.Init();
             SkinChance.Init();
             QSS.Init();
