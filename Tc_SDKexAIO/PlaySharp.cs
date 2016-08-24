@@ -22,8 +22,6 @@
 
         public static List<Obj_AI_Hero> Allies = new List<Obj_AI_Hero>();
 
-        public static Spell E { get; set; }
-
         #endregion
 
         #region 自動啟動列表英雄名單
@@ -43,7 +41,7 @@
 
         private static string[] SupList =
         {
-            "Jinx", "Jhin", "Teemo", "Ezreal", "Diana"
+            "Jinx", "Jhin", "Teemo", "Ezreal", "Diana", "Quinn"
         };
 
         #endregion
@@ -95,6 +93,9 @@
                     break;
                 case "Diana":
                     Champions.Diana.Init();
+                    break;
+                case "Quinn":
+                    Champions.Quinn.Init();
                     break;
                 default:
                     break;

@@ -387,12 +387,4 @@
             Damage = damage;
         }
     }
-
-    internal class UnitIncomingDamage
-    {
-        public int TargetNetworkId;
-        public float Time;
-        public double Damage;
-        public bool Skillshot;
-    }
 }

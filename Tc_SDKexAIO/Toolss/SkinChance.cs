@@ -44,6 +44,9 @@
                     case "Diana":
                         SkinMenu.Add(new MenuList<string>("SkinName", "Skin Name", Diana));
                         break;
+                    case "Quinn":
+                        SkinMenu.Add(new MenuList<string>("SkinName", "Skin Name", Quinn));
+                        break;
                     default:
                         SkinMenu.Add(new MenuList<string>("SkinName", "Skin Name", new[] { "Classic", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" }));
                         break;

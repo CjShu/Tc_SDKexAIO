@@ -95,7 +95,6 @@
     <Compile Include="Common\BaseUlti.cs" />
     <Compile Include="Common\HpBarDraw.cs" />
     <Compile Include="Common\Manager.cs" />
-    <Compile Include="Core\Dash.cs" />
     <Compile Include="Common\Geometry.cs" />
     <Compile Include="Config\ExterienceManager.cs" />
     <Compile Include="Core\TCommon.cs" />

@@ -30,9 +30,8 @@
                 PotionsMenu.GetSeparator("Hunter's Potion");
                 PotionsMenu.GetSliderButton("HuntersPotion", "Player HealthPercent = ", 50, 35, 80, false);
             }
+
             Game.OnUpdate += OnUpdate;
-
-
         }
 
         private static void OnUpdate(EventArgs args)

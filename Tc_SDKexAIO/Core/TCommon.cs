@@ -142,32 +142,31 @@
             }
         }
 
-        public static bool CanHitSkillShot(Obj_AI_Base target, GameObjectProcessSpellCastEventArgs Args)
+        public static bool CanHitSkillShot(Obj_AI_Base target, GameObjectProcessSpellCastEventArgs args)
         {
-            if (Args.Target == null && target.IsValidTarget(1000))
+            if (args.Target == null && target.IsValidTarget(1000))
             {
                 var pred = Movement.GetPrediction(target, 0.25f).CastPosition;
                 if (pred == null)
                     return false;
 
-                if (Args.SData.LineWidth > 0)
+                if (args.SData.LineWidth > 0)
                 {
-                    var powCalc = Math.Pow(Args.SData.LineWidth + target.BoundingRadius, 2);
+                    var powCalc = Math.Pow(args.SData.LineWidth + target.BoundingRadius, 2);
 
-                    if (pred.ToVector2().Distance(Args.End.ToVector2(), Args.Start.ToVector2(), true, true) <= powCalc ||
-                        target.ServerPosition.ToVector2().Distance(Args.End.ToVector2(), Args.Start.ToVector2(), true, true) <= powCalc)
+                    if (pred.ToVector2().Distance(args.End.ToVector2(), args.Start.ToVector2(), true, true) <= powCalc ||
+                        target.ServerPosition.ToVector2().Distance(args.End.ToVector2(), args.Start.ToVector2(), true, true) <= powCalc)
                     {
                         return true;
                     }
                 }
-                else if (target.Distance(Args.End) < 50 + target.BoundingRadius || pred.Distance(Args.End) < 50 + target.BoundingRadius)
+                else if (target.Distance(args.End) < 50 + target.BoundingRadius || pred.Distance(args.End) < 50 + target.BoundingRadius)
                 {
                     return true;
                 }
             }
             return false;
         }
-
     }
 
    internal class UnitIncomingDamage

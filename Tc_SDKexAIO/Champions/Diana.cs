@@ -14,8 +14,7 @@
 
     using Color = System.Drawing.Color;
 
-
-    using Tc_SDKexAIO.Common;
+    using Common;
     using static Common.Manager;
 
     using Config;
