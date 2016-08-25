@@ -35,10 +35,10 @@
 
         internal static void Init()
         {
-            Q = new Spell(SpellSlot.Q, 850).SetSkillshot(0.25f, 150f, 1400f, false, SkillshotType.SkillshotCircle);
+            Q = new Spell(SpellSlot.Q, 860).SetSkillshot(0.25f, 150f, 1400f, false, SkillshotType.SkillshotCircle);
             W = new Spell(SpellSlot.W);
             E = new Spell(SpellSlot.E, 450);
-            R = new Spell(SpellSlot.R, 825);
+            R = new Spell(SpellSlot.R, 850);
 
             var QMenu = Menu.Add(new Menu("Q", "Q.Set"));
             {
@@ -206,13 +206,13 @@
                 return;
 
             if (Menu["Draw"]["Q"].GetValue<MenuBool>() && Q.IsReady())
-                Render.Circle.DrawCircle(Player.Position, Q.Range, Color.BlueViolet);
+                Render.Circle.DrawCircle(Player.Position, Q.Range - 10, Color.DarkGray);
 
             if (Menu["Draw"]["E"].GetValue<MenuBool>() && E.IsReady())
                 Render.Circle.DrawCircle(Player.Position, E.Range, Color.BlueViolet);
 
             if (Menu["Draw"]["R"].GetValue<MenuBool>() && R.IsReady())
-                Render.Circle.DrawCircle(Player.Position, R.Range, Color.BlueViolet);
+                Render.Circle.DrawCircle(Player.Position, R.Range - 20, Color.Red);
         }
 
         private static void OnUpdate(EventArgs args)
