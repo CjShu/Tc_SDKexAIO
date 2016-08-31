@@ -330,7 +330,7 @@
                 {
                     var QTarget = GetTarget(550, Q.DamageType);
 
-                    if (Q.IsReady() && !Player.IsWindingUp && !Variables.Orbwalker.CanAttack)
+                    if (Q.IsReady() && !Player.IsWindingUp && !Variables.Orbwalker.CanAttack())
                     {
                         Q.Cast(QTarget);
                     }
@@ -383,7 +383,7 @@
                 {
                     var QTarget = GetTarget(550, Q.DamageType);
 
-                    if (Q.IsReady() && !Player.IsWindingUp && !Variables.Orbwalker.CanAttack)
+                    if (Q.IsReady() && !Player.IsWindingUp && !Variables.Orbwalker.CanAttack())
                     {
                         Q.Cast(QTarget);
                     }

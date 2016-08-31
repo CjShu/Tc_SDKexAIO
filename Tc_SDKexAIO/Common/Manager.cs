@@ -237,7 +237,7 @@
         /// <returns></returns>
         public static bool CanHarras()
         {
-            if (!Player.IsWindingUp && !Player.IsUnderEnemyTurret() && Variables.Orbwalker.CanMove)
+            if (!Player.IsWindingUp && !Player.IsUnderEnemyTurret() && Variables.Orbwalker.CanMove())
                 return true;
             else
                 return false;
