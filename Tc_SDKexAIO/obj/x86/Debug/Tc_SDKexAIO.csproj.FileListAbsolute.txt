@@ -3,7 +3,6 @@ C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\Tc_SDKexAIO.exe
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\Tc_SDKexAIO.pdb
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\clipper_library.dll
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\LeagueSharp.Common.dll
-C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\LeagueSharp.Data.dll
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\LeagueSharp.dll
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\LeagueSharp.SDKEx.dll
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\SharpDX.Direct3D9.dll

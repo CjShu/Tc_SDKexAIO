@@ -34,7 +34,7 @@
             }
             Obj_AI_Base.OnIssueOrder += OnIssueOrder;
             Game.OnUpdate += OnUpdate;
-         //   Game.OnWndProc += OnWndProc;
+            Game.OnWndProc += OnWndProc;
         }
 
         public static double GetIncomingDamage(Obj_AI_Hero target, float time = 0.5f, bool skillshots = true)
@@ -101,18 +101,18 @@
             return points;
         }
 
-   //     private static void OnWndProc(WndEventArgs args)
-   //     {
-   //         if (args.Msg == 123 && blockMove)
-   //         {
-   //             blockMove = false;
-   //             blockAttack = false;
-   //              Variables.Orbwalker.AttackState = true;
-   //              Variables.Orbwalker.MovementState = true;
-   //
-   //             Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
-   //         }
-   //     }
+        private static void OnWndProc(WndEventArgs args)
+        {
+            if (args.Msg == 123 && blockMove)
+            {
+                blockMove = false;
+                blockAttack = false;
+                 Variables.Orbwalker.AttackState = true;
+                 Variables.Orbwalker.MovementState = true;
+   
+                Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+            }
+        }
 
         private static void OnUpdate(EventArgs args)
         {

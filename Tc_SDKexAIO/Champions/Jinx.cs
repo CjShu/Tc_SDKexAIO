@@ -149,7 +149,7 @@
         private static void QLogic(EventArgs args)
         {
             var QHarass = Menu["Q"]["HarassQ"];
-            if ((Harass || LaneClear) && !BigGun && QHarass && !Player.IsWindingUp && Variables.Orbwalker.CanAttack()
+            if ((Harass || LaneClear) && !BigGun && QHarass && !Player.IsWindingUp && Variables.Orbwalker.CanAttack
                 && Variables.Orbwalker.GetTarget() == null && Player.Mana > R.Instance.ManaCost + W.Instance.ManaCost + E.Instance.ManaCost + 10)
             {
                 foreach (var minion in GameObjects.EnemyMinions.Where(minion => minion.IsValidTarget(Q2Range() + 30)
@@ -175,7 +175,7 @@
                     {
                         Q.Cast();
                     }
-                    else if (Harass && QHarass && !Player.IsWindingUp && Variables.Orbwalker.CanAttack() && !Player.IsUnderEnemyTurret()
+                    else if (Harass && QHarass && !Player.IsWindingUp && Variables.Orbwalker.CanAttack && !Player.IsUnderEnemyTurret()
                         && Player.Mana > R.Instance.ManaCost + W.Instance.ManaCost + E.Instance.ManaCost + 20 && disstance < Q2Range()
                         + t.BoundingRadius + Player.BoundingRadius)
                     {
