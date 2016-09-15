@@ -16,24 +16,13 @@
 
         public static Menu Menu { get; set; }
 
+        public static Menu ChampionMenu { get; set; }
+
         public static Obj_AI_Hero Player { get; set; }
 
         public static List<Obj_AI_Hero> Enemies = new List<Obj_AI_Hero>();
 
         public static List<Obj_AI_Hero> Allies = new List<Obj_AI_Hero>();
-
-        #endregion
-
-        #region 自動啟動列表英雄名單
-
-        public static string[] AutoEnableList =
-        {
-             "Annie", "Ahri", "Akali", "Anivia", "Annie", "Brand", "Cassiopeia", "Diana", "Evelynn", "FiddleSticks", "Fizz", "Gragas", "Heimerdinger", "Karthus",
-             "Kassadin", "Katarina", "Kayle", "Kennen", "Kled", "Leblanc", "Lissandra", "Lux", "Malzahar", "Mordekaiser", "Morgana", "Nidalee", "Orianna",
-             "Ryze", "Sion", "Swain", "Syndra", "Teemo", "TwistedFate", "Veigar", "Viktor", "Vladimir", "Xerath", "Ziggs", "Zyra", "Velkoz", "Azir", "Ekko",
-             "Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Graves", "Jayce", "Jinx", "KogMaw", "Lucian", "MasterYi", "MissFortune", "Quinn", "Shaco", "Sivir",
-             "Talon", "Tristana", "Twitch", "Urgot", "Varus", "Vayne", "Yasuo", "Zed", "Kindred", "AurelionSol"
-        };
 
         #endregion
 
@@ -73,9 +62,12 @@
 
             Menu = new Menu("TcAioSDK", "Tc AIO SDKEx", true).Attach();
             Menu.GetSeparator("By: CjShu");
+            Menu.GetSeparator("Credit: Sebby, NightMoon, xQx");
             Menu.Add(new MenuSeparator("Version", "版本號 : " + Assembly.GetExecutingAssembly().GetName().Version));
-
+            
             Toolss.Tools.Init();
+
+            ChampionMenu = Menu.Add(new Menu($"aio.{GameObjects.Player.ChampionName.ToLower()}", $"[TcSDKAio]: {GameObjects.Player.ChampionName}"));
 
             switch (Player.ChampionName)
             {
@@ -96,8 +88,6 @@
                     break;
                 case "Quinn":
                     Champions.Quinn.Init();
-                    break;
-                default:
                     break;
             }
         }

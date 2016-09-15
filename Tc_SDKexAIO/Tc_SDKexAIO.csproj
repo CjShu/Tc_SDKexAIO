@@ -93,12 +93,27 @@
     <Compile Include="Champions\Quinn.cs" />
     <Compile Include="Champions\Teemo.cs" />
     <Compile Include="Common\BaseUlti.cs" />
+    <Compile Include="Common\Evade\Collision.cs" />
+    <Compile Include="Common\Evade\Config.cs" />
+    <Compile Include="Common\Evade\EarlyEvade.cs" />
+    <Compile Include="Common\Evade\Evade.cs" />
+    <Compile Include="Common\Evade\Evader.cs" />
+    <Compile Include="Common\Evade\EvadeSpellData.cs" />
+    <Compile Include="Common\Evade\EvadeSpellDatabase.cs" />
+    <Compile Include="Common\Evade\Geometry.cs" />
+    <Compile Include="Common\Evade\Helpers.cs" />
+    <Compile Include="Common\Evade\Skillshot.cs" />
+    <Compile Include="Common\Evade\SkillshotDetector.cs" />
+    <Compile Include="Common\Evade\SpellBlocker.cs" />
+    <Compile Include="Common\Evade\SpellData.cs" />
+    <Compile Include="Common\Evade\SpellDatabase.cs" />
+    <Compile Include="Common\Evade\Utils.cs" />
     <Compile Include="Common\HpBarDraw.cs" />
     <Compile Include="Common\Manager.cs" />
     <Compile Include="Common\Geometry.cs" />
+    <Compile Include="Common\MEC.cs" />
     <Compile Include="Config\ExterienceManager.cs" />
     <Compile Include="Core\TCommon.cs" />
-    <Compile Include="Core\WallDashLogic.cs" />
     <Compile Include="PlaySharp.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Toolss\AutoWard.cs" />
@@ -124,6 +139,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

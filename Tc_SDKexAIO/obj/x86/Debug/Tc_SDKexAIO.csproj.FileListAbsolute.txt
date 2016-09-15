@@ -15,3 +15,4 @@ C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\obj\x86\Debug\Tc_SDKexAIO.csp
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\obj\x86\Debug\Tc_SDKexAIO.exe
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\obj\x86\Debug\Tc_SDKexAIO.pdb
 C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\clipper_library.pdb
+C:\Users\user\Source\Repos\Tc_SDKexAIO\Tc_SDKexAIO\bin\Debug\LeagueSharp.Data.dll

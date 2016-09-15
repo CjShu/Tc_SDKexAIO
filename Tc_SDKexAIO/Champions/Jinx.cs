@@ -27,7 +27,7 @@
     {
 
         private static Spell Q, W, E, R;
-        private static Menu Menu => PlaySharp.Menu;
+        private static Menu Menu => PlaySharp.ChampionMenu;
         private static Obj_AI_Hero Player => PlaySharp.Player;
         private static bool BigGun => Player.HasBuff("JinxQ");
 
@@ -62,7 +62,7 @@
                 {
                     if (GameObjects.EnemyHeroes.Any())
                     {
-                        GameObjects.EnemyHeroes.ForEach(i => WList.Add(new MenuBool(i.ChampionName.ToLower(), i.ChampionName, !PlaySharp.AutoEnableList.Contains(i.ChampionName))));
+                        GameObjects.EnemyHeroes.ForEach(i => WList.Add(new MenuBool(i.ChampionName.ToLower(), i.ChampionName, !AutoEnableList.Contains(i.ChampionName))));
                     }
                 }
             }
@@ -93,8 +93,6 @@
                 DrawMenu.Add(new MenuBool("W", "W Range"));
                 DrawMenu.Add(new MenuBool("E", "E Range"));
                 DrawMenu.Add(new MenuBool("RDKs", "Draw R KS", true));
-                DrawMenu.Add(new MenuBool("EnableBuffs", "Draw Buff Enable", true));
-                DrawMenu.GetList("DrawBuffs", "Show Red/Blue Time Circle", new[] { "Off", "Blue Buff", "Red Buff", "Both" }, 3);
             }
 
             PlaySharp.Write(GameObjects.Player.ChampionName + "OK! :)");
@@ -119,8 +117,6 @@
                 ELogic(args);
 
                 AutoRLogic(args);
-
-                Drawggg(args);
 
                 TSMode(args);
         }
@@ -402,7 +398,7 @@
                             List<Vector2> waypoints = target.GetWaypoints();
 
                             if ((Player.Distance(waypoints.Last().ToVector3()) - Player.Distance(target.Position)) > 400)
-                                CastSpell(R, target);
+                            R.Cast(target);
                         }
 
                         else if (cast && target.CountEnemyHeroesInRange(200) > 2
@@ -413,39 +409,6 @@
                         }
                     }
                 }
-            }
-        }
-
-        private static void Drawggg(EventArgs args)
-        {
-            try
-            {
-                var drawBuffs = Menu["Draw"]["DrawBuffs"].GetValue<MenuList>().Index;
-
-                if ((drawBuffs == 1 | drawBuffs == 3) && Player.HasBlueBuff())
-                {
-                    BuffInstance b = Player.Buffs.Find(buff =>
-                    buff.DisplayName == "CrestoftheAncientGolem");
-                    if (BlueBuff.EndTime < Game.Time || b.EndTime > BlueBuff.EndTime)
-                    {
-                        BlueBuff.StartTime = b.StartTime;
-                        BlueBuff.EndTime = b.EndTime;
-                    }
-                }
-                if ((drawBuffs == 2 | drawBuffs == 3) && Player.HasRedBuff())
-                {
-                    BuffInstance b = Player.Buffs.Find(buff =>
-                    buff.DisplayName == "BlessingoftheLizardElder");
-                    if (RedBuff.EndTime < Game.Time || b.EndTime > RedBuff.EndTime)
-                    {
-                        RedBuff.StartTime = b.StartTime;
-                        RedBuff.EndTime = b.EndTime;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error In On Darwggg" + ex);
             }
         }
 
@@ -484,64 +447,12 @@
                         addpos = addpos + 15;
                     }
                 }
-                DrawBuffs(args);
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error in On Draw" + ex);
             }
         }
-
-        private static void DrawBuffs(EventArgs args)
-        {
-            try
-            {
-                if (!Menu["Draw"]["EnableBuffs"].GetValue<MenuBool>())
-                {
-                    return;
-                }
-
-                var drawBuffs = Menu["Draw"]["DrawBuffs"].GetValue<MenuList>().Index;
-
-                if ((drawBuffs == 1 | drawBuffs == 3) && Player.HasBlueBuff())
-                {
-                    if (BlueBuff.EndTime >= Game.Time)
-                    {
-                        var circle1 =
-                            new Geometry.Circle2(
-                                new Vector2(Player.Position.X + 3, Player.Position.Y - 3), 170f,
-                                Game.Time - BlueBuff.StartTime, BlueBuff.EndTime - BlueBuff.StartTime).ToPolygon();
-                        circle1.Draw(Color.Black, 4);
-
-                        var circle =
-                            new Geometry.Circle2(Player.Position.ToVector2(), 170f,
-                                Game.Time - BlueBuff.StartTime, BlueBuff.EndTime - BlueBuff.StartTime).ToPolygon();
-                        circle.Draw(Color.Blue, 4);
-                    }
-                }
-                if ((drawBuffs == 2 || drawBuffs == 3) && Player.HasRedBuff())
-                {
-                    if (RedBuff.EndTime >= Game.Time)
-                    {
-                        var circle1 =
-                            new Geometry.Circle2(
-                                new Vector2(Player.Position.X + 3, Player.Position.Y - 3), 150f,
-                                Game.Time - RedBuff.StartTime, RedBuff.EndTime - RedBuff.StartTime).ToPolygon();
-                        circle1.Draw(Color.Black, 4);
-
-                        var circle =
-                            new Geometry.Circle2(Player.Position.ToVector2(), 150f,
-                                Game.Time - RedBuff.StartTime, RedBuff.EndTime - RedBuff.StartTime).ToPolygon();
-                        circle.Draw(Color.Red, 4);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error in DrawBuffs" + ex);
-            }
-        }
-
         private static void OnAction(object sender, OrbwalkingActionArgs args)
         {
             try

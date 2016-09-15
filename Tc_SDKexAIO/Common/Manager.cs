@@ -20,9 +20,25 @@
     {
         private static Obj_AI_Hero Player => PlaySharp.Player;
 
+        public static string[] AutoEnableList =
+        {
+             "Annie", "Ahri", "Akali", "Anivia", "Annie", "Brand", "Cassiopeia", "Diana", "Evelynn", "FiddleSticks", "Fizz", "Gragas", "Heimerdinger", "Karthus",
+             "Kassadin", "Katarina", "Kayle", "Kennen", "Leblanc", "Lissandra", "Lux", "Malzahar", "Mordekaiser", "Morgana", "Nidalee", "Orianna",
+             "Ryze", "Sion", "Swain", "Syndra", "Teemo", "TwistedFate", "Veigar", "Viktor", "Vladimir", "Xerath", "Ziggs", "Zyra", "Velkoz", "Azir", "Ekko",
+             "Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Graves", "Jayce", "Jinx", "KogMaw", "Lucian", "MasterYi", "MissFortune", "Quinn", "Shaco", "Sivir",
+             "Talon", "Tristana", "Twitch", "Urgot", "Varus", "Vayne", "Yasuo", "Zed", "Kindred", "AurelionSol"
+        };
+
+        public static string[] Marksman =
+        {
+            "Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Jinx", "Kalista",
+            "KogMaw", "Lucian", "MissFortune", "Quinn", "Sivir", "Teemo", "Tristana", "Twitch", "Urgot", "Varus",
+            "Vayne"
+        };
+
         public static List<Obj_AI_Minion> GetMinions(Vector3 From, float Range)
         {
-            return GameObjects.EnemyMinions.Where(x => x.IsValidTarget(Range, false, @From)).ToList();
+            return GameObjects.EnemyMinions.Where(x => x.IsValidTarget(Range, false, From)).ToList();
         }
 
         public static List<Obj_AI_Minion> GetMobs(Vector3 From, float Range, bool OnlyBig = false)
@@ -87,37 +103,9 @@
         /// <returns></returns>
         public static bool CanMove(Obj_AI_Hero Target)
         {
-            if (Target.MoveSpeed < 50 || Target.IsStunned || Target.HasBuffOfType(BuffType.Stun) ||
-                Target.HasBuffOfType(BuffType.Fear) || Target.HasBuffOfType(BuffType.Snare) ||
-                Target.HasBuffOfType(BuffType.Knockup) || Target.HasBuff("Recall") ||
-                Target.HasBuffOfType(BuffType.Knockback) || Target.HasBuffOfType(BuffType.Charm) ||
-                Target.HasBuffOfType(BuffType.Taunt) || Target.HasBuffOfType(BuffType.Suppression)
-                || (Target.IsCastingInterruptableSpell() && !Target.IsMoving))
-            {
-                return false;
-            }
-            else
-                return true;
+            return !(Target.MoveSpeed < 50) && !Target.IsStunned && !Target.HasBuffOfType(BuffType.Stun) && !Target.HasBuffOfType(BuffType.Fear) && !Target.HasBuffOfType(BuffType.Snare) && !Target.HasBuffOfType(BuffType.Knockup) && !Target.HasBuff("Recall") && !Target.HasBuffOfType(BuffType.Knockback) && !Target.HasBuffOfType(BuffType.Charm) && !Target.HasBuffOfType(BuffType.Taunt) && !Target.HasBuffOfType(BuffType.Suppression) && (!Target.IsCastingInterruptableSpell() || Target.IsMoving);
         }
 
-        private static bool CanMovee(Obj_AI_Hero target)
-        {
-            if (target.HasBuffOfType(BuffType.Stun)
-                || target.HasBuffOfType(BuffType.Snare)
-                || target.HasBuffOfType(BuffType.Knockup)
-                || target.HasBuffOfType(BuffType.Charm)
-                || target.HasBuffOfType(BuffType.Fear)
-                || target.HasBuffOfType(BuffType.Knockback)
-                || target.HasBuffOfType(BuffType.Taunt)
-                || target.HasBuffOfType(BuffType.Suppression)
-                || target.IsStunned || target.IsCastingInterruptableSpell()
-                || target.MoveSpeed < 50f)
-            {
-                return false;
-            }
-            else
-                return true;
-        }
 
         public static bool CanKill(Obj_AI_Base Target)
         {
@@ -139,6 +127,7 @@
             }
         }
 
+
         public static bool CheckTarget(Obj_AI_Hero Target)
         {
             if (Target != null && !Target.IsDead && !Target.IsZombie && Target.IsHPBarRendered)
@@ -148,6 +137,7 @@
             else
                 return false;
         }
+
 
         public static double GetDamage(Obj_AI_Hero Target, bool CalCulateAttackDamage = true,
             bool CalCulateQDamage = true, bool CalCulateWDamage = true,
@@ -182,6 +172,42 @@
                     Damage += GameObjects.Player.Spellbook.GetSpell(SpellSlot.R).IsReady() ? GameObjects.Player.GetSpellDamage(Target, SpellSlot.R) : 0d;
                 }
 
+                if (GameObjects.Player.GetSpellSlot("SummonerDot") != SpellSlot.Unknown && GameObjects.Player.GetSpellSlot("SummonerDot").IsReady())
+                {
+                    Damage += 50 + 20 * GameObjects.Player.Level - (Target.HPRegenRate / 5 * 3);
+                }
+
+                if (Target.ChampionName == "Moredkaiser")
+                    Damage -= Target.Mana;
+
+                // exhaust
+                if (GameObjects.Player.HasBuff("SummonerExhaust"))
+                    Damage = Damage * 0.6f;
+
+                // blitzcrank passive
+                if (Target.HasBuff("BlitzcrankManaBarrierCD") && Target.HasBuff("ManaBarrier"))
+                    Damage -= Target.Mana / 2f;
+
+                // kindred r
+                if (Target.HasBuff("KindredRNoDeathBuff"))
+                    Damage = 0;
+
+                // tryndamere r
+                if (Target.HasBuff("UndyingRage") && Target.GetBuff("UndyingRage").EndTime - Game.Time > 0.3)
+                    Damage = 0;
+
+                // kayle r
+                if (Target.HasBuff("JudicatorIntervention"))
+                    Damage = 0;
+
+                // zilean r
+                if (Target.HasBuff("ChronoShift") && Target.GetBuff("ChronoShift").EndTime - Game.Time > 0.3)
+                    Damage = 0;
+
+                // fiora w
+                if (Target.HasBuff("FioraW"))
+                    Damage = 0;
+
                 return Damage;
             }
             else
@@ -189,6 +215,35 @@
                 return 0d;
             }
         }
+
+
+        public static void DrawEndScene(float range)
+        {
+            var pointList = new List<Vector3>();
+            for (var i = 0; i < 30; i++)
+            {
+                var angle = i * Math.PI * 2 / 30;
+                pointList.Add(
+                    new Vector3(
+                        GameObjects.Player.Position.X + range * (float)Math.Cos(angle), GameObjects.Player.Position.Y + range * (float)Math.Sin(angle),
+                        GameObjects.Player.Position.Z));
+            }
+
+            for (var i = 0; i < pointList.Count; i++)
+            {
+                var a = pointList[i];
+                var b = pointList[i == pointList.Count - 1 ? 0 : i + 1];
+
+                var aonScreen = Drawing.WorldToMinimap(a);
+                var bonScreen = Drawing.WorldToMinimap(b);
+                var aon1Screen = Drawing.WorldToScreen(a);
+                var bon1Screen = Drawing.WorldToScreen(b);
+
+                Drawing.DrawLine(aon1Screen.X, aon1Screen.Y, bon1Screen.X, bon1Screen.Y, 1, System.Drawing.Color.White);
+                Drawing.DrawLine(aonScreen.X, aonScreen.Y, bonScreen.X, bonScreen.Y, 1, System.Drawing.Color.White);
+            }
+        }
+
 
         public static int GetCustomDamage(this Obj_AI_Hero source, string auraname, Obj_AI_Hero target)
         {
@@ -212,6 +267,7 @@
             return 0;
         }
 
+
         public static bool SpellCollision(Obj_AI_Hero t, Spell spell, int extraWith = 50)
         {
             foreach (var hero in GameObjects.EnemyHeroes.Where(hero => hero.IsValidTarget(spell.Range + spell.Width, true, spell.RangeCheckFrom) && t.NetworkId != hero.NetworkId))
@@ -231,6 +287,7 @@
             return false;
         }
 
+
         /// <summary>
         /// (Sebby Lib)
         /// </summary>
@@ -241,50 +298,6 @@
                 return true;
             else
                 return false;
-        }
-
-        /// <summary>
-        /// (Sebby Lib)
-        /// </summary>
-        /// <param name="spell"></param>
-        /// <param name="target"></param>
-        public static void CastSpell(Spell spell, Obj_AI_Base target)
-        {
-            SkillshotType CoreType2 = SkillshotType.SkillshotLine;
-            bool aoe2 = false;
-            if (spell.Type == SkillshotType.SkillshotCircle)
-            {
-                CoreType2 = SkillshotType.SkillshotCircle;
-                aoe2 = true;
-            }
-
-            if (spell.Width > 80 && !spell.Collision)
-                aoe2 = true;
-
-            var predInput2 = new PredictionInput
-            {
-                AoE = aoe2,
-                Collision = spell.Collision,
-                Speed = spell.Speed,
-                Delay = spell.Delay,
-                Range = spell.Range,
-                From = Player.ServerPosition,
-                Radius = spell.Width,
-                Unit = target,
-                Type = CoreType2
-            };
-            var poutput2 = Movement.GetPrediction(predInput2);
-
-            if (spell.Speed != float.MaxValue && Core.TCommon.CollisionYasuo(Player.ServerPosition, poutput2.CastPosition))
-                return;
-
-            if (poutput2.Hitchance >= HitChance.VeryHigh)
-                spell.Cast(poutput2.CastPosition);
-
-            else if (predInput2.AoE && poutput2.AoeTargetsHitCount > 1 && poutput2.Hitchance >= HitChance.High)
-            {
-                spell.Cast(poutput2.CastPosition);
-            }
         }
 
         #region 模式

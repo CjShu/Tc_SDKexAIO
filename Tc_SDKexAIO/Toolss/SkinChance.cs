@@ -13,6 +13,7 @@
     {
 
         private static Obj_AI_Hero Player => PlaySharp.Player;
+
         private static Menu Menu => Tools.Menu;
 
         private static int SkinID;

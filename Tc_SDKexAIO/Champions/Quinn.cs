@@ -19,7 +19,7 @@
     internal static class Quinn
     {
         private static Spell Q, W, E, R;
-        private static Menu Menu => PlaySharp.Menu;
+        private static Menu Menu => PlaySharp.ChampionMenu;
         private static Obj_AI_Hero Player => PlaySharp.Player;
         private static HpBarDraw HpBarDraw = new HpBarDraw();
         private static string StartR = "QuinnR";

@@ -24,7 +24,7 @@
     {
 
         private static Spell Q, W, E, R;
-        private static Menu Menu => PlaySharp.Menu;
+        private static Menu Menu => PlaySharp.ChampionMenu;
         private static Obj_AI_Hero Player => PlaySharp.Player;
 
         private static HpBarDraw HpBarDraw = new HpBarDraw();
@@ -57,7 +57,7 @@
                 {
                     if (GameObjects.EnemyHeroes.Any())
                     {
-                        GameObjects.EnemyHeroes.ForEach(i => QList.Add(new MenuBool(i.ChampionName.ToLower(), i.ChampionName, !PlaySharp.AutoEnableList.Contains(i.ChampionName))));
+                        GameObjects.EnemyHeroes.ForEach(i => QList.Add(new MenuBool(i.ChampionName.ToLower(), i.ChampionName, !AutoEnableList.Contains(i.ChampionName))));
                     }
                 }
             }
