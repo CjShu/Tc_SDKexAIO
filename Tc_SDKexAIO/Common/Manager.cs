@@ -36,6 +36,8 @@
             "Vayne"
         };
 
+        public static int GetSmiteDmg => new[] { 390, 410, 430, 450, 480, 510, 540, 570, 600, 640, 680, 720, 760, 800, 850, 900, 950, 1000 }[Player.Level - 1];
+
         public static List<Obj_AI_Minion> GetMinions(Vector3 From, float Range)
         {
             return GameObjects.EnemyMinions.Where(x => x.IsValidTarget(Range, false, From)).ToList();
@@ -51,14 +53,115 @@
                 return GameObjects.Jungle.Where(x => x.IsValidTarget(Range, false, @From)).ToList();
         }
 
+        public static List<Obj_AI_Base> ListEnemies(bool includeClones = false)
+        {
+            var list = new List<Obj_AI_Base>();
+            list.AddRange(GameObjects.EnemyHeroes);
+            list.AddRange(ListMinions(includeClones));
+            return list;
+        }
+
+        public static List<Obj_AI_Minion> ListMinions(bool includeClones = false)
+        {
+            var list = new List<Obj_AI_Minion>();
+            list.AddRange(GameObjects.Jungle);
+            list.AddRange(GameObjects.EnemyMinions.Where(i => i.IsMinion() || i.IsPet(includeClones)));
+            return list;
+        }
+
+        public static List<Obj_AI_Base> GetCollision(this Spell spell, Obj_AI_Base target, List<Vector3> to, CollisionableObjects collisionable = CollisionableObjects.Minions)
+        {
+            var col = Collision.GetCollision(
+                to,
+                new PredictionInput
+                {
+                    Delay = spell.Delay,
+                    Radius = spell.Width,
+                    Speed = spell.Speed,
+                    From = spell.From,
+                    Range = spell.Range,
+                    Type = spell.Type,
+                    CollisionObjects = collisionable
+                });
+
+            col.RemoveAll(i => i.Compare(target));
+
+            return col;
+        }
+
         public static List<Obj_AI_Hero> GetEnemies(float Range)
         {
             return GameObjects.EnemyHeroes.Where(x => x.IsValidTarget(Range) && x.IsEnemy && !x.IsZombie && !x.IsDead).ToList();
         }
 
+        public static CastStates Casting(this Spell spell, Obj_AI_Base unit, bool aoe = false, CollisionableObjects collisionable = CollisionableObjects.Minions | CollisionableObjects.YasuoWall)
+        {
+            if (!unit.IsValidTarget())
+            {
+                return CastStates.InvalidTarget;
+            }
+
+            if (!spell.IsReady())
+            {
+                return CastStates.NotReady;
+            }
+
+            if (spell.CastCondition != null && !spell.CastCondition())
+            {
+                return CastStates.FailedCondition;
+            }
+
+            var pred = spell.GetPrediction(unit, aoe, -1, collisionable);
+
+            if (pred.CollisionObjects.Count > 0)
+            {
+                return CastStates.Collision;
+            }
+
+            if (spell.RangeCheckFrom.DistanceSquared(pred.CastPosition) > spell.RangeSqr)
+            {
+                return CastStates.OutOfRange;
+            }
+
+            if (pred.Hitchance < spell.MinHitChance && (!pred.Input.AoE || pred.Hitchance < HitChance.High || pred.AoeTargetsHitCount < 2))
+            {
+                return CastStates.LowHitChance;
+            }
+
+            if (!Player.Spellbook.CastSpell(spell.Slot, pred.CastPosition))
+            {
+                return CastStates.NotCasted;
+            }
+
+            spell.LastCastAttemptT = Variables.TickCount;
+
+            return CastStates.SuccessfullyCasted;
+        }
+
+        public static bool IsCasted(this CastStates state)
+        {
+            return state == CastStates.SuccessfullyCasted;
+        }
+
         public static Obj_AI_Hero GetTarget(float Range, DamageType DamageType = DamageType.Physical)
         {
             return Variables.TargetSelector.GetTarget(Range, DamageType);
+        }
+
+        internal static bool IsWard(this Obj_AI_Minion minion)
+        {
+            return minion.GetMinionType().HasFlag(MinionTypes.Ward) && minion.CharData.BaseSkinName != "BlueTrinket";
+        }
+
+        public static bool CanHitCircle(this Spell spell, Obj_AI_Base unit)
+        {
+            return spell.IsInRange(unit);
+        }
+
+        public static bool CanLastHit(this Spell spell, Obj_AI_Base unit, double dmg, double subDmg = 0)
+        {
+            var hpPred = spell.GetHealthPrediction(unit);
+            return hpPred > 0 && hpPred - subDmg < dmg;
         }
 
         public static Obj_AI_Hero GetTarget(Spell Spell, bool Ignote = true)
@@ -375,18 +478,6 @@
 
         #endregion
 
-    }
-
-    internal class BlueBuff
-    {
-        public static float StartTime { get; set; }
-        public static float EndTime { get; set; }
-    }
-
-    internal class RedBuff
-    {
-        public static float StartTime { get; set; }
-        public static float EndTime { get; set; }
     }
 
     internal class OnDamageEvent

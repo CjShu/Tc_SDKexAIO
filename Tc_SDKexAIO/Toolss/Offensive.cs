@@ -7,6 +7,7 @@
     using LeagueSharp.SDK.Utils;
 
     using System;
+    using System.Linq;
 
     using Common;
     using Config;
@@ -16,6 +17,8 @@
         private static Obj_AI_Hero Player => PlaySharp.Player;
 
         private static Menu Menu => Tools.Menu;
+
+        private static Items.Item BotRuinedKing, Tiamat, Hydra, Titanic;
 
         internal static void Init()
         {
@@ -30,10 +33,22 @@
                 OffMenu.GetSeparator("Botrk Mode");
                 OffMenu.Add(new MenuBool("Botrk", "Use Botrk", true));
                 OffMenu.GetSlider("Botrk.s", "Botrk enemy HP Min >=", 70, 0, 100);
+                OffMenu.GetSeparator("BotRuinedKing Mode");
+                OffMenu.Add(new MenuBool("BotRuined", "Use BotRuinedKing", true));
+                OffMenu.GetSlider("BotRuined.s", "BotRuinedKing enemy HP Min >=", 70, 0, 100);
                 OffMenu.GetSeparator("Combo Mode");
                 OffMenu.Add(new MenuBool("Combo", "Combo Use", true));
+                OffMenu.Add(new MenuBool("Hydra", "Hydra Use", true));
+                OffMenu.Add(new MenuBool("Tiamat", "Tiamat Use", true));
+                OffMenu.Add(new MenuBool("Titanic", "Titanic Use", true));
+
             }
             Game.OnUpdate += OnUpdate;
+
+            BotRuinedKing = new Items.Item(ItemId.Blade_of_the_Ruined_King, 550);
+            Tiamat = new Items.Item(ItemId.Tiamat_Melee_Only, 400);
+            Hydra = new Items.Item(ItemId.Ravenous_Hydra_Melee_Only, 400);
+            Titanic = new Items.Item(3748, 0);
         }
 
         private static void OnUpdate(EventArgs args)
@@ -69,7 +84,52 @@
                     {
                         Items.UseItem(3153, t);
                     }
+
+                    if (Menu["Offensive"]["Hydra"])
+                    {
+                        UseItem(t);
+                    }
+
+                    if (Menu["Offensive"]["Tiamat"])
+                    {
+                        UseItem(t);
+                    }
+                    if (Menu["Offensive"]["Titanic"])
+                    {
+                        UseItem(t);
+                    }
+                    if (Menu["Offensive"]["BotRuined"] && (t.HealthPercent >= Menu["Offensive"]["BotRuined.s"].GetValue<MenuSlider>().Value
+                        && Player.HealthPercent < 60) && t.IsValidTarget(Player.GetRealAutoAttackRange()))
+                    {
+                        UseItem(t);
+                    }
                 }
+            }
+        }
+
+        private static void UseItem(Obj_AI_Hero target)
+        {
+            if (target != null)
+            {
+                if (BotRuinedKing.IsReady)
+                {
+                    BotRuinedKing.Cast(target);
+                }
+            }
+
+            if (Tiamat.IsReady && Player.CountEnemyHeroesInRange(Tiamat.Range) > 0)
+            {
+                Tiamat.Cast();
+            }
+
+            if (Hydra.IsReady && Player.CountEnemyHeroesInRange(Hydra.Range) > 0)
+            {
+                Hydra.Cast();
+            }
+
+            if (Titanic.IsReady && !Player.Spellbook.IsAutoAttacking && Variables.Orbwalker.GetTarget() != null)
+            {
+                Titanic.Cast();
             }
         }
     }

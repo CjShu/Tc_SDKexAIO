@@ -30,7 +30,7 @@
 
         private static string[] SupList =
         {
-            "Jinx", "Jhin", "Teemo", "Ezreal", "Diana", "Quinn"
+            "Jinx", "Jhin", "Teemo", "Ezreal", "Diana", "Quinn", "LeeSin"
         };
 
         #endregion
@@ -88,6 +88,9 @@
                     break;
                 case "Quinn":
                     Champions.Quinn.Init();
+                    break;
+                case "LeeSin":
+                    Champions.LeeSin.Init();
                     break;
             }
         }
