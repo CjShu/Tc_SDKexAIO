@@ -291,10 +291,8 @@
             {
                 if (Menu["R"]["RKey"].GetValue<MenuKeyBind>().Active)
                 {
-                    AutoUse(RTarget);
                     R.Cast(R.GetPrediction(RTarget).UnitPosition);
                 }
-                AutoUse(RTarget);
                 R.Cast(R.GetPrediction(RTarget).UnitPosition);
             }
         }
