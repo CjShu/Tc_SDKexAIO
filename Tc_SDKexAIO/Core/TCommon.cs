@@ -15,6 +15,8 @@
    {
         private static readonly List<UnitIncomingDamage> IncomingDamageList = new List<UnitIncomingDamage>();
         private static readonly List<Obj_AI_Hero> ChampionList = new List<Obj_AI_Hero>();
+        public static readonly Dictionary<int, List<Vector2>> StoredPaths = new Dictionary<int, List<Vector2>>();
+        public static readonly Dictionary<int, int> StoredTick = new Dictionary<int, int>();
 
         private static Obj_AI_Hero Player => PlaySharp.Player;
 
@@ -29,20 +31,20 @@
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
         }
 
-        private static void Game_OnUpdate(EventArgs Args)
+        private static void Game_OnUpdate(EventArgs args)
         {
             var time = Game.Time - 2;
             IncomingDamageList.RemoveAll(damage => time < damage.Time);
         }
 
-        private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs Args)
+        private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            if (Args.SData == null)
+            if (args.SData == null)
             {
                 return;
             }
 
-            var targed = Args.Target as Obj_AI_Base;
+            var targed = args.Target as Obj_AI_Base;
 
             if (targed != null)
             {
@@ -50,8 +52,8 @@
                 {
                     IncomingDamageList.Add(new UnitIncomingDamage
                     {
-                        Damage = (sender as Obj_AI_Hero).GetSpellDamage(targed, Args.Slot),
-                        TargetNetworkId = Args.Target.NetworkId,
+                        Damage = (sender as Obj_AI_Hero).GetSpellDamage(targed, args.Slot),
+                        TargetNetworkId = args.Target.NetworkId,
                         Time = Game.Time,
                         Skillshot = false
                     });
@@ -61,11 +63,11 @@
             {
                 foreach (var champion in ChampionList.Where(champion => !champion.IsDead && champion.IsVisible && champion.Team != sender.Team && champion.Distance(sender) < 2000))
                 {
-                    if (CanHitSkillShot(champion, Args))
+                    if (CanHitSkillShot(champion, args))
                     {
                         IncomingDamageList.Add(new UnitIncomingDamage
                         {
-                            Damage = champion.GetSpellDamage(targed, Args.Slot),
+                            Damage = champion.GetSpellDamage(targed, args.Slot),
                             TargetNetworkId = champion.NetworkId,
                             Time = Game.Time,
                             Skillshot = true
@@ -75,23 +77,23 @@
             }
         }
 
-        public static bool CanHitSkillShot(Obj_AI_Base target, GameObjectProcessSpellCastEventArgs Args)
+        public static bool CanHitSkillShot(Obj_AI_Base target, GameObjectProcessSpellCastEventArgs args)
         {
-            if (Args.Target == null && target.IsValidTarget(1000))
+            if (args.Target == null && target.IsValidTarget(1000))
             {
                 var pred = Movement.GetPrediction(target, 0.25f).CastPosition;
 
-                if (Args.SData.LineWidth > 0)
+                if (args.SData.LineWidth > 0)
                 {
-                    var powCalc = Math.Pow(Args.SData.LineWidth + target.BoundingRadius, 2);
+                    var powCalc = Math.Pow(args.SData.LineWidth + target.BoundingRadius, 2);
 
-                    if (pred.ToVector2().Distance(Args.End.ToVector2(), Args.Start.ToVector2(), true, true) <= powCalc ||
-                        target.ServerPosition.ToVector2().Distance(Args.End.ToVector2(), Args.Start.ToVector2(), true, true) <= powCalc)
+                    if (pred.ToVector2().Distance(args.End.To2D(), args.Start.To2D(), true, true) <= powCalc ||
+                        target.ServerPosition.To2D().Distance(args.End.To2D(), args.Start.To2D(), true, true) <= powCalc)
                     {
                         return true;
                     }
                 }
-                else if (target.Distance(Args.End) < 50 + target.BoundingRadius || pred.Distance(Args.End) < 50 + target.BoundingRadius)
+                else if (target.Distance(args.End) < 50 + target.BoundingRadius || pred.Distance(args.End) < 50 + target.BoundingRadius)
                 {
                     return true;
                 }
@@ -99,24 +101,23 @@
             return false;
         }
 
-        public static double GetIncomingDamage(Obj_AI_Hero target, float time = 0.5f, bool skillshots = true)
+        public static Vector3 GetTrapPos(float range)
         {
-            double totalDamage = 0;
-
-            foreach (var damage in IncomingDamageList.Where(damage => damage.TargetNetworkId == target.NetworkId && Game.Time - time < damage.Time))
+            foreach (var enemy in GameObjects.EnemyHeroes.Where(enemy => enemy.IsValid && enemy.Distance(Player.ServerPosition) < range && (enemy.HasBuff("zhonyasringshield") || enemy.HasBuff("BardRStasis"))))
             {
-                if (skillshots)
-                {
-                    totalDamage += damage.Damage;
-                }
-                else
-                {
-                    if (!damage.Skillshot)
-                        totalDamage += damage.Damage;
-                }
+                return enemy.Position;
             }
 
-            return totalDamage;
+            foreach (var obj in ObjectManager.Get<Obj_GeneralParticleEmitter>().Where(obj => obj.IsValid && obj.Position.Distance(Player.Position) < range))
+            {
+                var name = obj.Name.ToLower();
+
+                if (name.Contains("GateMarker_red.troy".ToLower()) || name.Contains("global_ss_teleport_target_red.troy".ToLower())
+                    || name.Contains("R_indicator_red.troy".ToLower()))
+                    return obj.Position;
+            }
+
+            return Vector3.Zero;
         }
     }
 

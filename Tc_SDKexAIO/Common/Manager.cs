@@ -9,16 +9,21 @@
     using LeagueSharp.Data.Enumerations;
 
     using SharpDX;
-    using SharpDX.Direct3D9;
     using Collision = LeagueSharp.SDK.Collision;
 
     using System;
     using System.Collections.Generic;
     using System.Linq;
 
+    using Core;
+
     internal static class Manager
     {
         private static Obj_AI_Hero Player => PlaySharp.Player;
+
+        private static List<UnitIncomingDamage> IncomingDamageList = new List<UnitIncomingDamage>();
+
+        private static readonly Dictionary<int, PredictedDamage> ActiveAttacks = new Dictionary<int, PredictedDamage>();
 
         public static string[] AutoEnableList =
         {
@@ -169,8 +174,6 @@
             return Variables.TargetSelector.GetTarget(Spell, Ignote);
         }
 
-        public static int GetMana(SpellSlot slot, AMenuComponent value) => value.GetValue<MenuSliderButton>().SValue + (int)(GameObjects.Player.Spellbook.GetSpell(slot).ManaCost / GameObjects.Player.MaxMana * 100);
-
         public static bool InAutoAttackRange(AttackableUnit target)
         {
             var baseTarget = (Obj_AI_Base)target;
@@ -199,6 +202,88 @@
                 return 0f;
         }
 
+        public static float GetKsDamage(Obj_AI_Hero t, Spell QWER)
+        {
+            var TotalDmg = QWER.GetDamage(t);
+            TotalDmg -= t.HPRegenRate;
+
+            if (TotalDmg > t.Health)
+            {
+                if (Player.HasBuff("summonerexhaust"))
+                    TotalDmg = TotalDmg * 0.6f;
+
+                if (t.HasBuff("ferocioushowl"))
+                    TotalDmg = TotalDmg * 0.7f;
+
+                if (t.ChampionName == "Blitzcrank" && !t.HasBuff("BlitzcrankManaBarrierCD") && !t.HasBuff("ManaBarrier"))
+                {
+                    TotalDmg -= t.Mana / 2f;
+                }
+            }
+
+            TotalDmg += (float)GetIncomingDamage(t);
+            return TotalDmg;
+        }
+
+        /// <summary>
+        /// (This Part From SebbyLib)
+        /// </summary>
+        /// <param name="unit"></param>
+        /// <param name="time"></param>
+        /// <param name="delay"></param>
+        /// <returns></returns>
+        public static float GetHealthPrediction(Obj_AI_Base unit, int time, int delay = 70)
+        {
+            var PredDamage = 0f;
+
+            foreach (var attack in ActiveAttacks.Values)
+            {
+                var attackDmg = 0f;
+
+                if (!attack.Processed && attack.Target.IsValidTarget(float.MaxValue, false) && attack.Target.NetworkId == unit.NetworkId)
+                {
+                    float bonding = Math.Max(attack.Target.BoundingRadius, unit.Distance(attack.StartPos) - attack.Source.BoundingRadius);
+
+                    if (attack.Source.IsMelee)
+                    {
+                        bonding = 0;
+                    }
+
+                    var landTime = attack.StartTick + attack.Delay + 1000 * bonding / attack.ProjectileSpeed + delay;
+
+                    if (landTime < Variables.TickCount + time)
+                    {
+                        attackDmg = attack.Damage;
+                    }
+                }
+                PredDamage += attackDmg;
+            }
+            return unit.Health - PredDamage;
+
+        }
+
+        public static bool IsMovingInSameDirection(Obj_AI_Base source, Obj_AI_Base Target)
+        {
+            var sourceLW = source.GetWaypoints().Last().To3D();
+
+            if (sourceLW == source.Position || !source.IsMoving)
+                return false;
+
+            var targetLW = Target.GetWaypoints().Last().To3D();
+
+            if (targetLW == Target.Position || !Target.IsMoving)
+                return false;
+
+            Vector2 pos1 = sourceLW.To2D() - source.Position.To2D();
+            Vector2 pos2 = targetLW.To2D() - Target.Position.To2D();
+            var getAngle = pos1.AngleBetween(pos2);
+
+            if (getAngle < 25)
+                return true;
+            else
+                return false;
+        }
+
         /// <summary>
         /// Judge Target MoveMent Status (This Part From SebbyLib)
         /// </summary>
@@ -209,18 +294,9 @@
             return !(Target.MoveSpeed < 50) && !Target.IsStunned && !Target.HasBuffOfType(BuffType.Stun) && !Target.HasBuffOfType(BuffType.Fear) && !Target.HasBuffOfType(BuffType.Snare) && !Target.HasBuffOfType(BuffType.Knockup) && !Target.HasBuff("Recall") && !Target.HasBuffOfType(BuffType.Knockback) && !Target.HasBuffOfType(BuffType.Charm) && !Target.HasBuffOfType(BuffType.Taunt) && !Target.HasBuffOfType(BuffType.Suppression) && (!Target.IsCastingInterruptableSpell() || Target.IsMoving);
         }
 
-
-        public static bool CanKill(Obj_AI_Base Target)
+        public static bool CanKill(Obj_AI_Hero Target)
         {
-            if (Target.HasBuffOfType(BuffType.PhysicalImmunity)
-                || Target.HasBuffOfType(BuffType.SpellImmunity)
-                || Target.IsZombie
-                || Target.IsInvulnerable
-                || Target.HasBuffOfType(BuffType.Invulnerability)
-                || Target.HasBuffOfType(BuffType.SpellShield)
-                || Target.HasBuff("deathdefiedbuff")
-                || Target.HasBuff("Undying Rage")
-                || Target.HasBuff("Chrono Shift"))
+            if (Target.HasBuffOfType(BuffType.PhysicalImmunity) || Target.HasBuffOfType(BuffType.SpellImmunity) || Target.IsZombie || Target.IsInvulnerable || Target.HasBuffOfType(BuffType.Invulnerability) || Target.HasBuff("KindredRNoDeathBuff") || Target.HasBuffOfType(BuffType.SpellShield) || Target.Health - GetIncomingDamage(Target) < 1)
             {
                 return false;
             }
@@ -229,7 +305,6 @@
                 return true;
             }
         }
-
 
         public static bool CheckTarget(Obj_AI_Hero Target)
         {
@@ -240,7 +315,6 @@
             else
                 return false;
         }
-
 
         public static double GetDamage(Obj_AI_Hero Target, bool CalCulateAttackDamage = true,
             bool CalCulateQDamage = true, bool CalCulateWDamage = true,
@@ -319,6 +393,25 @@
             }
         }
 
+        public static double GetIncomingDamage(Obj_AI_Hero target, float time = 0.5f, bool skillshots = true)
+        {
+            double totalDamage = 0;
+
+            foreach (var damage in IncomingDamageList.Where(damage => damage.TargetNetworkId == target.NetworkId && Game.Time - time < damage.Time))
+            {
+                if (skillshots)
+                {
+                    totalDamage += damage.Damage;
+                }
+                else
+                {
+                    if (!damage.Skillshot)
+                        totalDamage += damage.Damage;
+                }
+            }
+
+            return totalDamage;
+        }
 
         public static void DrawEndScene(float range)
         {
@@ -347,7 +440,6 @@
             }
         }
 
-
         public static int GetCustomDamage(this Obj_AI_Hero source, string auraname, Obj_AI_Hero target)
         {
             if (auraname == "sheen")
@@ -370,18 +462,17 @@
             return 0;
         }
 
-
-        public static bool SpellCollision(Obj_AI_Hero t, Spell spell, int extraWith = 50)
+        public static bool SpellCollision(this Obj_AI_Hero t, Spell spell, int extraWith = 50)
         {
             foreach (var hero in GameObjects.EnemyHeroes.Where(hero => hero.IsValidTarget(spell.Range + spell.Width, true, spell.RangeCheckFrom) && t.NetworkId != hero.NetworkId))
             {
                 var prediction = spell.GetPrediction(hero);
                 var powCalc = Math.Pow((spell.Width + extraWith + hero.BoundingRadius), 2);
-                if (prediction.UnitPosition.ToVector2().DistanceSquared(spell.From.ToVector2(), spell.GetPrediction(t).CastPosition.ToVector2(), true) <= powCalc)
+                if (prediction.UnitPosition.ToVector2().Distance(spell.From.ToVector2(), spell.GetPrediction(t).CastPosition.ToVector2(), true, true) <= powCalc)
                 {
                     return true;
                 }
-                else if (prediction.UnitPosition.ToVector2().Distance(spell.From.ToVector2(), t.ServerPosition.ToVector2(), true) <= powCalc)
+                else if (prediction.UnitPosition.ToVector2().Distance(spell.From.ToVector2(), t.ServerPosition.ToVector2(), true, true) <= powCalc)
                 {
                     return true;
                 }
@@ -390,6 +481,38 @@
             return false;
         }
 
+        public static void CastSpell(Spell QWER, Obj_AI_Base Target, bool Aoe = false)
+        {
+
+            var predInput = new PredictionInput
+            {
+                AoE = Aoe,
+                Collision = QWER.Collision,
+                Delay = QWER.Delay,
+                From = GameObjects.Player.ServerPosition,
+                Radius = QWER.Width,
+                Range = QWER.Range,
+                Speed = QWER.Speed,
+                Type = QWER.Type,
+                Unit = Target
+            };
+
+            var predput = Movement.GetPrediction(predInput);
+
+            if (QWER.Speed != float.MaxValue && YasuoWindWall.CollisionYasuo(GameObjects.Player.ServerPosition, predput.CastPosition))
+            {
+                return;
+            }
+
+            if (predput.Hitchance >= HitChance.VeryHigh)
+            {
+                QWER.Cast(predput.CastPosition);
+            }
+            else if (predInput.AoE && predput.AoeTargetsHitCount > 1 && predput.Hitchance >= HitChance.High)
+            {
+                QWER.Cast(predput.CastPosition);
+            }
+        }
 
         /// <summary>
         /// (Sebby Lib)
@@ -446,40 +569,7 @@
         }
 
         #endregion
-
-        #region BUFF
-
-        public static readonly Dictionary<int, List<OnDamageEvent>> DamagesOnTime = new Dictionary<int, List<OnDamageEvent>>();
-
-        public static bool CanKillableWith(this Obj_AI_Base t, Spell spell)
-        {
-            return t.Health < spell.GetDamage(t) - 5;
-        }
-
-        public static bool HasBuffInst(this Obj_AI_Base obj, string buffName)
-        {
-            return obj.Buffs.Any(buff => buff.DisplayName == buffName);
-        }
-
-        public static bool HasPassive(this Obj_AI_Base obj)
-        {
-            return obj.PassiveCooldownEndTime - (Game.Time - 15.5) <= 0;
-        }
-
-        public static bool HasBlueBuff(this Obj_AI_Base obj)
-        {
-            return obj.Buffs.Any(buff => buff.DisplayName == "CrestoftheAncientGolem");
-        }
-
-        public static bool HasRedBuff(this Obj_AI_Base obj)
-        {
-            return obj.Buffs.Any(buff => buff.DisplayName == "BlessingoftheLizardElder");
-        }
-
-        #endregion
-
     }
-
     internal class OnDamageEvent
     {
         public int Time;
@@ -489,6 +579,31 @@
         {
             Time = time;
             Damage = damage;
+        }
+    }
+
+    internal class PredictedDamage
+    {
+        public readonly float AnimationTime;
+        public float Damage { get; private set; }
+        public float Delay { get; private set; }
+        public int ProjectileSpeed { get; private set; }
+        public Obj_AI_Base Source { get; private set; }
+        public Vector3 StartPos { get; private set; }
+        public int StartTick { get; internal set; }
+        public Obj_AI_Base Target { get; private set; }
+        public bool Processed { get; internal set; }
+
+        public PredictedDamage(Obj_AI_Base source, Obj_AI_Base target, Vector3 startPos, int startTick, float delay, float animationTime, int projectileSpeed, float damage)
+        {
+            Source = source;
+            StartPos = startPos;
+            Target = target;
+            StartTick = startTick;
+            Delay = delay;
+            ProjectileSpeed = projectileSpeed;
+            Damage = damage;
+            AnimationTime = animationTime;
         }
     }
 }

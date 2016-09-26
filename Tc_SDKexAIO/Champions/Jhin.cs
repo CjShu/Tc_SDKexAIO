@@ -28,8 +28,11 @@
         private static HpBarDraw HpBarDraw = new HpBarDraw();
         private static float LasPing = Variables.TickCount;
         private static string StartR = "JhinR";
-        private static string IsCastingR = "JhinR";
+        private static string IsJhinRShot = "JhinRShot";
         private static Spell Q, W, E, R;
+        private static int LastPingT, LastECast, LastShowNoit;
+        private static bool IsAttack;
+        private static Vector2 PingLocation;
 
         internal static void Init()
         {
@@ -42,43 +45,62 @@
 
             var QMenu = Menu.Add(new Menu("Q", "Q.Set"));
             {
-                QMenu.GetSeparator("Q: Always On");
-                QMenu.Add(new MenuBool("ComboQ", "Comno Q", true));
-                QMenu.Add(new MenuBool("HarassQ", "Harass Q", true));
-                QMenu.Add(new MenuBool("LaneClearQ", "LaneClear Q", true));
-                QMenu.Add(new MenuBool("JungleQ", "Jungle Q", true));
+                QMenu.GetSeparator("Q Mode");
+                QMenu.Add(new MenuBool("ComboQ", "Combo Q", true));
+                QMenu.Add(new MenuSliderButton("HarassQ", "Harass Q | Min Mana", 60));
+                QMenu.Add(new MenuSliderButton("LaneClearQ", "LaneClear Q | Min Mana", 40));
+                QMenu.Add(new MenuSliderButton("JungleQ", "Jungle Q | Min Mana", 40));
                 QMenu.Add(new MenuBool("KillStealQ", "KillSteal Q", true));
             }
 
             var WMenu = Menu.Add(new Menu("W", "W.Set"));
             {
-                WMenu.Add(new MenuBool("ComboW", "Comno W", true));
-                WMenu.Add(new MenuBool("KSW", "Killsteal W", true));
-                WMenu.Add(new MenuBool("HarassW", "Harass W", true));
-                WMenu.Add(new MenuBool("LaneClearW", "LaneClear W", true));
+                WMenu.GetSeparator("W Mode");
+                WMenu.Add(new MenuBool("ComboW", "Combo W", true));
+                WMenu.Add(new MenuBool("ComboWAA", "Use Combo W | After Attack", true));
                 WMenu.Add(new MenuBool("WMO", "W Only Marked Target", true));
-                WMenu.Add(new MenuKeyBind("WTap", "W Fire On Tap", Keys.G, KeyBindType.Press));
-                WMenu.Add(new MenuKeyBind("AutoW", "Use W Auto (Toggle)", Keys.Y, KeyBindType.Toggle));
-                WMenu.Add(new MenuSlider("HarassWMana", "Harass W Min Mana > =", 60));
+                WMenu.Add(new MenuSliderButton("HarassW", "Harass W | Min Mana", 60));
+                WMenu.Add(new MenuSliderButton("LaneClearW", "LaneClear W | Min Mana", 40));
+                WMenu.Add(new MenuSliderButton("JungleW", "Jungle W | Min Mana", 40));
+                WMenu.Add(new MenuBool("KillStealW", "KillSteal W", true));
+                WMenu.Add(new MenuBool("AutoW", "Auto W Target Cant Move", true));
+                WMenu.GetSeparator("Misc Mode");
+                WMenu.Add(new MenuBool("GapW", "Anti GapCloser W| When target HavePassive", true));
             }
 
             var EMenu = Menu.Add(new Menu("E", "E.Set"));
             {
-                EMenu.GetSeparator("E: Mobe");
+                EMenu.GetSeparator("E Mobe");
                 EMenu.Add(new MenuBool("ComboE", "Combo E", true));
-                EMenu.Add(new MenuBool("LaneClearE", "LaneClear E", true));
-                EMenu.Add(new MenuSlider("LaneClearEMana", "LaneClear E Min Mana", 40, 0, 100));
+                EMenu.Add(new MenuSliderButton("HarassE", "Harass E Enemy | Min Mana", 60));
+                EMenu.Add(new MenuSliderButton("JungleE", "Jungle E | Min Mana", 40));
+                EMenu.Add(new MenuSliderButton("LaneClearE", "LaneClear E | Min Mana", 40));
                 EMenu.Add(new MenuSlider("LCminions", "LaneClear Min minion", 5, 3, 8));
-                EMenu.GetSeparator("E: Gapcloser | Melee Modes");
-                EMenu.Add(new MenuBool("Gapcloser", "Gapcloser E", true));
-                EMenu.GetSeparator("Auto E Always");
-                EMenu.Add(new MenuKeyBind("ETap", "Force E", Keys.H, KeyBindType.Press));
+                EMenu.GetSeparator("Misc Mode");
+                EMenu.Add(new MenuBool("GapE", "Anti GapCloser E| When target HavePassive", true));
+                EMenu.Add(new MenuBool("AutoE", "Auto E Target Cant Move", true));
             }
 
             var RMenu = Menu.Add(new Menu("R", "R.Set"));
             {
-                RMenu.Add(new MenuKeyBind("RTap", "R Fire On Tap", Keys.S, KeyBindType.Press));
-                RMenu.Add(new MenuBool("Ping", "Ping Who Can Killable(Every 3 Seconds)", true));
+                RMenu.GetSeparator("R Mode");
+                RMenu.Add(new MenuBool("AutoR", "Auto R", true));
+                RMenu.Add(new MenuBool("RCheck", "Use R | Check is Safe Range", true));
+                RMenu.Add(new MenuSlider("RMinRange", "Use R Min Range = ", 1000, 500, 2500));
+                RMenu.Add(new MenuSlider("RMaxRange", "Use R Max Range = ", 3000, 1500, 3500));
+                RMenu.Add(new MenuSlider("RKill", "UseR Min Shot Can Kill = ", 3, 1, 4));
+                RMenu.GetSeparator("Misc Mode");
+                RMenu.Add(new MenuKeyBind("RKey", "Use Semi R Key", Keys.T, KeyBindType.Press));
+            }
+
+            var MiscMenu = Menu.Add(new Menu("Misc", "Misc.Set"));
+            {
+                MiscMenu.GetSeparator("Misc Mode");
+                MiscMenu.Add(new MenuBool("PingKill", "Auto Ping Kill Target", true));
+                MiscMenu.Add(new MenuBool("NormalPingKill", "Normal Ping Kill", true));
+                MiscMenu.Add(new MenuBool("UseYoumuu", "Combo Use Youmuu", true));
+                MiscMenu.Add(new MenuBool("UseBotrk", "Combo Use Botrk", true));
+                MiscMenu.Add(new MenuBool("UseCutlass", "Combo Use Cutlass", true));
             }
 
             var DrawMenu = Menu.Add(new Menu("Draw", "Draw"));
@@ -87,11 +109,10 @@
                 DrawMenu.Add(new MenuBool("W", "W Range"));
                 DrawMenu.Add(new MenuBool("E", "E Range"));
                 DrawMenu.Add(new MenuBool("R", "R Range"));
-                DrawMenu.Add(new MenuBool("RDKs", "Draw Who Can Killable With R (3 Fire)", true));
-                DrawMenu.Add(new MenuBool("RDind", "Draw R Damage Indicator (3 Fire)", true));
+                DrawMenu.Add(new MenuBool("DrawRMin", "Draw R Range(MinMap)", true));
+                DrawMenu.Add(new MenuBool("RDind", "Draw Combo Damage", true));
+                DrawMenu.Add(new MenuBool("RDKs", "Draw Who Can Killable Text", true));
             }
-
-            Menu.Add(new MenuBool("ComboY", "Combo Use Youmoo", true));
 
             PlaySharp.Write(GameObjects.Player.ChampionName + "OK! :)");
 
@@ -107,331 +128,426 @@
 
         private static void OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
+            if (!sender.IsMe)
+                return;
 
-            try
+            var Espell = Player.GetSpellSlot(args.SData.Name);
+
+            if (Espell == SpellSlot.E)
             {
-                if (!sender.IsMe && !AutoAttack.IsAutoAttack(args.SData.Name) || !args.Target.IsEnemy
-                    || !args.Target.IsValid || !(args.Target is Obj_AI_Hero)) return;
-                if (Combo && Menu["ComboY"].GetValue<MenuBool>().Value)
-                {
-                    CastYoumoo();
-                }
+                LastECast = Variables.TickCount;
             }
-            catch (Exception ex)
+
+            if (AutoAttack.IsAutoAttack(args.SData.Name))
             {
-                Console.WriteLine("Error In On ProcessSpellCast" + ex);
+                IsAttack = true;
+                DelayAction.Add(500, () => IsAttack = false);
             }
         }
 
         private static void OnDoCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            try
+            if (!sender.IsMe || !AutoAttack.IsAutoAttack(args.SData.Name))
             {
-
-                if (!sender.IsMe || !AutoAttack.IsAutoAttack(args.SData.Name)) return;
-
-                if (Combo)
-                {
-                    if (args.Target is Obj_AI_Hero)
-                    {
-                        var target = (Obj_AI_Hero)args.Target;
-                        if (!target.IsDead)
-                        {
-                            if (Menu["W"]["ComboW"].GetValue<MenuBool>() && W.IsReady())
-                            {
-                                W.Cast(W.GetPrediction(target).UnitPosition);
-                                return;
-                            }
-                            if (Q.IsReady() && Menu["Q"]["ComboQ"].GetValue<MenuBool>() && Player.Distance(target) <= 550)
-                            {
-                                Q.Cast(target);
-                            }
-                        }
-                    }
-                }
-                if (Harass)
-                {
-                    if (args.Target is Obj_AI_Hero)
-                    {
-                        var target = (Obj_AI_Hero)args.Target;
-                        if (!target.IsDead)
-                        {
-                            if (Menu["W"]["HarassW"].GetValue<MenuBool>() && W.IsReady())
-                            {
-                                W.Cast(W.GetPrediction(target).UnitPosition);
-                                return;
-                            }
-                            if (Q.IsReady() && Menu["Q"]["HarassQ"].GetValue<MenuBool>() && Player.Distance(target) <= 550)
-                            {
-                                Q.Cast(target);
-                            }
-                        }
-                    }
-                }
+                return;
             }
-            catch (Exception ex)
+
+            switch (Variables.Orbwalker.ActiveMode)
             {
-                Console.WriteLine("Error In On DoCast" + ex);
+                case OrbwalkingMode.Combo:
+                    {
+                        var enemy = (Obj_AI_Hero)sender.Target;
+
+                        if (enemy != null && !enemy.IsDead && !enemy.IsZombie)
+                        {
+                            if (Menu["Misc"]["UseYoumuu"] && Items.HasItem(3142) && Items.CanUseItem(3142))
+                            {
+                                Items.UseItem(3142);
+                            }
+
+                            if (Menu["Q"]["ComboQ"] && Q.IsReady() && enemy.IsValidTarget(Q.Range))
+                            {
+                                Q.CastOnUnit(enemy);
+                            }
+
+                            if (Menu["W"]["ComboW"] && W.IsReady())
+                            {
+                                if (Menu["W"]["ComboWAA"] && enemy.IsValidTarget(W.Range) && enemy.HasBuff("jhinespotteddebuff"))
+                                {
+                                    CastSpell(W, enemy);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case OrbwalkingMode.Hybrid:
+                    {
+                        var hero = sender.Target as Obj_AI_Hero;
+
+                        if (hero != null && !hero.IsDead)
+                        {
+                            var target = hero;
+
+                            if (Menu["Q"]["HarassQ"].GetValue<MenuSliderButton>().BValue && Q.IsReady())
+                            {
+                                if (Player.ManaPercent >= Menu["Q"]["HarassQ"].GetValue<MenuSliderButton>().SValue)
+                                {
+                                    if (target.IsValidTarget(Q.Range))
+                                    {
+                                        Q.CastOnUnit(target);
+                                    }
+                                }
+                            }
+
+                            if (Menu["W"]["HarassW"].GetValue<MenuSliderButton>().BValue && W.IsReady())
+                            {
+                                if (Player.ManaPercent >= Menu["W"]["HarassW"].GetValue<MenuSliderButton>().SValue)
+                                {
+                                    if (target.IsValidTarget(W.Range) && target.HasBuff("jhinespotteddebuff"))
+                                    {
+                                        CastSpell(W, target);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;                
             }
         }
 
         private static void OnGapCloser(object sender, Events.GapCloserEventArgs args)
         {
-            try
+            var enemy = args.Sender;
+
+            if (enemy.Target.IsValidTarget(E.Range) && (args.End.DistanceToPlayer() <= 300 || enemy.DistanceToPlayer() <= 300))
             {
-                if (E.IsReady() && !Invulnerable.Check(args.Sender) && args.Sender.IsValidTarget(E.Range))
+                if (Menu["E"]["GapE"] && E.IsReady() && Variables.TickCount - LastECast > 2500 && !IsAttack)
                 {
-                    if (Menu["E"]["Gapcloser"].GetValue<MenuBool>().Value)
-                    {
-                        E.Cast(args.End);
-                    }
+                    E.Cast(enemy);                    
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error In On GapCloser" + ex);
+                if (Menu["W"]["GapW"] && W.IsReady() && HasPassive(enemy))
+                {
+                    W.Cast(enemy);                  
+                }
             }
         }
 
         private static void OnUpdate(EventArgs args)
         {
+            if (Player.IsDead)
+            {
+                return;
+            }
 
-                if (Player.IsDead)
-                    return;
 
-                ComboLogic(args);
+            if (R.Instance.Name == IsJhinRShot)
+            {
+                Variables.Orbwalker.AttackState = false;
+                Variables.Orbwalker.MovementState = false;
+            }
+            else
+            {
+                Variables.Orbwalker.AttackState = true;
+                Variables.Orbwalker.MovementState = true;
+            }
 
-                HarassLogic(args);
+            KillSteal();
+            RLogic();
+            AutoLogic();
 
-                LaneClearLogic(args);
-
-                KSLogic(args);
+            switch (Variables.Orbwalker.ActiveMode)
+            {
+                case OrbwalkingMode.Combo:
+                    ComboLogic();
+                    break;
+                case OrbwalkingMode.Hybrid:
+                    HarassLogic();
+                    break;
+                case OrbwalkingMode.LaneClear:
+                    LaneClearLogic();
+                    JungleLogic();
+                    break;
+                case OrbwalkingMode.None:
+                    RKey();
+                    break;
+            }
         }
-
-        static void CastYoumoo()
+        private static void RKey()
         {
-            if (Items.CanUseItem(3142))
-                Items.UseItem(3142);
-        }
+            var RTarget = GetTarget(R.Range, R.DamageType);
 
-        private static void KSLogic(EventArgs args)
-        {
-
-            if (Menu["W"]["WTap"].GetValue<MenuKeyBind>().Active)
+            if (R.IsReady() && CheckTarget(RTarget, R.Range))
             {
-                if (W.IsReady())
+                if (R.Instance.Name == StartR)
                 {
-                    var WTarget = GetTarget(W.Range, W.DamageType);
-
-                    if (W.GetPrediction(WTarget).Hitchance >= HitChance.High)
+                    if (Menu["R"]["RKey"].GetValue<MenuKeyBind>().Active)
                     {
-                        W.Cast(W.GetPrediction(WTarget, true).UnitPosition);
+                        R.Cast(R.GetPrediction(RTarget).UnitPosition);
                     }
+                    R.Cast(R.GetPrediction(RTarget).CastPosition);
                 }
             }
-            if (Menu["Q"]["KillStealQ"].GetValue<MenuBool>())
+            if (R.Instance.Name == IsJhinRShot)
             {
-                if (Q.IsReady())
+                if (Menu["R"]["RKey"].GetValue<MenuKeyBind>().Active)
                 {
-                    var QTarget = GetTarget(Q.Range, Q.DamageType);
-
-                    if (QTarget.Health <= Q.GetDamage(QTarget))
-                    {
-                        Q.Cast(QTarget);
-                    }
+                    AutoUse(RTarget);
+                    R.Cast(R.GetPrediction(RTarget).UnitPosition);
                 }
-            }
-            if (Menu["W"]["KSW"].GetValue<MenuBool>())
-            {
-                if (W.IsReady())
-                {
-                    var WTarget = GetTarget(W.Range, W.DamageType);
-
-                    if (WTarget.Health <= W.GetDamage(WTarget) && W.GetPrediction(WTarget).Hitchance >= HitChance.VeryHigh)
-                    {
-                        W.Cast(W.GetPrediction(WTarget, true).UnitPosition);
-                    }
-                }
-            }
-            foreach (var e in GameObjects.Get<Obj_AI_Hero>().Where(x => x.IsValidTarget() && x.Health
-                <= R.GetDamage(x) * 3 && !x.IsZombie && !x.IsDead && !x.IsDead))
-            {
-                if (LasPing <= Variables.TickCount && Menu["R"]["Ping"])
-                {
-                    LasPing = Variables.TickCount + 3000;
-                    Game.SendPing(PingCategory.Danger, e);
-                }
-            }
-            if (Menu["E"]["ETap"].GetValue<MenuKeyBind>().Active)
-            {
-                if (E.IsReady())
-                {
-                    var ETarget = GetTarget(E.Range, E.DamageType);
-
-                    if (!ETarget.IsDead && R.GetPrediction(ETarget).Hitchance >= HitChance.High)
-                    {
-                        E.Cast(R.GetPrediction(ETarget, true).UnitPosition);
-                    }
-                }
-            }
-            if (Menu["R"]["RTap"].GetValue<MenuKeyBind>().Active)
-            {
-                if (R.IsReady() && R.Instance.Name == StartR)
-                {
-                    var RTarget = GetTarget(R.Range, R.DamageType);
-
-                    if (RTarget.Health <= R.GetDamage(RTarget) * 3 && !RTarget.IsZombie && !RTarget.IsDead
-                        && R.GetPrediction(RTarget).Hitchance >= HitChance.VeryHigh)
-                    {
-                        if (Items.CanUseItem(3363))
-                        {
-                            Items.UseItem(3363, RTarget.Position);
-                        }
-                        R.Cast(R.GetPrediction(RTarget, true).UnitPosition);
-                    }
-                }
-            }
-            if (Menu["R"]["RTap"].GetValue<MenuKeyBind>().Active)
-            {
-                if (Q.IsReady() && R.Instance.Name == IsCastingR)
-                {
-                    var RTarget = GetTarget(R.Range, R.DamageType);
-
-                    if (Items.CanUseItem(3363))
-                    {
-                        Items.UseItem(3363, RTarget.Position);
-                    }
-                    R.Cast(R.GetPrediction(RTarget, true).UnitPosition);
-                }
+                AutoUse(RTarget);
+                R.Cast(R.GetPrediction(RTarget).UnitPosition);
             }
         }
 
-
-        private static void ComboLogic(EventArgs args)
+        private static void RLogic()
         {
-            if (Combo)
+            var RTarget = GetTarget(R.Range, R.DamageType);
+
+            if (R.IsReady() && CheckTarget(RTarget, R.Range))
             {
-                if (Menu["W"]["ComboW"].GetValue<MenuBool>())
+                if (R.Instance.Name == StartR)
                 {
-                    if (W.IsReady())
+                    if (!Menu["R"]["AutoR"])
                     {
-                        var WTarget = GetTarget(2500, W.DamageType);
-
-                        var WMO = Menu["W"]["WMO"].GetValue<MenuBool>();
-
-                        if (W.GetPrediction(WTarget).Hitchance >= HitChance.VeryHigh
-                            && ((WTarget.HasBuff("jhinespotteddebuff") && WMO) || !WMO))
-                        {
-                            W.Cast(W.GetPrediction(WTarget).UnitPosition);
-                        }
+                        return;
                     }
+
+                    if (Menu["R"]["RCheck"] && Player.CountEnemyHeroesInRange(800f) > 0)
+                    {
+                        return;
+                    }
+
+                    if (RTarget.DistanceToPlayer() <= Menu["R"]["RMinRange"].GetValue<MenuSlider>().Value)
+                    {
+                        return;
+                    }
+
+                    if (RTarget.DistanceToPlayer() > Menu["R"]["RMaxRange"].GetValue<MenuSlider>().Value)
+                    {
+                        return;
+                    }
+
+                    if (RTarget.Health > Player.GetSpellDamage(RTarget, SpellSlot.R) * Menu["R"]["RKill"].GetValue<MenuSlider>().Value)
+                    {
+                        return;
+                    }
+                    R.Cast(R.GetPrediction(RTarget).CastPosition);
                 }
-                if (Menu["Q"]["ComboQ"].GetValue<MenuBool>())
+
+                if (R.Instance.Name == IsJhinRShot)
                 {
-                    var QTarget = GetTarget(550, Q.DamageType);
-
-                    if (Q.IsReady() && !Player.IsWindingUp && !Variables.Orbwalker.CanAttack)
+                    if (!Menu["R"]["AutoR"])
                     {
-                        Q.Cast(QTarget);
+                        return;
                     }
-                }
-                if (Menu["E"]["ComboE"].GetValue<MenuBool>())
-                {
-                    var ETarget = Variables.Orbwalker.GetTarget();
 
-                    if (E.IsReady() && ETarget.IsValidTarget())
-                    {
-                        E.Cast(E.GetPrediction((Obj_AI_Base)ETarget).UnitPosition);
-                    }
-                }
-                if (Menu["W"]["AutoW"].GetValue<MenuKeyBind>().Active)
-                {
-                    if (Player.ManaPercent >= Menu["W"]["HarassWMana"].GetValue<MenuSlider>().Value)
-                    {
-                        var WTarget = GetTarget(2500, W.DamageType);
-
-                        var WMO = Menu["W"]["WMO"].GetValue<MenuBool>();
-
-                        if (W.GetPrediction(WTarget).Hitchance >= HitChance.VeryHigh
-                            && W.IsReady() && ((WTarget.HasBuff("jhinespotteddebuff")
-                            && WMO) && !WMO))
-                        {
-                            W.Cast(W.GetPrediction(WTarget).UnitPosition);
-                        }
-                    }
+                    AutoUse(RTarget);
+                    R.Cast(R.GetPrediction(RTarget).UnitPosition);
                 }
             }
         }
 
-        private static void HarassLogic(EventArgs args)
+        private static void KillSteal()
         {
-            if (Harass)
+            if (R.Instance.Name == IsJhinRShot)
+                return;
+
+            var WTarget = GetTarget(W.Range, W.DamageType);
+            var QTarget = GetTarget(Q.Range, Q.DamageType);
+
+            if (Menu["W"]["KillStealW"] && CheckTarget(WTarget, Q.Range) && W.IsReady() && WTarget.Health < Player.GetSpellDamage(WTarget, SpellSlot.W) && !(Q.IsReady() && WTarget.IsValidTarget(Q.Range) && WTarget.Health < Player.GetSpellDamage(WTarget, SpellSlot.Q)))
             {
-                if (Menu["W"]["HarassW"].GetValue<MenuBool>())
+                CastSpell(W, WTarget);
+                return;
+            }
+
+            if (Menu["Q"]["KillStealQ"] && CheckTarget(QTarget, Q.Range) && Q.IsReady() && QTarget.Health < Player.GetSpellDamage(QTarget, SpellSlot.Q))
+            {
+                Q.CastOnUnit(QTarget);
+            }
+        }
+
+        private static void AutoLogic()
+        {
+            if (R.Instance.Name == IsJhinRShot)
+                return;
+
+            foreach (var target in GameObjects.EnemyHeroes.Where(enemy => enemy.IsValidTarget(W.Range) && !enemy.CanMove))
+            {
+                if (Menu["W"]["AutoW"] && W.IsReady() && target.IsValidTarget(W.Range))
                 {
-                    var WTarget = GetTarget(2500, W.DamageType);
+                    CastSpell(W, target);
+                }
 
-                    var WMO = Menu["W"]["WMO"].GetValue<MenuBool>();
+                if (Menu["E"]["AutoE"] && E.IsReady() && Variables.TickCount - LastECast > 2500 && !IsAttack)
+                {
+                    CastSpell(E, target);
+                }
+            }
+        }
 
-                    if (W.GetPrediction(WTarget).Hitchance >= HitChance.VeryHigh
-                        && W.IsReady() && ((WTarget.HasBuff("jhinespotteddebuff") && WMO) || !WMO))
+        private static void ComboLogic()
+        {
+            if (R.Instance.Name == IsJhinRShot)
+                return;
+
+            var orbTarget = Variables.Orbwalker.GetTarget();
+            var WTarget = GetTarget(W.Range, W.DamageType);
+            var QTarget = GetTarget(Q.Range, Q.DamageType);
+            var ETarget = GetTarget(E.Range, E.DamageType);
+
+            if (CheckTarget((Obj_AI_Base)orbTarget, AutoAttack.GetRealAutoAttackRange(Player)))
+            {
+                if (Menu["Misc"]["UseCutlass"] && Items.HasItem(3144) && Items.CanUseItem(3144))
+                {
+                    Items.UseItem(3144, (Obj_AI_Base)orbTarget);
+                }
+
+                if (Menu["Misc"]["UseBotrk"] && Items.HasItem(3153) && Items.CanUseItem(3153) && (orbTarget.HealthPercent < 80 || Player.HealthPercent < 80))
+                {
+                    Items.UseItem(3153, (Obj_AI_Base)orbTarget);
+                }
+            }
+
+            if (Menu["W"]["ComboW"] && W.IsReady() && CheckTarget(WTarget, W.Range))
+            {
+                if (Menu["W"]["WMO"])
+                {
+                    if (HasPassive(WTarget))
                     {
-                        W.Cast(W.GetPrediction(WTarget).UnitPosition);
+                        CastSpell(W, WTarget);
                     }
                 }
-                if (Menu["Q"]["HarassQ"].GetValue<MenuBool>())
+                else
                 {
-                    var QTarget = GetTarget(550, Q.DamageType);
+                    CastSpell(W, WTarget);
+                }
+            }
 
-                    if (Q.IsReady() && !Player.IsWindingUp && !Variables.Orbwalker.CanAttack)
+            if (Menu["Q"]["ComboQ"] && Q.IsReady() && CheckTarget(QTarget, Q.Range) && !Variables.Orbwalker.CanAttack)
+            {
+                Q.CastOnUnit(QTarget);
+            }
+
+            if (Menu["E"]["ComboE"] && E.IsReady() && CheckTarget(ETarget, E.Range) && Variables.TickCount - LastECast > 2500 && !IsAttack)
+            {
+                if (!ETarget.CanMove)
+                {
+                    CastSpell(E, ETarget);
+                }
+                else
+                {
+                    if (E.GetPrediction(ETarget).Hitchance >= HitChance.High)
                     {
-                        Q.Cast(QTarget);
+                        E.Cast(E.GetPrediction(ETarget).UnitPosition);
+                    }
+                }
+            }              
+        }
+
+        private static void HarassLogic()
+        {
+            var WTarget = GetTarget(1500f, W.DamageType);
+            var ETarget = GetTarget(E.Range, DamageType.Magical);
+
+            if (Menu["W"]["HarassW"].GetValue<MenuSliderButton>().BValue && W.IsReady() && CheckTarget(WTarget, W.Range))
+            {
+                if (Player.ManaPercent >= Menu["W"]["HarassW"].GetValue<MenuSliderButton>().SValue)
+                {
+                    if (Menu["W"]["WMO"] && !HasPassive(WTarget))
+                    {
+                        return;
+                    }
+
+                    CastSpell(W, WTarget);
+                }
+            }
+
+            if (Menu["E"]["HarassE"].GetValue<MenuSliderButton>().BValue && E.IsReady() && CheckTarget(ETarget, E.Range) && Variables.TickCount - LastECast > 2500 && !IsAttack)
+            {
+                if (Player.ManaPercent >= Menu["E"]["HarassE"].GetValue<MenuSliderButton>().SValue)
+                {
+                    CastSpell(E, ETarget);
+                }
+            }
+        }
+
+        private static void LaneClearLogic()
+        {
+            var Qminions = GetMinions(Player.Position, Q.Range);
+            var Eminions = GetMinions(Player.Position, E.Range);
+            var minion = Qminions.MinOrDefault(x => x.Health);
+
+            if (!Qminions.Any())
+            {
+                return;
+            }
+
+            if (Menu["Q"]["LaneClearQ"].GetValue<MenuSliderButton>().BValue && Q.IsReady() && minion != null && minion.IsValidTarget(Q.Range) && Qminions.Count > 2)
+            {
+                if (Player.ManaPercent >= Menu["Q"]["LaneClearQ"].GetValue<MenuSliderButton>().SValue)
+                {
+                    Q.Cast(minion);
+                }
+            }
+
+            if (Menu["W"]["LaneClearW"].GetValue<MenuSliderButton>().BValue && W.IsReady() && minion != null)
+            {
+                if (Player.ManaPercent >= Menu["W"]["LaneClearW"].GetValue<MenuSliderButton>().SValue)
+                {
+                    W.Cast(minion);
+                }
+            }
+
+            if (Menu["E"]["LaneClearE"].GetValue<MenuSliderButton>().BValue && E.IsReady())
+            {
+                var FarmPosition = E.GetCircularFarmLocation(Eminions, E.Width);
+
+                if (Player.ManaPercent >= Menu["E"]["LaneClearE"].GetValue<MenuSliderButton>().SValue)
+                {
+                    if (FarmPosition.MinionsHit >= Menu["E"]["LCminions"].GetValue<MenuSlider>().Value)
+                    {
+                        E.Cast(FarmPosition.Position);
                     }
                 }
             }
         }
 
-        private static void LaneClearLogic(EventArgs args)
+        private static void JungleLogic()
         {
-            if (LaneClear)
+            var mobs = GetMobs(Player.Position, Q.Range);
+            var minion = mobs.MinOrDefault(x => x.Health);
+            var mob = mobs.FirstOrDefault(x => !x.Name.ToLower().Contains("mini"));
+
+            if (Menu["Q"]["JungleQ"].GetValue<MenuSliderButton>().BValue && Q.IsReady())
             {
-                if (Menu["Q"]["LaneClearQ"].GetValue<MenuBool>())
+                if (Player.ManaPercent >= Menu["Q"]["JungleQ"].GetValue<MenuSliderButton>().SValue)                                    
                 {
-                    var minionQ = GameObjects.EnemyMinions.Where(x => x.IsValidTarget(Q.Range)).MinOrDefault(x => x.Health);
-
-                    if (minionQ != null)
+                    if (minion != null)
                     {
-                        Q.Cast(minionQ);
+                        Q.Cast(minion);
                     }
                 }
+            }
 
-                if (Menu["Q"]["JungleQ"].GetValue<MenuBool>())
+            if (Menu["W"]["JungleW"].GetValue<MenuSliderButton>().BValue && W.IsReady())
+            {
+                if (Player.ManaPercent >= Menu["W"]["JungleW"].GetValue<MenuSliderButton>().SValue)
                 {
-                    var JungleQ = GameObjects.JungleLarge.Where(x => x.IsValidTarget(Q.Range)).MinOrDefault(x => x.Health);
-                    if (JungleQ != null)
+                    if (mobs.Count() > 2)
                     {
-                        Q.Cast(JungleQ);
+                        W.Cast(mob ?? mobs.FirstOrDefault());
                     }
                 }
-                if (Menu["W"]["LaneClearW"].GetValue<MenuBool>())
+            }
+
+            if (Menu["E"]["JungleE"].GetValue<MenuSliderButton>().BValue && E.IsReady() && mob.IsValidTarget(E.Range) && Variables.TickCount - LastECast > 2500 && !IsAttack)
+            {
+                if (Player.ManaPercent >= Menu["E"]["JungleE"].GetValue<MenuSliderButton>().SValue)
                 {
-                    var minionW = GameObjects.EnemyMinions.Where(x => x.IsValidTarget(W.Range)).MinOrDefault(x => x.Health);
-
-                    if (minionW != null)
+                    if (mobs.Count() > 1)
                     {
-                        W.Cast(minionW);
-                    }
-                }
-                if (Menu["E"]["LaneClearE"].GetValue<MenuBool>())
-                {
-                    var minionE = GetMinions(Player.ServerPosition, E.Range);
-
-                    var farmPosition = E.GetCircularFarmLocation(minionE, W.Width);
-
-                    if (Player.ManaPercent > Menu["E"]["LaneClearEMana"].GetValue<MenuSlider>().Value)
-                    {
-                        if (farmPosition.MinionsHit >= Menu["E"]["LCminions"].GetValue<MenuSlider>().Value)
-                            E.Cast(farmPosition.Position);
+                        E.Cast(mob ?? mobs.FirstOrDefault());
                     }
                 }
             }
@@ -447,45 +563,118 @@
                     HpBarDraw.DrawDmg(R.GetDamage(enemy) * 3, new ColorBGRA(0, 100, 200, 150));
                 }
             }
+
+            if (!Player.IsDead && !MenuGUI.IsShopOpen && !MenuGUI.IsChatOpen && !MenuGUI.IsScoreboardOpen)
+            {
+                if (Menu["Draw"]["DrawRMin"] && R.IsReady())
+                {
+                    Render.Circle.DrawCircle(Player.Position, R.Range, System.Drawing.Color.FromArgb(14, 194, 255), 1);
+                }
+            }
         }
 
         private static void OnDraw(EventArgs args)
         {
-            try
+
+            if (!Player.IsDead && !MenuGUI.IsChatOpen && !MenuGUI.IsChatOpen && !MenuGUI.IsScoreboardOpen)
             {
-                if (Menu["Draw"]["RDKs"].GetValue<MenuBool>() && R.IsReady() && R.Level >= 1)
+                if (Menu["Draw"]["Q"] && Q.IsReady())
                 {
-                    var spos = Drawing.WorldToScreen(Player.Position);
-                    var target = ObjectManager.Get<Obj_AI_Hero>().Where(x => x.IsEnemy && x.Health <= R.GetDamage(x) * 3
-                    && !x.IsZombie && !x.IsDead);
-                    int addpos = 0;
-                    foreach (var killable in target)
-                    {
-                        Drawing.DrawText(spos.X - 50, spos.Y + 35 + addpos, System.Drawing.Color.Red, killable.ChampionName + "Is Killable !!!");
-                        addpos = addpos + 15;
-                    }
+                    Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.DeepPink, 3);
                 }
-                if (Menu["Draw"]["R"].GetValue<MenuBool>() && R.Level >= 1)
+
+                if (Menu["Draw"]["W"] && W.IsReady())
                 {
-                    Drawing.DrawCircle(Player.Position, 3500, R.IsReady() ? System.Drawing.Color.Cyan : System.Drawing.Color.DarkRed);
+                    Render.Circle.DrawCircle(Player.Position, W.Range, System.Drawing.Color.FromArgb(9, 253, 242), 1);
                 }
-                if (Menu["Draw"]["W"].GetValue<MenuBool>() && W.Level >= 1)
+
+                if (Menu["Draw"]["E"] && E.IsReady())
                 {
-                    Drawing.DrawCircle(Player.Position, 2500, W.IsReady() ? System.Drawing.Color.Cyan : System.Drawing.Color.DarkRed);
+                    Render.Circle.DrawCircle(Player.Position, E.Range, System.Drawing.Color.FromArgb(188, 6, 248), 1);
                 }
-                if (Menu["Draw"]["E"].GetValue<MenuBool>() && E.Level >= 1)
+
+                if (Menu["Draw"]["R"] && R.IsReady())
                 {
-                    Drawing.DrawCircle(Player.Position, 750, E.IsReady() ? System.Drawing.Color.Cyan : System.Drawing.Color.DarkRed);
+                    Render.Circle.DrawCircle(Player.Position, R.Range, System.Drawing.Color.FromArgb(19, 130, 234), 1);
                 }
-                if (Menu["Draw"]["Q"].GetValue<MenuBool>() && Q.Level >= 1)
+            }            
+            if (Menu["Draw"]["RDKs"].GetValue<MenuBool>() && R.IsReady() && R.Level >= 1)
+            {
+                var spos = Drawing.WorldToScreen(Player.Position);
+                var target = ObjectManager.Get<Obj_AI_Hero>().Where(x => x.IsEnemy && x.Health <= R.GetDamage(x) * 3
+                && !x.IsZombie && !x.IsDead);
+                int addpos = 0;
+                foreach (var killable in target)
                 {
-                    Drawing.DrawCircle(Player.Position, 550 + Player.BoundingRadius, Q.IsReady() ? System.Drawing.Color.Cyan : System.Drawing.Color.DarkRed);
+                    Drawing.DrawText(spos.X - 50, spos.Y + 35 + addpos, System.Drawing.Color.Red, killable.ChampionName + "Is Killable !!!");
+                    addpos = addpos + 15;
                 }
             }
-            catch (Exception ex)
+        }
+
+        private static bool HasPassive(Obj_AI_Hero target)
+        {
+            return target.HasBuff("jhinespotteddebuff");
+        }
+
+        private static void Ping(Vector2 position)
+        {
+            if (Variables.TickCount - LastPingT < 30 * 1000)
             {
-                Console.WriteLine("Error In On Draw" + ex);
+                return;
             }
+
+            LastPingT = Variables.TickCount;
+            PingLocation = position;
+            SimplePing();
+
+            DelayAction.Add(150, SimplePing);
+            DelayAction.Add(300, SimplePing);
+            DelayAction.Add(500, SimplePing);
+            DelayAction.Add(800, SimplePing);
+        }
+
+        private static void SimplePing()
+        {
+            Game.ShowPing(Menu["Misc"]["NormalPingKill"] ? PingCategory.Normal : PingCategory.Fallback, PingLocation, true);
+        }
+
+        private static void AutoUse(Obj_AI_Hero target)
+        {
+            if (Items.HasItem(3363) && Items.CanUseItem(3363))
+            {
+                Items.UseItem(3363, target.Position);
+            }
+        }
+
+        internal static bool CheckTarget(Obj_AI_Base target, float Range)
+        {
+            return target.IsValidTarget(Range) && !target.IsDead && !target.IsZombie && !DontCast(target);
+        }
+
+        internal static bool DontCast(Obj_AI_Base target)
+        {
+            // kindred r
+            if (target.HasBuff("KindredRNoDeathBuff"))
+                return true;
+
+            // tryndamere r
+            if (target.HasBuff("UndyingRage") && target.GetBuff("UndyingRage").EndTime - Game.Time > 0.3)
+                return true;
+
+            // kayle r
+            if (target.HasBuff("JudicatorIntervention"))
+                return true;
+
+            // zilean r
+            if (target.HasBuff("ChronoShift") && target.GetBuff("ChronoShift").EndTime - Game.Time > 0.3)
+                return true;
+
+            // fiora w
+            if (target.HasBuff("FioraW"))
+                return true;
+
+            return false;
         }
     }
 }

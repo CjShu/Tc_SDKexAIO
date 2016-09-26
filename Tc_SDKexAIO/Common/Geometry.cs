@@ -16,14 +16,14 @@
 
 namespace Tc_SDKexAIO.Common
 {
-    using System;
-    using System.Collections.Generic;
     using ClipperLib;
     using LeagueSharp;
     using LeagueSharp.SDK;
     using SharpDX;
-    using Color = System.Drawing.Color;
+    using System;
+    using System.Collections.Generic;
     using System.Linq;
+    using Color = System.Drawing.Color;
 
     public static class Geometry
     {

@@ -115,6 +115,7 @@
     <Compile Include="Common\MEC.cs" />
     <Compile Include="Config\ExterienceManager.cs" />
     <Compile Include="Core\TCommon.cs" />
+    <Compile Include="Core\YasuoWindWall.cs" />
     <Compile Include="PlaySharp.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Toolss\AutoWard.cs" />
