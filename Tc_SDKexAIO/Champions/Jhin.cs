@@ -37,10 +37,10 @@
         internal static void Init()
         {
 
-            Q = new Spell(SpellSlot.Q, 550);
-            W = new Spell(SpellSlot.W, 2500).SetSkillshot(0.75f, 40, float.MaxValue, false, SkillshotType.SkillshotLine);
-            E = new Spell(SpellSlot.E, 750).SetSkillshot(0.5f, 120, 1600, false, SkillshotType.SkillshotCircle);
-            R = new Spell(SpellSlot.R, 3500).SetSkillshot(0.21f, 80, 5000, false, SkillshotType.SkillshotLine);
+            Q = new Spell(SpellSlot.Q, 600f);
+            W = new Spell(SpellSlot.W, 2500f).SetSkillshot(0.75f, 40, float.MaxValue, false, SkillshotType.SkillshotLine);
+            E = new Spell(SpellSlot.E, 750f).SetSkillshot(0.5f, 120, 1600, false, SkillshotType.SkillshotCircle);
+            R = new Spell(SpellSlot.R, 3500f).SetSkillshot(0.21f, 80, 5000, false, SkillshotType.SkillshotLine);
 
 
             var QMenu = Menu.Add(new Menu("Q", "Q.Set"));
@@ -112,7 +112,6 @@
                 DrawMenu.Add(new MenuBool("R", "R Range"));
                 DrawMenu.Add(new MenuBool("DrawRMin", "Draw R Range(MinMap)", true));
                 DrawMenu.Add(new MenuBool("RDind", "Draw Combo Damage", true));
-                DrawMenu.Add(new MenuBool("RDKs", "Draw Who Can Killable Text", true));
             }
 
             PlaySharp.Write(GameObjects.Player.ChampionName + "OK! :)");
@@ -293,11 +292,11 @@
             if (Player.IsUnderEnemyTurret() && Menu["R"]["Rturrent"] && R.IsReady())
                 return;
 
-            if (R.IsReady() && CheckTarget(RTarget) && CanKill(RTarget))
+            if (R.IsReady() && CheckTarget(RTarget))
             {
                 var PredHealth = RTarget.Health - GetIncomingDamage(RTarget);
 
-                if (GetDamage(RTarget) >= PredHealth)
+                if (GetDamage(RTarget) > PredHealth)
                 {
                     if (R.Instance.Name == StartR)
                     {
@@ -311,7 +310,7 @@
                             return;
                         }
 
-                        if (Menu["R"]["RCheck"] && Player.CountEnemyHeroesInRange(700f) > 0)
+                        if (Menu["R"]["RCheck"] && Player.CountEnemyHeroesInRange(800f) > 0)
                         {
                             return;
                         }
@@ -561,7 +560,7 @@
                 if (Menu["Draw"]["RDind"].GetValue<MenuBool>() && R.Level >= 1)
                 {
                     HpBarDraw.Unit = enemy;
-                    HpBarDraw.DrawDmg(R.GetDamage(enemy) * 3, new ColorBGRA(0, 100, 200, 150));
+                    HpBarDraw.DrawDmg(R.GetDamage(enemy) * 3, Color.Cyan);
                 }
             }
 
@@ -576,39 +575,26 @@
 
         private static void OnDraw(EventArgs args)
         {
-
             if (!Player.IsDead && !MenuGUI.IsChatOpen && !MenuGUI.IsChatOpen && !MenuGUI.IsScoreboardOpen)
             {
                 if (Menu["Draw"]["Q"] && Q.IsReady())
                 {
-                    Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.DeepPink, 3);
+                    Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.DeepPink);
                 }
 
                 if (Menu["Draw"]["W"] && W.IsReady())
                 {
-                    Render.Circle.DrawCircle(Player.Position, W.Range, System.Drawing.Color.FromArgb(9, 253, 242), 1);
+                    Drawing.DrawCircle(Player.Position, W.Range, System.Drawing.Color.CadetBlue);
                 }
 
                 if (Menu["Draw"]["E"] && E.IsReady())
                 {
-                    Render.Circle.DrawCircle(Player.Position, E.Range, System.Drawing.Color.FromArgb(188, 6, 248), 1);
+                    Drawing.DrawCircle(Player.Position, E.Range, System.Drawing.Color.Gray);
                 }
 
                 if (Menu["Draw"]["R"] && R.IsReady())
                 {
-                    Render.Circle.DrawCircle(Player.Position, R.Range, System.Drawing.Color.FromArgb(19, 130, 234), 1);
-                }
-            }            
-            if (Menu["Draw"]["RDKs"].GetValue<MenuBool>() && R.IsReady() && R.Level >= 1)
-            {
-                var spos = Drawing.WorldToScreen(Player.Position);
-                var target = ObjectManager.Get<Obj_AI_Hero>().Where(x => x.IsEnemy && x.Health <= R.GetDamage(x) * 3
-                && !x.IsZombie && !x.IsDead);
-                int addpos = 0;
-                foreach (var killable in target)
-                {
-                    Drawing.DrawText(spos.X - 50, spos.Y + 35 + addpos, System.Drawing.Color.Red, killable.ChampionName + "Is Killable !!!");
-                    addpos = addpos + 15;
+                    Drawing.DrawCircle(Player.Position, R.Range, System.Drawing.Color.Red);
                 }
             }
         }
@@ -637,7 +623,7 @@
 
         private static void SimplePing()
         {
-            Game.ShowPing(Menu["Misc"]["NormalPingKill"] ? PingCategory.Normal : PingCategory.Fallback, PingLocation, true);
+            Game.ShowPing(Menu["R"]["NormalPingKill"] ? PingCategory.Normal : PingCategory.Fallback, PingLocation, true);
         }
 
         private static void AutoUse(Obj_AI_Hero target)
