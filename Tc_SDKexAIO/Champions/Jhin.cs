@@ -276,7 +276,7 @@
         {
             var RTarget = GetTarget(R.Range, R.DamageType);
 
-            if (R.IsReady() && CheckTarget(RTarget, R.Range))
+            if (R.IsReady() && CheckTarget(RTarget, R.Range) && RTarget.Health > R.GetDamage(RTarget) * 3)
             {
                 if (R.Instance.Name == StartR)
                 {
