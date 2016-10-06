@@ -85,6 +85,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Champions\Ahri.cs" />
     <Compile Include="Champions\Diana.cs" />
     <Compile Include="Champions\Ezreal.cs" />
     <Compile Include="Champions\Jhin.cs" />

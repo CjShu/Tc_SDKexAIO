@@ -21,9 +21,6 @@
     using Config;
     using static Core.TCommon;
 
-    using Menu = LeagueSharp.SDK.UI.Menu;
-    using Geometry = Common.Geometry;
-
     internal static class Jinx
     {
 
@@ -63,7 +60,7 @@
                 {
                     if (GameObjects.EnemyHeroes.Any())
                     {
-                        GameObjects.EnemyHeroes.ForEach(i => WList.Add(new MenuBool(i.ChampionName.ToLower(), i.ChampionName, !AutoEnableList.Contains(i.ChampionName))));
+                        GameObjects.EnemyHeroes.ForEach(i => WList.Add(new MenuBool(i.ChampionName.ToLower(), i.ChampionName, true)));
                     }
                 }
             }

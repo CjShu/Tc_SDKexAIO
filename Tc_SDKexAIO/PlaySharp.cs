@@ -92,6 +92,9 @@
                 case "LeeSin":
                     Champions.LeeSin.Init();
                     break;
+              //  case "Ahri":
+              //      Champions.Ahri.Init();
+              //      break;
             }
         }
 
