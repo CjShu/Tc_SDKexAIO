@@ -84,6 +84,7 @@
             {
                 RMenu.GetSeparator("R Mode");
                 RMenu.Add(new MenuBool("AutoR", "Auto R", true));
+                RMenu.Add(new MenuBool("ComboR", "Combo R", true));
                 RMenu.Add(new MenuBool("RCheck", "Use R | Check is Safe Range", true));
                 RMenu.Add(new MenuSlider("RMinRange", "Use R Min Range = ", 1000, 500, 2500));
                 RMenu.Add(new MenuSlider("RMaxRange", "Use R Max Range = ", 3000, 1500, 3500));
@@ -156,7 +157,7 @@
             {
                 case OrbwalkingMode.Combo:
                     {
-                        var enemy = (Obj_AI_Hero)sender.Target;
+                        var enemy = (Obj_AI_Hero)args.Target;
 
                         if (enemy != null && !enemy.IsDead && !enemy.IsZombie)
                         {
@@ -223,11 +224,11 @@
             {
                 if (Menu["E"]["GapE"] && E.IsReady() && Variables.TickCount - LastECast > 2500 && !IsAttack)
                 {
-                    E.Cast(enemy);                    
+                    CastSpell(E, enemy);                 
                 }
                 if (Menu["W"]["GapW"] && W.IsReady() && HasPassive(enemy))
                 {
-                    W.Cast(enemy);                  
+                    CastSpell(E, enemy);            
                 }
             }
         }
@@ -239,26 +240,25 @@
                 return;
             }
 
-            foreach (var enemy in GameObjects.EnemyHeroes.Where(e => R.IsReady() && e.IsValidTarget(R.Range) && Player.GetSpellDamage(e, SpellSlot.R) *  Menu["R"]["RKill"].GetValue<MenuSlider>().Value > e.Health + e.HPRegenRate * 3))
+            foreach (var enemy in GameObjects.EnemyHeroes.Where(e => R.IsReady() && e.IsValidTarget(R.Range) && Player.GetSpellDamage(e, SpellSlot.R) * Menu["R"]["RKill"].GetValue<MenuSlider>().Value > e.Health + e.HPRegenRate * 3))
             {
                 if (Menu["R"]["PingKill"])
                 {
                     Ping(enemy.Position.To2D());
                 }
 
-                if (Menu["R"]["NotificationKill"]  && Variables.TickCount - LastShowNoit > 10000)
+                if (Menu["R"]["NotificationKill"] && Variables.TickCount - LastShowNoit > 10000)
                 {
                     LastShowNoit = Variables.TickCount;
                 }
             }
-
 
             if (R.Instance.Name == IsJhinRShot)
             {
                 Variables.Orbwalker.AttackState = false;
                 Variables.Orbwalker.MovementState = false;
             }
-            else
+            else //if (R.Instance.Name == "JhinR")
             {
                 Variables.Orbwalker.AttackState = true;
                 Variables.Orbwalker.MovementState = true;
@@ -287,65 +287,73 @@
 
         private static void RLogic()
         {
-            var RTarget = GetTarget(R.Range, R.DamageType);
+            Obj_AI_Hero target = null;
 
-            if (Player.IsUnderEnemyTurret() && Menu["R"]["Rturrent"] && R.IsReady())
-                return;
-
-            if (R.IsReady() && CheckTarget(RTarget))
+            if (Variables.TargetSelector.GetSelectedTarget() != null && Variables.TargetSelector.GetSelectedTarget().DistanceToPlayer() <= Menu["R"]["RMaxRange"].GetValue<MenuSlider>().Value)
             {
-                var PredHealth = RTarget.Health - GetIncomingDamage(RTarget);
+                target = Variables.TargetSelector.GetSelectedTarget();
+            }
+            else
+            {
+                target = GetTarget(R.Range, DamageType.Physical);
+            }
 
-                if (GetDamage(RTarget) > PredHealth)
+            if (R.IsReady() && CheckTarget(target) && R.IsInRange(target))
+            {
+                if (R.Instance.Name == StartR)
                 {
-                    if (R.Instance.Name == StartR)
+                    if (Menu["R"]["RKey"].GetValue<MenuKeyBind>().Active)
                     {
-                        if (Menu["R"]["RKey"].GetValue<MenuKeyBind>().Active)
-                        {
-                            R.Cast(R.GetPrediction(RTarget).UnitPosition);
-                        }
-
-                        if (!Menu["R"]["AutoR"])
-                        {
-                            return;
-                        }
-
-                        if (Menu["R"]["RCheck"] && Player.CountEnemyHeroesInRange(800f) > 0)
-                        {
-                            return;
-                        }
-
-                        if (RTarget.DistanceToPlayer() <= Menu["R"]["RMinRange"].GetValue<MenuSlider>().Value)
-                        {
-                            return;
-                        }
-
-                        if (RTarget.DistanceToPlayer() > Menu["R"]["RMaxRange"].GetValue<MenuSlider>().Value)
-                        {
-                            return;
-                        }
-
-                        if (PredHealth > Player.GetSpellDamage(RTarget, SpellSlot.R) * Menu["R"]["RKill"].GetValue<MenuSlider>().Value)
-                        {
-                            return;
-                        }
-                        R.Cast(R.GetPrediction(RTarget).CastPosition);
+                        R.Cast(R.GetPrediction(target).UnitPosition);
                     }
 
-                    if (R.Instance.Name == IsJhinRShot)
+                    if (!Menu["R"]["AutoR"])
                     {
-                        if (Menu["R"]["RKey"].GetValue<MenuKeyBind>().Active)
-                        {
-                            AutoUse(RTarget);
-                            R.Cast(R.GetPrediction(RTarget).UnitPosition);
-                        }
-                        if (!Menu["R"]["AutoR"])
-                        {
-                            return;
-                        }
-                        AutoUse(RTarget);
-                        R.Cast(R.GetPrediction(RTarget).UnitPosition);
+                        return;
                     }
+
+                    if (Menu["R"]["RCheck"] && Player.CountEnemyHeroesInRange(800f) > 0)
+                    {
+                        return;
+                    }
+
+                    if (target.DistanceToPlayer() <= Menu["R"]["RMinRange"].GetValue<MenuSlider>().Value)
+                    {
+                        return;
+                    }
+
+                    if (target.DistanceToPlayer() > Menu["R"]["RMaxRange"].GetValue<MenuSlider>().Value)
+                    {
+                        return;
+                    }
+
+                    if (target.Health > Player.GetSpellDamage(target, SpellSlot.R) * Menu["R"]["RKill"].GetValue<MenuSlider>().Value)
+                    {
+                        return;
+                    }
+                    R.Cast(R.GetPrediction(target).CastPosition);
+                }
+
+                if (R.Instance.Name == IsJhinRShot)
+                {
+                    if (Menu["R"]["RKey"].GetValue<MenuKeyBind>().Active)
+                    {
+                        AutoUse(target);
+                        R.Cast(R.GetPrediction(target).UnitPosition);
+                    }
+
+                    if (Menu["R"]["ComboR"] && Variables.Orbwalker.ActiveMode == OrbwalkingMode.Combo)
+                    {
+                        AutoUse(target);
+                        R.Cast(R.GetPrediction(target).UnitPosition);
+                    }
+
+                    if (!Menu["R"]["AutoR"])
+                    {
+                        return;
+                    }
+                    AutoUse(target);
+                    R.Cast(R.GetPrediction(target).UnitPosition);
                 }
             }
         }
