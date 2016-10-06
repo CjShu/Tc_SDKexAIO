@@ -87,17 +87,17 @@
 
         private static IEnumerable<string> Ahri = new[]
         {
-            "Classic", "Dynasty Ahri", "Midnight Ahri", "Foxfire Ahri", "Popstar Ahri", "Challenger Ahri", "Academy Ahri"
+            "Classic", "Dynasty Ahri", "Midnight Ahri", "Foxfire Ahri", "Popstar Ahri", "Challenger Ahri", "Academy Ahri", "Arcade Ahri"
         };
 
         private static IEnumerable<string> Akali = new[]
         {
-            "Classic", "Stinger Akali", "Crimson Akali", "All-star Akali", "Nurse Akali", "Blood Moon Akali", "Silverfang Akali", "Headhunter Akali"
+            "Classic", "Stinger Akali", "Crimson Akali", "All-star Akali", "Nurse Akali", "Blood Moon Akali", "Silverfang Akali", "Headhunter Akali", "Sashimi Akali"
         };
 
         private static IEnumerable<string> Alistar = new[]
         {
-            "Classic", "Black Alistar", "Golden Alistar", "Matador Alistar", "Longhorn Alistar", "Unchained Alistar", "Infernal Alistar", "Sweeper Alistar", "Marauder Alistar"
+            "Classic", "Black Alistar", "Golden Alistar", "Matador Alistar", "Longhorn Alistar", "Unchained Alistar", "Infernal Alistar", "Sweeper Alistar", "Marauder Alistar", "SKT T1 Alistar"
         };
 
         private static IEnumerable<string> Amumu = new[]
@@ -117,7 +117,7 @@
 
         private static IEnumerable<string> Ashe = new[]
         {
-            "Classic", "Freljord Ashe", "Sherwood Forest Ashe", "Woad Ashe", "Queen Ashe", "Amethyst Ashe", "Heartseeker Ashe", "Marauder Ashe"
+            "Classic", "Freljord Ashe", "Sherwood Forest Ashe", "Woad Ashe", "Queen Ashe", "Amethyst Ashe", "Heartseeker Ashe", "Marauder Ashe", "PROJECT: Ashe"
         };
 
         private static IEnumerable<string> AurelionSol = new[]
@@ -127,7 +127,7 @@
 
         private static IEnumerable<string> Azir = new[]
         {
-            "Classic", "Galactic Azir", "Gravelord Azir"
+            "Classic", "Galactic Azir", "Gravelord Azir", "SKT T1 Azir"
         };
 
         private static IEnumerable<string> Bard = new[]
@@ -167,7 +167,7 @@
 
         private static IEnumerable<string> Corki = new[]
         {
-            "Classic", "UFO Corki", "Ice Toboggan Corki", "Red Baron Corki", "Hot Rod Corki", "Urfrider Corki", "Dragonwing Corki", "Fnatic Corki"
+            "Classic", "UFO Corki", "Ice Toboggan Corki", "Red Baron Corki", "Hot Rod Corki", "Urfrider Corki", "Dragonwing Corki", "Fnatic Corki", "Arcade Corki"
         };
 
         private static IEnumerable<string> Darius = new[]
@@ -192,12 +192,12 @@
 
         private static IEnumerable<string> Ekko = new[]
         {
-            "Classic", "Sandstorm Ekko", "Academy Ekko"
+            "Classic", "Sandstorm Ekko", "Academy Ekko", "PROJECT: Ekko"
         };
 
         private static IEnumerable<string> Elise = new[]
         {
-            "Classic", "Death Blossom Elise", "Victorious Elise", "Blood Moon Elise"
+            "Classic", "Death Blossom Elise", "Victorious Elise", "Blood Moon Elise", "SKT T1 Elise"
         };
 
         private static IEnumerable<string> Evelynn = new[]
@@ -207,7 +207,7 @@
 
         private static IEnumerable<string> Ezreal = new[]
         {
-            "Classic", "Nottingham Ezreal", "Striker Ezreal", "Frosted Ezreal", "Explorer Ezreal", "Pulsefire Ezreal", "TPA Ezreal", "Debonair Ezreal", "Ace of Spades Ezreal"
+            "Classic", "Nottingham Ezreal", "Striker Ezreal", "Frosted Ezreal", "Explorer Ezreal", "Pulsefire Ezreal", "TPA Ezreal", "Debonair Ezreal", "Ace of Spades Ezreal", "Arcade Ezreal"
         };
 
         private static IEnumerable<string> Fiddlesticks = new[]
@@ -217,7 +217,7 @@
 
         private static IEnumerable<string> Fiora = new[]
         {
-            "Classic", "Royal Guard Fiora", "Nightraven Fiora", "Headmistress Fiora", "PROJECT: Fiora"
+            "Classic", "Royal Guard Fiora", "Nightraven Fiora", "Headmistress Fiora", "PROJECT: Fiora", "Pool Party Fiora"
         };
 
         private static IEnumerable<string> Fizz = new[]
@@ -307,7 +307,7 @@
 
         private static IEnumerable<string> Kalista = new[]
         {
-            "Classic", "Blood Moon Kalista", "Championship Kalista"
+            "Classic", "Blood Moon Kalista", "Championship Kalista", "SKT T1 Kalista"
         };
 
         private static IEnumerable<string> Karma = new[]
@@ -327,7 +327,7 @@
 
         private static IEnumerable<string> Katarina = new[]
         {
-            "Classic", "Mercenary Katarina", "Red Card Katarina", "Bilgewater Katarina", "Kitty Cat Katarina", "High Command Katarina", "Sandstorm Katarina", "Slay Belle Katarina", "Warring Kingdoms Katarina"
+            "Classic", "Mercenary Katarina", "Red Card Katarina", "Bilgewater Katarina", "Kitty Cat Katarina", "High Command Katarina", "Sandstorm Katarina", "Slay Belle Katarina", "Warring Kingdoms Katarina", "PROJECT: Katarina"
         };
 
         private static IEnumerable<string> Kayle = new[]
@@ -372,7 +372,7 @@
 
         private static IEnumerable<string> Leona = new[]
         {
-            "Classic", "Valkyrie Leona", "Defender Leona", "Iron Solari Leona", "Pool Party Leona", "PROJECT: Leona"
+            "Classic", "Valkyrie Leona", "Defender Leona", "Iron Solari Leona", "Pool Party Leona", "PROJECT: Leona", "Barbecue Leona"
         };
 
         private static IEnumerable<string> Lissandra = new[]
@@ -417,7 +417,7 @@
 
         private static IEnumerable<string> MissFortune = new[]
         {
-            "Classic", "Cowgirl Miss Fortune", "Waterloo Miss Fortune", "Secret Agent Miss Fortune", "Candy Cane Miss Fortune", "Road Warrior Miss Fortune", "Mafia Miss Fortune", "Arcade Miss Fortune", "Captain Fortune"
+            "Classic", "Cowgirl Miss Fortune", "Waterloo Miss Fortune", "Secret Agent Miss Fortune", "Candy Cane Miss Fortune", "Road Warrior Miss Fortune", "Mafia Miss Fortune", "Arcade Miss Fortune", "Captain Fortune", "Pool Party Miss Fortune"
         };
 
         private static IEnumerable<string> Mordekaiser = new[]
@@ -432,7 +432,7 @@
 
         private static IEnumerable<string> Nami = new[]
         {
-            "Classic", "Koi Nami", "River Spirit Nami", "Urf the Nami-tee"
+            "Classic", "Koi Nami", "River Spirit Nami", "Urf the Nami-tee", "Deep Sea Nami"
         };
 
         private static IEnumerable<string> Nasus = new[]
@@ -462,7 +462,7 @@
 
         private static IEnumerable<string> Olaf = new[]
         {
-            "Classic", "Forsaken Olaf", "Glacial Olaf", "Brolaf", "Pentakill Olaf", "Marauder Olaf"
+            "Classic", "Forsaken Olaf", "Glacial Olaf", "Brolaf", "Pentakill Olaf", "Marauder Olaf", "Butcher Olaf"
         };
 
         private static IEnumerable<string> Orianna = new[]
@@ -472,7 +472,7 @@
 
         private static IEnumerable<string> Pantheon = new[]
         {
-            "Classic", "Myrmidon Pantheon", "Ruthless Pantheon", "Perseus Pantheon", "Full Metal Pantheon", "Glaive Warrior Pantheon", "Dragonslayer Pantheon", "Slayer Pantheon"
+            "Classic", "Myrmidon Pantheon", "Ruthless Pantheon", "Perseus Pantheon", "Full Metal Pantheon", "Glaive Warrior Pantheon", "Dragonslayer Pantheon", "Slayer Pantheon", "Baker Pantheon"
         };
 
         private static IEnumerable<string> Poppy = new[]
@@ -497,7 +497,7 @@
 
         private static IEnumerable<string> Renekton = new[]
         {
-            "Classic", "Galactic Renekton", "Outback Renekton", "Bloodfury Renekton", "Rune Wars Renekton", "Scorched Earth Renekton", "Pool Party Renekton", "Prehistoric Renekton"
+            "Classic", "Galactic Renekton", "Outback Renekton", "Bloodfury Renekton", "Rune Wars Renekton", "Scorched Earth Renekton", "Pool Party Renekton", "Prehistoric Renekton", "SKT T1 Renekton"
         };
 
         private static IEnumerable<string> Rengar = new[]
@@ -517,7 +517,7 @@
 
         private static IEnumerable<string> Ryze = new[]
         {
-            "Classic", "Human Ryze", "Tribal Ryze", "Uncle Ryze", "Triumphant Ryze", "Professor Ryze", "Zombie Ryze", "Dark Crystal Ryze", "Pirate Ryze", "Ryze Whitebeard"
+            "Classic", "Human Ryze", "Tribal Ryze", "Uncle Ryze", "Triumphant Ryze", "Professor Ryze", "Zombie Ryze", "Dark Crystal Ryze", "Pirate Ryze", "Ryze Whitebeard", "SKT T1 Ryze"
         };
 
         private static IEnumerable<string> Sejuani = new[]
@@ -652,7 +652,7 @@
 
         private static IEnumerable<string> Vayne = new[]
         {
-            "Classic", "Vindicator Vayne", "Aristocrat Vayne", "Dragonslayer Vayne", "Heartseeker Vayne", "SKT T1 Vayne", "Arclight Vayne"
+            "Classic", "Vindicator Vayne", "Aristocrat Vayne", "Dragonslayer Vayne", "Heartseeker Vayne", "SKT T1 Vayne", "Arclight Vayne", "Soulstealer Vayne"
         };
 
         private static IEnumerable<string> Veigar = new[]
@@ -682,7 +682,7 @@
 
         private static IEnumerable<string> Volibear = new[]
         {
-            "Classic", "Thunder Lord Volibear", "Northern Storm Volibear", "Runeguard Volibear", "Captain Volibear", "BEl Rayo Volibear"
+            "Classic", "Thunder Lord Volibear", "Northern Storm Volibear", "Runeguard Volibear", "Captain Volibear", "El Rayo Volibear"
         };
 
         private static IEnumerable<string> Warwick = new[]
@@ -722,7 +722,7 @@
 
         private static IEnumerable<string> Zed = new[]
         {
-            "Classic", "Shockblade Zed", "SKT T1 Zed", "PROJECT: Zed"
+            "Classic", "Shockblade Zed", "SKT T1 Zed", "PROJECT: Zed", "Championship Zed"
         };
 
         private static IEnumerable<string> Ziggs = new[]
