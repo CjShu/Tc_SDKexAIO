@@ -508,7 +508,43 @@
                 {
                     CastSpell(E, t);
                 }
-            }               
+            }
+
+            if (Player.HasBuff("AhriTumble") && Menu["R"]["KillstealR"] && R.IsReady())
+            {
+                var DashPos = Vector3.Zero;
+
+                DashPos = Player.ServerPosition.Extend(Game.CursorPos, 450f);
+
+                foreach (var t in GetEnemies(R.Range))
+                {
+                    var Dmg = GetDamage(t, false);
+                    var QDmg = Q.GetDamage(t) * 2;
+                    var WDmg = W.GetDamage(t);
+                    var RDmg = R.GetDamage(t) * 3;
+
+                    if (!t.IsValidTarget(800) && !(t.Distance(DashPos) <= R.Range))
+                        return;
+
+                    if (DashPos.CountEnemyHeroesInRange(R.Range) > 2 || t.CountAllyHeroesInRange(R.Range) > 2)
+                    {
+                        return;
+                    }
+
+                    if (t.Health >= Dmg && t.Health <= QDmg + WDmg + RDmg)
+                    {
+                        R.Cast(DashPos);
+                    }
+                    else if (t.Health < RDmg + QDmg)
+                    {
+                        R.Cast(DashPos);
+                    }
+                    else if (t.Health < RDmg + WDmg)
+                    {
+                        R.Cast(DashPos);
+                    }
+                }
+            }
         }
 
         private static void AutoQLogic()
