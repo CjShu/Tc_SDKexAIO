@@ -575,6 +575,37 @@ namespace Tc_SDKexAIO.Common
             return solution;
         }
 
+        /// <summary>
+        /// SebbyLib
+        /// </summary>
+        /// <param name="start2"></param>
+        /// <param name="end2"></param>
+        /// <param name="radius"></param>
+        /// <param name="width"></param>
+        /// <param name="color"></param>
+        public static void DrawLineRectangle(this Vector3 start2, Vector3 end2, int radius, float width, Color color)
+        {
+            Vector2 start = start2.To2D();
+            Vector2 end = end2.To2D();
+            var dir = (end - start).Normalized();
+            var pDir = dir.Perpendicular();
+
+            var rightStartPos = start + pDir * radius;
+            var leftStartPos = start - pDir * radius;
+            var rightEndPos = end + pDir * radius;
+            var leftEndPos = end - pDir * radius;
+
+            var rStartPos = Drawing.WorldToScreen(new Vector3(rightStartPos.X, rightStartPos.Y, ObjectManager.Player.Position.Z));
+            var lStartPos = Drawing.WorldToScreen(new Vector3(leftStartPos.X, leftStartPos.Y, ObjectManager.Player.Position.Z));
+            var rEndPos = Drawing.WorldToScreen(new Vector3(rightEndPos.X, rightEndPos.Y, ObjectManager.Player.Position.Z));
+            var lEndPos = Drawing.WorldToScreen(new Vector3(leftEndPos.X, leftEndPos.Y, ObjectManager.Player.Position.Z));
+
+            Drawing.DrawLine(rStartPos, rEndPos, width, color);
+            Drawing.DrawLine(lStartPos, lEndPos, width, color);
+            Drawing.DrawLine(rStartPos, lStartPos, width, color);
+            Drawing.DrawLine(lEndPos, rEndPos, width, color);
+        }
+
         public struct IntersectionResult
         {
             public bool Intersects;

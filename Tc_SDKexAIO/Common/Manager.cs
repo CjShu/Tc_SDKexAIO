@@ -169,6 +169,11 @@
             return hpPred > 0 && hpPred - subDmg < dmg;
         }
 
+        public static double GetIgniteDamage(Obj_AI_Hero target)
+        {
+            return 50 + 20 * GameObjects.Player.Level - (target.HPRegenRate / 5 * 3);
+        }
+
         public static Obj_AI_Hero GetTarget(Spell Spell, bool Ignote = true)
         {
             return Variables.TargetSelector.GetTarget(Spell, Ignote);
@@ -331,7 +336,15 @@
 
                 if (CalCulateQDamage)
                 {
-                    Damage += GameObjects.Player.Spellbook.GetSpell(SpellSlot.Q).IsReady() ? GameObjects.Player.GetSpellDamage(Target, SpellSlot.Q) : 0d;
+                    switch (GameObjects.Player.ChampionName)
+                    {
+                        case "Ahri":
+                            Damage += GameObjects.Player.Spellbook.GetSpell(SpellSlot.Q).IsReady() ? GameObjects.Player.GetSpellDamage(Target, SpellSlot.Q) * 2 : 0d;
+                            break;
+                        default:
+                            Damage += GameObjects.Player.Spellbook.GetSpell(SpellSlot.Q).IsReady() ? GameObjects.Player.GetSpellDamage(Target, SpellSlot.Q) : 0d;
+                            break;
+                    }
                 }
 
                 if (CalCulateWDamage)
@@ -346,7 +359,14 @@
 
                 if (CalCulateRDamage)
                 {
-                    Damage += GameObjects.Player.Spellbook.GetSpell(SpellSlot.R).IsReady() ? GameObjects.Player.GetSpellDamage(Target, SpellSlot.R) : 0d;
+                    if (GameObjects.Player.ChampionName == "Ahri")
+                    {
+                        Damage += GameObjects.Player.Spellbook.GetSpell(SpellSlot.R).IsReady() ? GameObjects.Player.GetSpellDamage(Target, SpellSlot.R) * 3 : 0d;
+                    }
+                    else
+                    {
+                        Damage += GameObjects.Player.Spellbook.GetSpell(SpellSlot.R).IsReady() ? GameObjects.Player.GetSpellDamage(Target, SpellSlot.R) : 0d;
+                    }
                 }
 
                 if (GameObjects.Player.GetSpellSlot("SummonerDot") != SpellSlot.Unknown && GameObjects.Player.GetSpellSlot("SummonerDot").IsReady())
@@ -387,11 +407,9 @@
 
                 return Damage;
             }
-            else
-            {
-                return 0d;
-            }
+            return 0d;
         }
+    
 
         public static double GetIncomingDamage(Obj_AI_Hero target, float time = 0.5f, bool skillshots = true)
         {
