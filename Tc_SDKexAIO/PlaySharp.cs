@@ -95,6 +95,10 @@
                 case "Ahri":
                     Champions.Ahri.Init();
                     break;
+               // case "Sivir":
+               //     Champions.Sivir.Init();
+               //     break;
+                    
             }
         }
 
