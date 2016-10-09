@@ -52,25 +52,25 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="clipper_library">
-      <HintPath>C:\Users\user\Desktop\L#\RbPbmy2n2\References\clipper_library.dll</HintPath>
+      <HintPath>C:\Users\user\Desktop\L#\yZsuXPLXC\References\clipper_library.dll</HintPath>
     </Reference>
     <Reference Include="LeagueSharp">
-      <HintPath>C:\Users\user\Desktop\L#\RbPbmy2n2\References\LeagueSharp.dll</HintPath>
+      <HintPath>C:\Users\user\Desktop\L#\yZsuXPLXC\References\LeagueSharp.dll</HintPath>
     </Reference>
     <Reference Include="LeagueSharp.Common">
-      <HintPath>C:\Users\user\Desktop\L#\RbPbmy2n2\References\LeagueSharp.Common.dll</HintPath>
+      <HintPath>C:\Users\user\Desktop\L#\yZsuXPLXC\References\LeagueSharp.Common.dll</HintPath>
     </Reference>
     <Reference Include="LeagueSharp.Data">
-      <HintPath>C:\Users\user\Desktop\L#\RbPbmy2n2\References\LeagueSharp.Data.dll</HintPath>
+      <HintPath>C:\Users\user\Desktop\L#\yZsuXPLXC\References\LeagueSharp.Data.dll</HintPath>
     </Reference>
     <Reference Include="LeagueSharp.SDKEx">
-      <HintPath>C:\Users\user\Desktop\L#\RbPbmy2n2\References\LeagueSharp.SDKEx.dll</HintPath>
+      <HintPath>C:\Users\user\Desktop\L#\yZsuXPLXC\References\LeagueSharp.SDKEx.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX">
-      <HintPath>C:\Users\user\Desktop\L#\RbPbmy2n2\References\SharpDX.dll</HintPath>
+      <HintPath>C:\Users\user\Desktop\L#\yZsuXPLXC\References\SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Direct3D9">
-      <HintPath>C:\Users\user\Desktop\L#\RbPbmy2n2\References\SharpDX.Direct3D9.dll</HintPath>
+      <HintPath>C:\Users\user\Desktop\L#\yZsuXPLXC\References\SharpDX.Direct3D9.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

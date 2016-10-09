@@ -3,6 +3,7 @@
     using LeagueSharp;
     using LeagueSharp.SDK;
     using LeagueSharp.SDK.UI;
+    using LeagueSharp.SDK.Utils;
     using LeagueSharp.SDK.Enumerations;
 
     using System;
@@ -155,22 +156,22 @@
 
             if (Menu["Draw"]["Q"] && Q.IsReady())
             {
-                Drawing.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.DeepPink);
+                Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.DeepPink);
             }
 
             if (Menu["Draw"]["W"] && W.IsReady())
             {
-                Drawing.DrawCircle(Player.Position, W.Range, System.Drawing.Color.AliceBlue);
+                Render.Circle.DrawCircle(Player.Position, W.Range, System.Drawing.Color.AliceBlue);
             }
 
             if (Menu["Draw"]["E"] && E.IsReady())
             {
-                Drawing.DrawCircle(Player.Position, E.Range, System.Drawing.Color.Gray);
+                Render.Circle.DrawCircle(Player.Position, E.Range, System.Drawing.Color.Gray);
             }
 
             if (Menu["Draw"]["R"] && R.IsReady())
             {
-                Drawing.DrawCircle(Player.Position, R.Range, System.Drawing.Color.Yellow);
+                Render.Circle.DrawCircle(Player.Position, 450f, System.Drawing.Color.Yellow);
             }
         }
 
@@ -198,47 +199,45 @@
 
         private static void OnDelete(GameObject sender, EventArgs args)
         {
-            MissileClient missile = (MissileClient)sender;
+            if (!(sender is MissileClient)) return;
 
-            if (sender.IsEnemy || sender.Type != GameObjectType.MissileClient || !sender.IsValid)
+            var QMissleClient = (MissileClient)sender;
+
+            if (!QMissleClient.SpellCaster.IsMe) return;
+
+            var Name = QMissleClient.SData.Name;
+
+            if (Name.Contains("AhriOrbMissile") && QMissleClient.IsValid)
             {
-                return;
+                Qobj = null;
             }
 
-            if (missile.SData.Name != null)
+            if (Name.Contains("AhriOrbReturn") && QMissleClient.IsValid)
             {
-                if (missile.SData.Name == "AhriOrbMissile" || missile.SData.Name == "AhriOrbReturn")
-                {
-                    QMissile = null;
-                }
-
-                if (missile.SData.Name == "AhriSeduceMissile")
-                {
-                    EMissile = null;
-                }
+                QReturn = null;
             }
         }
 
         private static void OnCreate(GameObject sender, EventArgs args)
         {
-            MissileClient missile = (MissileClient)sender;
+            var client = sender as MissileClient;
 
-            if (sender.IsEnemy || sender.Type != GameObjectType.MissileClient || !sender.IsValid)
+            if (client == null) return;
+
+            var QMissleClient = client;
+
+            if (!QMissleClient.SpellCaster.IsMe || !QMissleClient.IsValid) return;
+
+            var Name = QMissleClient.SData.Name;
+
+            if (Name.Contains("AhriOrbMissile"))
             {
-                return;
+                Qobj = QMissleClient;
             }
 
-            if (missile.SData.Name != null)
+            if (Name.Contains("AhriOrbReturn"))
             {
-                if (missile.SData.Name == "AhriOrbReturn")
-                {
-                    QMissile = null;
-                }
-
-                if (missile.SData.Name == "AhriSeduceMissile")
-                {
-                    EMissile = null;
-                }
+                QReturn = QMissleClient;
             }
         }
 
@@ -299,9 +298,9 @@
                 }
             }
 
-            if (Menu["R"]["ComboR"] && R.IsReady() && enemy.IsValidTarget(R.Range))
+            if (Menu["R"]["ComboR"] && R.IsReady() && Target.IsValidTarget(900f))
             {
-                if (!CheckTarget(Target) || !enemy.IsValidTarget(R.Range))
+                if (!CheckTarget(Target) || !Target.IsValidTarget(900f))
                     return;
 
                 var DashPos = Vector3.Zero;
@@ -350,7 +349,8 @@
                     {
                         return;
                     }
-                    else if (Game.CursorPos.Distance(enemy.Position) > enemy.DistanceToPlayer() && enemy.IsValidTarget(R.Range))
+
+                    if (Game.CursorPos.Distance(enemy.Position) > enemy.DistanceToPlayer() && enemy.IsValidTarget(R.Range))
                     {
                         R.Cast(DashPos);
                     }
