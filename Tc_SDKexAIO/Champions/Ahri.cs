@@ -28,14 +28,13 @@
         private static Obj_AI_Hero Player => PlaySharp.Player;
         private static HpBarDraw HpBarDraw = new HpBarDraw();
         private static GameObject QMissile = null, EMissile = null;
-        private static Obj_AI_Hero enemy;
         private static MissileClient QReturn, Qobj;
 
 
         internal static void Init()
         {
             Q = new Spell(SpellSlot.Q, 870f).SetSkillshot(0.25f, 90f, 1550f, false, SkillshotType.SkillshotLine);
-            W = new Spell(SpellSlot.W, 580f);
+            W = new Spell(SpellSlot.W, 680f);
             E = new Spell(SpellSlot.E, 920f).SetSkillshot(0.25f, 70f, 1550f, true, SkillshotType.SkillshotLine);
             R = new Spell(SpellSlot.R, 600f);
 
@@ -80,19 +79,10 @@
                 EMenu.Add(new MenuSliderButton("HarassE", "騷擾 E | 最低魔力 = ", 40, 0, 100, true));
                 EMenu.Add(new MenuSeparator("Mode2", "連招 E 模式"));
                 EMenu.Add(new MenuBool("ComboE", "連招 E", true));
-                var EList = EMenu.Add(new Menu("EList", "禁止 E 目標名單"));
-                {
-                    if (GameObjects.EnemyHeroes.Any())
-                    {
-                        GameObjects.EnemyHeroes.ForEach(i => EList.Add(new MenuBool(i.ChampionName.ToLower(), i.ChampionName, true)));
-                    }
-                }
             }
 
             var RMenu = Menu.Add(new Menu("R", "R.Set"));
             {
-                RMenu.Add(new MenuSeparator("Mode", "模式"));
-                RMenu.Add(new MenuBool("KillstealR", "可擊殺目標 R", true));
                 RMenu.Add(new MenuSeparator("Mode2", "連招 模式"));
                 RMenu.Add(new MenuBool("ComboR", "連招 R", true));
                 RMenu.Add(new MenuBool("RCheck", "檢查R", true));
@@ -154,22 +144,22 @@
             if (Player.IsDead)
                 return;
 
-            if (Menu["Draw"]["Q"] && Q.IsReady())
+            if (Menu["Draw"]["Q"] && Q.Level > 1)
             {
-                Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.DeepPink);
+                Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.DeepPink, 3);                              
             }
 
-            if (Menu["Draw"]["W"] && W.IsReady())
+            if (Menu["Draw"]["W"] && W.Level > 1)
             {
                 Render.Circle.DrawCircle(Player.Position, W.Range, System.Drawing.Color.AliceBlue);
             }
 
-            if (Menu["Draw"]["E"] && E.IsReady())
+            if (Menu["Draw"]["E"] && E.Level > 1)
             {
                 Render.Circle.DrawCircle(Player.Position, E.Range, System.Drawing.Color.Gray);
             }
 
-            if (Menu["Draw"]["R"] && R.IsReady())
+            if (Menu["Draw"]["R"] && R.Level > 1)
             {
                 Render.Circle.DrawCircle(Player.Position, 450f, System.Drawing.Color.Yellow);
             }
@@ -285,80 +275,14 @@
                 }
             }
 
-            if (Menu["E"]["ComboE"] && E.IsReady())
+            if (Menu["E"]["ComboE"] && E.IsReady() && Target.IsValidTarget(E.Range - 50))
             {
-                var t = Variables.Orbwalker.GetTarget() as Obj_AI_Hero;
-
-                if (!CheckTarget(t))
-                {
-                    if (!Menu["E"]["EList"][t.ChampionName.ToLower()] && Player.Mana > R.Instance.ManaCost + E.Instance.ManaCost)
-                    {
-                        CastSpell(E, t);
-                    }
-                }
+                CastSpell(E, Target);
             }
 
             if (Menu["R"]["ComboR"] && R.IsReady() && Target.IsValidTarget(900f))
             {
-                if (!CheckTarget(Target) || !Target.IsValidTarget(900f))
-                    return;
-
-                var DashPos = Vector3.Zero;
-
-                DashPos = Player.ServerPosition.Extend(Game.CursorPos, 450f);
-
-                if ((DashPos.IsWall() && Menu["R"]["RCheck"]) || (DashPos.IsUnderEnemyTurret() && Menu["R"]["RTurret"]) || (enemy.Health < GetDamage(enemy, false, true, true, true, false) && enemy.IsValidTarget(600)))
-                {
-                    return;
-                }
-
-                if (Player.HasBuff("AhriTumble"))
-                {
-                    var BuffTime = Player.GetBuff("AhriTumble").EndTime;
-
-                    if (BuffTime - Game.Time <= 3)
-                    {
-                        R.Cast(DashPos);
-                    }
-
-                    if (QReturn != null && QReturn.IsValid)
-                    {
-                        var RPos = QReturn.Position;
-
-                        if (enemy.DistanceToPlayer() > RPos.DistanceToPlayer())
-                        {
-                            var targetdis = enemy.Position.Distance(RPos);
-
-                            var QReturnEnd = QReturn.EndPosition;
-
-                            var CastPos = QReturnEnd.Extend(enemy.ServerPosition, enemy.ServerPosition.Distance(RPos));
-
-                            if (!(targetdis < Q.Range))
-                            {
-                                return;
-                            }
-
-                            if ((CastPos.IsWall() && Menu["R"]["RCheck"]) || Player.ServerPosition.Distance(CastPos) > R.Range || CastPos.CountEnemyHeroesInRange(R.Range) > 2 || (RPos.IsUnderEnemyTurret() && Menu["R"]["RTurret"]))
-                            {
-                                return;
-                            }
-                            R.Cast(CastPos);
-                        }
-                    }
-                    else if (Q.IsReady() && DashPos.CountEnemyHeroesInRange(R.Range) > 2 || !enemy.IsValidTarget(800f))
-                    {
-                        return;
-                    }
-
-                    if (Game.CursorPos.Distance(enemy.Position) > enemy.DistanceToPlayer() && enemy.IsValidTarget(R.Range))
-                    {
-                        R.Cast(DashPos);
-                    }
-                    else if (Game.CursorPos.Distance(enemy.Position) < enemy.DistanceToPlayer() || !enemy.IsValidTarget(R.Range) && enemy.IsValidTarget(800f))
-                    {
-                        R.Cast(DashPos);
-                    }
-                }
+                RLogic(Target);
             }
 
             if (Menu["ComboIgnite"].GetValue<MenuBool>() && Ignite.IsReady() && Ignite != SpellSlot.Unknown)
@@ -391,7 +315,7 @@
             {
                 if (Player.ManaPercent >= Menu["Q"]["HarassQ"].GetValue<MenuSliderButton>().SValue)
                 {
-                    if (CheckTarget(QTarget) && QTarget.IsValidTarget(Q.Range))
+                    if (CheckTarget(QTarget) && QTarget.IsValidTarget(Q.Range - 50))
                     {
                         CastSpell(Q, QTarget);                            
                     }
@@ -492,7 +416,7 @@
                 if (!CheckTarget(t))
                     continue;
 
-                if (Menu["Q"]["KillStealQ"] && Q.IsReady() && t.IsValidTarget(Q.Range) && Q.GetDamage(t) > t.Health)
+                if (Menu["Q"]["KillStealQ"] && Q.IsReady() && t.IsValidTarget(Q.Range - 50) && Q.GetDamage(t) > t.Health)
                 {
                     CastSpell(Q, t);
                     return;
@@ -509,40 +433,94 @@
                     CastSpell(E, t);
                 }
             }
+        }
 
-            if (Player.HasBuff("AhriTumble") && Menu["R"]["KillstealR"] && R.IsReady())
+        private static void RLogic(Obj_AI_Hero Target)
+        {
+            if (!CheckTarget(Target) || !Target.IsValidTarget(900f))
             {
-                var DashPos = Vector3.Zero;
+                return;
+            }
 
-                DashPos = Player.ServerPosition.Extend(Game.CursorPos, 450f);
+            var DashPos = Vector3.Zero;
 
-                foreach (var t in GetEnemies(R.Range))
+            DashPos = Player.ServerPosition.Extend(Game.CursorPos, 450f);
+
+            if ((DashPos.IsWall() && Menu["R"]["RCheck"]) || (DashPos.IsUnderEnemyTurret() && Menu["R"]["RTurret"]) || (Target.Health < GetDamage(Target, false, true, true, true, false) && Target.IsValidTarget(650)))
+            {
+                return;
+            }
+
+            if (Player.HasBuff("AhriTumble"))
+            {
+                var buffTime = Player.GetBuff("AhriTumble").EndTime;
+
+                if (buffTime - Game.Time <= 3)
                 {
-                    var Dmg = GetDamage(t, false);
-                    var QDmg = Q.GetDamage(t) * 2;
-                    var WDmg = W.GetDamage(t);
-                    var RDmg = R.GetDamage(t) * 3;
+                    R.Cast(DashPos);
+                }
 
-                    if (!t.IsValidTarget(800) && !(t.Distance(DashPos) <= R.Range))
+                if (QReturn != null && QReturn.IsValid)
+                {
+                    var ReturnPos = QReturn.Position;
+
+                    if (Target.DistanceToPlayer() > ReturnPos.DistanceToPlayer())
+                    {
+                        var targetdis = Target.Position.Distance(ReturnPos);
+                        var QReturnEnd = QReturn.EndPosition;
+
+                        if (!(targetdis < Q.Range)) return;
+
+                        var CastPos = QReturnEnd.Extend(Target.ServerPosition, Target.ServerPosition.Distance(DashPos));
+
+                        if ((CastPos.IsWall() && Menu["R"]["RCheck"]) || Player.ServerPosition.Distance(CastPos) > R.Range || CastPos.CountEnemyHeroesInRange(R.Range) > 2 || (DashPos.IsUnderEnemyTurret() && Menu["R"]["RTurret"]))
+                        {
+                            return;
+                        }
+                        R.Cast(CastPos);
+                    }
+                }
+                else
+                {
+                    if (Q.IsReady() || DashPos.CountEnemyHeroesInRange(R.Range) > 2 || !Target.IsValidTarget(800f))
                         return;
 
-                    if (DashPos.CountEnemyHeroesInRange(R.Range) > 2 || t.CountAllyHeroesInRange(R.Range) > 2)
+                    if (Game.CursorPos.Distance(Target.Position) > Target.DistanceToPlayer() && Target.IsValidTarget(R.Range))
                     {
-                        return;
+                        R.Cast(DashPos);
                     }
+                    else if (Game.CursorPos.Distance(Target.Position) < Target.DistanceToPlayer() && !Target.IsValidTarget(R.Range) && Target.IsValidTarget(800f))
+                    {
+                        R.Cast(DashPos);
+                    }
+                }
+            }
+            else
+            {
+                var AllDamage = GetDamage(Target, false);
+                var QDamage = Q.GetDamage(Target) * 2;
+                var WDamage = W.GetDamage(Target);
+                var RDamage = R.GetDamage(Target) * 3;
 
-                    if (t.Health >= Dmg && t.Health <= QDmg + WDmg + RDmg)
-                    {
-                        R.Cast(DashPos);
-                    }
-                    else if (t.Health < RDmg + QDmg)
-                    {
-                        R.Cast(DashPos);
-                    }
-                    else if (t.Health < RDmg + WDmg)
-                    {
-                        R.Cast(DashPos);
-                    }
+                if (!Target.IsValidTarget(800) || !(Target.Distance(DashPos) <= R.Range)) return;
+
+                if (DashPos.CountEnemyHeroesInRange(R.Range) > 2 ||
+                    Target.CountAllyHeroesInRange(R.Range) > 2)
+                {
+                    return;
+                }
+
+                if (Target.Health >= AllDamage && Target.Health <= QDamage + WDamage + RDamage)
+                {
+                    R.Cast(DashPos);
+                }
+                else if (Target.Health < RDamage + QDamage)
+                {
+                    R.Cast(DashPos);
+                }
+                else if (Target.Health < RDamage + WDamage)
+                {
+                    R.Cast(DashPos);
                 }
             }
         }
