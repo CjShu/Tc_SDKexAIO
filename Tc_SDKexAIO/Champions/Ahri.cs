@@ -146,7 +146,7 @@
 
             if (Menu["Draw"]["Q"] && Q.Level > 1)
             {
-                Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.DeepPink, 3);                              
+                Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.DeepPink);
             }
 
             if (Menu["Draw"]["W"] && W.Level > 1)
