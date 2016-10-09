@@ -37,8 +37,8 @@
         {
 
             Q = new Spell(SpellSlot.Q);
-            W = new Spell(SpellSlot.W, 1500f).SetSkillshot(0.6f, 60f, 3300f, true, SkillshotType.SkillshotLine);
-            E = new Spell(SpellSlot.E, 920f).SetSkillshot(1.2f, 100f, 1750f, false, SkillshotType.SkillshotCircle);
+            W = new Spell(SpellSlot.W, 1450f).SetSkillshot(0.6f, 60f, 3300f, true, SkillshotType.SkillshotLine);
+            E = new Spell(SpellSlot.E, 900f).SetSkillshot(1.2f, 100f, 1750f, false, SkillshotType.SkillshotCircle);
             R = new Spell(SpellSlot.R, 3000f).SetSkillshot(0.7f, 140f, 1500f, false, SkillshotType.SkillshotLine);
 
             var QMenu = Menu.Add(new Menu("Q", "Q.Set"));
@@ -132,23 +132,25 @@
             if (Menu["Draw"]["Q"])
             {
                 if (Q.IsReady())
-                    Drawing.DrawCircle(Player.Position, 585f + Player.BoundingRadius, Color.DeepPink);
+                    Render.Circle.DrawCircle(Player.Position, 585f + Player.BoundingRadius, Color.DeepPink);
                 else
-                    Drawing.DrawCircle(Player.Position, bonusRange() - 28, Color.DeepPink);
+                    Render.Circle.DrawCircle(Player.Position, bonusRange() - 28, Color.DeepPink);                       
             }
 
             if (Menu["Draw"]["W"])
             {
                 if (W.IsReady())
-                    Drawing.DrawCircle(Player.Position, W.Range, Color.AliceBlue);
+                    Render.Circle.DrawCircle(Player.Position, W.Range, Color.Blue);
+                else
+                    Render.Circle.DrawCircle(Player.Position, W.Range, Color.Blue);
             }
 
             if (Menu["Draw"]["E"])
             {
                 if (E.IsReady())
-                {
-                    Drawing.DrawCircle(Player.Position, E.Range, Color.Gray);
-                }
+                    Render.Circle.DrawCircle(Player.Position, E.Range, Color.Yellow);
+                else
+                    Render.Circle.DrawCircle(Player.Position, E.Range, Color.Yellow);
             }
 
             if (Menu["Draw"]["RKill"])
@@ -157,7 +159,7 @@
                 {
                     if (target != null)
                     {
-                        Drawing.DrawText(Drawing.WorldToScreen(target.Position)[0] - 20, Drawing.WorldToScreen(target.Position)[1], Color.Red, "R KillAble!!!!!");
+                       Drawing.DrawText(Drawing.WorldToScreen(target.Position)[0] - 20, Drawing.WorldToScreen(target.Position)[1], Color.Red, "R KillAble!!!!!");
                     }
                 }
             }

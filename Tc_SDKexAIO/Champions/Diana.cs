@@ -205,14 +205,29 @@
             if (Player.IsDead)
                 return;
 
-            if (Menu["Draw"]["Q"].GetValue<MenuBool>() && Q.IsReady())
-                Render.Circle.DrawCircle(Player.Position, Q.Range - 10, Color.DarkGray);
+            if (Menu["Draw"]["Q"])
+            {
+                if (Q.IsReady())
+                    Render.Circle.DrawCircle(Player.Position, Q.Range + 25, Color.DeepPink);
+                else
+                    Render.Circle.DrawCircle(Player.Position, Q.Range + 25, Color.DeepPink);
+            }
 
-            if (Menu["Draw"]["E"].GetValue<MenuBool>() && E.IsReady())
-                Render.Circle.DrawCircle(Player.Position, E.Range, Color.BlueViolet);
+            if (Menu["Draw"]["E"])
+            {
+                if (E.IsReady())
+                    Render.Circle.DrawCircle(Player.Position, E.Range, Color.Blue);
+                else
+                    Render.Circle.DrawCircle(Player.Position, E.Range, Color.Blue);
+            }
 
-            if (Menu["Draw"]["R"].GetValue<MenuBool>() && R.IsReady())
-                Render.Circle.DrawCircle(Player.Position, R.Range - 20, Color.Red);
+            if (Menu["Draw"]["R"])
+            {
+                if (R.IsReady())
+                    Render.Circle.DrawCircle(Player.Position, R.Range - 20, Color.Yellow);
+                else
+                    Render.Circle.DrawCircle(Player.Position, R.Range - 20, Color.Yellow);
+            }
         }
 
         private static void OnUpdate(EventArgs args)

@@ -39,7 +39,7 @@
             Q = new Spell(SpellSlot.Q, 680).SetTargetted(0.5f, 1500f);
             W = new Spell(SpellSlot.W);
             E = new Spell(SpellSlot.E);
-            R = new Spell(SpellSlot.R, 300).SetSkillshot(0.5f, 120f, 1000f, false, SkillshotType.SkillshotCircle);
+            R = new Spell(SpellSlot.R, 400).SetSkillshot(0.5f, 120f, 1000f, false, SkillshotType.SkillshotCircle);
 
             var QMenu = Menu.Add(new Menu("Q", "Q.Set"));
             {
@@ -146,31 +146,32 @@
 
         private static void OnDraw(EventArgs args)
         {
-            try
-            {                
-                if (Menu["Draw"]["Q"].GetValue<MenuBool>() && Q.Level >= 1)
+            if (Menu["Draw"]["Q"])
+            {
+                if (Q.IsReady())
+                    Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.Cyan);
+                else
+                    Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.Cyan);
+            }
+
+            if (Menu["Draw"]["R"])
+            {
+                if (R.IsReady())
+                    Render.Circle.DrawCircle(Player.Position, R.Range + Player.BoundingRadius, System.Drawing.Color.Yellow);
+                else
+                    Render.Circle.DrawCircle(Player.Position, R.Range + Player.BoundingRadius, System.Drawing.Color.Yellow);
+            }
+                       
+            if (Menu["Draw"]["DrawDamge"])
+            {
+                foreach (var t in GameObjects.EnemyHeroes.Where(x => x.IsValidTarget() && !x.IsDead && !x.IsZombie))
                 {
-                    Render.Circle.DrawCircle(Player.Position, Q.Range + Player.BoundingRadius, Q.IsReady() ? System.Drawing.Color.Cyan : System.Drawing.Color.DarkRed);
-                }
-                if (Menu["Draw"]["R"].GetValue<MenuBool>() && R.Level >= 1)
-                {
-                    Render.Circle.DrawCircle(Player.Position, R.Range + Player.BoundingRadius, R.IsReady() ? System.Drawing.Color.AliceBlue : System.Drawing.Color.Beige);
-                }
-                if (Menu["Draw"]["DrawDamge"])
-                {
-                    foreach (var t in GameObjects.EnemyHeroes.Where(x => x.IsValidTarget() && !x.IsDead && !x.IsZombie))
+                    if (t != null)
                     {
-                        if (t != null)
-                        {
-                            HpBarDraw.Unit = t;
-                            HpBarDraw.DrawDmg((float)GetDamage(t), new ColorBGRA(255, 200, 0, 170));
-                        }
+                        HpBarDraw.Unit = t;
+                        HpBarDraw.DrawDmg((float)GetDamage(t), new ColorBGRA(255, 200, 0, 170));
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error In OnDraw" + ex);
             }
         }
 
@@ -252,7 +253,7 @@
                     }
                     if (Combo && ComboR.Active && R.IsReady())
                     {
-                        var RTarget = GetTarget(300, R.DamageType);
+                        var RTarget = GetTarget(400, R.DamageType);
 
                         if (R.IsInRange(RTarget) && Charge <= Player.Spellbook.GetSpell(SpellSlot.R).Ammo
                             && RTarget.IsValidTarget() && !Trap)

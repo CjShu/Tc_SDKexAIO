@@ -585,24 +585,36 @@
         {
             if (!Player.IsDead && !MenuGUI.IsChatOpen && !MenuGUI.IsChatOpen && !MenuGUI.IsScoreboardOpen)
             {
-                if (Menu["Draw"]["Q"] && Q.IsReady())
+                if (Menu["Draw"]["Q"])
                 {
-                    Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.DeepPink);
+                    if (Q.IsReady())
+                        Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.DeepPink);
+                    else
+                        Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.DeepPink);                   
                 }
 
-                if (Menu["Draw"]["W"] && W.IsReady())
+                if (Menu["Draw"]["W"])
                 {
-                    Drawing.DrawCircle(Player.Position, W.Range, System.Drawing.Color.CadetBlue);
+                    if (W.IsReady())
+                        Render.Circle.DrawCircle(Player.Position, W.Range, System.Drawing.Color.Blue);
+                    else
+                        Render.Circle.DrawCircle(Player.Position, W.Range, System.Drawing.Color.Blue);
                 }
 
-                if (Menu["Draw"]["E"] && E.IsReady())
+                if (Menu["Draw"]["E"])
                 {
-                    Drawing.DrawCircle(Player.Position, E.Range, System.Drawing.Color.Gray);
+                    if (E.IsReady())
+                        Render.Circle.DrawCircle(Player.Position, E.Range, System.Drawing.Color.Cyan);
+                    else
+                        Render.Circle.DrawCircle(Player.Position, E.Range, System.Drawing.Color.Cyan);
                 }
 
-                if (Menu["Draw"]["R"] && R.IsReady())
+                if (Menu["Draw"]["R"])
                 {
-                    Drawing.DrawCircle(Player.Position, R.Range, System.Drawing.Color.Red);
+                    if (R.IsReady())
+                        Render.Circle.DrawCircle(Player.Position, R.Range, System.Drawing.Color.Yellow);
+                    else
+                        Render.Circle.DrawCircle(Player.Position, R.Range, System.Drawing.Color.Yellow);
                 }
             }
         }
