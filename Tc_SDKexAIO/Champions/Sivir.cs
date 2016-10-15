@@ -80,7 +80,7 @@
                                 else
                                 {
                                     targetMenu.Add(new MenuBool("spell" + spell.SData.Name, spell.Name, false));
-                                }                                   
+                                }
                             }
                         }
                     }
